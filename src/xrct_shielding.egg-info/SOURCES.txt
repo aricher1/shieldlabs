@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+src/xrct_shielding.egg-info/PKG-INFO
+src/xrct_shielding.egg-info/SOURCES.txt
+src/xrct_shielding.egg-info/dependency_links.txt
+src/xrct_shielding.egg-info/top_level.txt
+src/xrct_shielding/core/__init__.py
+src/xrct_shielding/core/geometry.py
+src/xrct_shielding/core/intersections.py
+src/xrct_shielding/core/materials.py
+src/xrct_shielding/core/rays.py
+src/xrct_shielding/core/sources.py
+tests/test_geometry.py
+tests/test_sanity.py

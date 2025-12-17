@@ -1,6 +1,6 @@
-from src.core.geometry import Point, Segment, Wall
-from src.core.rays import Ray
-from src.core.intersections import wall_path_length
+from xrct_shielding.core.geometry import Point, Segment, Wall
+from xrct_shielding.core.rays import Ray
+from xrct_shielding.core.intersections import wall_path_length
 import math
 
 
