@@ -8,7 +8,11 @@ src/xrct_shielding/core/__init__.py
 src/xrct_shielding/core/geometry.py
 src/xrct_shielding/core/intersections.py
 src/xrct_shielding/core/materials.py
+src/xrct_shielding/core/ray_tracing.py
 src/xrct_shielding/core/rays.py
 src/xrct_shielding/core/sources.py
+src/xrct_shielding/physics/__init__.py
+src/xrct_shielding/physics/attenuation.py
 tests/test_geometry.py
+tests/test_ray_tracing.py
 tests/test_sanity.py
