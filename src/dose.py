@@ -1,3 +1,7 @@
+from core.geometry import Point, Wall
+from core.sources import Source
+from core.rays import Ray
+
 def dose_at_point(source, point, walls):
     """
     Compute photon dose rate at a point from a source through walls.
