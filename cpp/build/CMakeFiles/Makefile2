@@ -63,11 +63,11 @@ CMAKE_BINARY_DIR = /Users/aidanricher/xrct-shielding/cpp/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/xrct_geom.dir/all
+all: CMakeFiles/xrct_ui.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
-codegen: CMakeFiles/xrct_geom.dir/codegen
+codegen: CMakeFiles/xrct_ui.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -75,40 +75,40 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/xrct_geom.dir/clean
+clean: CMakeFiles/xrct_ui.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/xrct_geom.dir
+# Target rules for target CMakeFiles/xrct_ui.dir
 
 # All Build rule for target.
-CMakeFiles/xrct_geom.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles --progress-num=1,2,3 "Built target xrct_geom"
-.PHONY : CMakeFiles/xrct_geom.dir/all
+CMakeFiles/xrct_ui.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles --progress-num=1,2,3,4 "Built target xrct_ui"
+.PHONY : CMakeFiles/xrct_ui.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/xrct_geom.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles 3
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/xrct_geom.dir/all
+CMakeFiles/xrct_ui.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles 4
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/xrct_ui.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles 0
-.PHONY : CMakeFiles/xrct_geom.dir/rule
+.PHONY : CMakeFiles/xrct_ui.dir/rule
 
 # Convenience name for target.
-xrct_geom: CMakeFiles/xrct_geom.dir/rule
-.PHONY : xrct_geom
+xrct_ui: CMakeFiles/xrct_ui.dir/rule
+.PHONY : xrct_ui
 
 # codegen rule for target.
-CMakeFiles/xrct_geom.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles --progress-num=1,2,3 "Finished codegen for target xrct_geom"
-.PHONY : CMakeFiles/xrct_geom.dir/codegen
+CMakeFiles/xrct_ui.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target xrct_ui"
+.PHONY : CMakeFiles/xrct_ui.dir/codegen
 
 # clean rule for target.
-CMakeFiles/xrct_geom.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/clean
-.PHONY : CMakeFiles/xrct_geom.dir/clean
+CMakeFiles/xrct_ui.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/clean
+.PHONY : CMakeFiles/xrct_ui.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

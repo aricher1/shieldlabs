@@ -1,4 +1,6 @@
 #include "geometry/GeometryEngine.hpp"
+#include <SFML/Graphics.hpp>
+#include "ui/GridRenderer.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -6,6 +8,16 @@
 
 int main() {
 
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 600)), "XRCT Grid");
+    GeometryEngine engine(1.0);
+    GridRenderer renderer(window, engine);
+
+    while (window.isOpen()) {
+        renderer.handle_events();
+        renderer.render();
+    }
+    
+    /*
     GeometryEngine engine(1.0); // 1 cm grid
 
     engine.add_wall({0, 0}, {500, 0}, 20.0, 1.0);
@@ -20,4 +32,5 @@ int main() {
         out << engine.to_json();
         out.close();
     }
+    */
 }

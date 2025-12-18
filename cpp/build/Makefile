@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named xrct_geom
+# Target rules for targets named xrct_ui
 
 # Build rule for target.
-xrct_geom: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 xrct_geom
-.PHONY : xrct_geom
+xrct_ui: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 xrct_ui
+.PHONY : xrct_ui
 
 # fast build rule for target.
-xrct_geom/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/build
-.PHONY : xrct_geom/fast
+xrct_ui/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/build
+.PHONY : xrct_ui/fast
 
 src/GeometryEngine.o: src/GeometryEngine.cpp.o
 .PHONY : src/GeometryEngine.o
 
 # target to build an object file
 src/GeometryEngine.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/GeometryEngine.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/GeometryEngine.cpp.o
 .PHONY : src/GeometryEngine.cpp.o
 
 src/GeometryEngine.i: src/GeometryEngine.cpp.i
@@ -142,7 +142,7 @@ src/GeometryEngine.i: src/GeometryEngine.cpp.i
 
 # target to preprocess a source file
 src/GeometryEngine.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/GeometryEngine.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/GeometryEngine.cpp.i
 .PHONY : src/GeometryEngine.cpp.i
 
 src/GeometryEngine.s: src/GeometryEngine.cpp.s
@@ -150,32 +150,56 @@ src/GeometryEngine.s: src/GeometryEngine.cpp.s
 
 # target to generate assembly for a file
 src/GeometryEngine.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/GeometryEngine.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/GeometryEngine.cpp.s
 .PHONY : src/GeometryEngine.cpp.s
 
-src/main.o: src/main.cpp.o
-.PHONY : src/main.o
+src/ui/GridRenderer.o: src/ui/GridRenderer.cpp.o
+.PHONY : src/ui/GridRenderer.o
 
 # target to build an object file
-src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/main.cpp.o
-.PHONY : src/main.cpp.o
+src/ui/GridRenderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/GridRenderer.cpp.o
+.PHONY : src/ui/GridRenderer.cpp.o
 
-src/main.i: src/main.cpp.i
-.PHONY : src/main.i
+src/ui/GridRenderer.i: src/ui/GridRenderer.cpp.i
+.PHONY : src/ui/GridRenderer.i
 
 # target to preprocess a source file
-src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/main.cpp.i
-.PHONY : src/main.cpp.i
+src/ui/GridRenderer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/GridRenderer.cpp.i
+.PHONY : src/ui/GridRenderer.cpp.i
 
-src/main.s: src/main.cpp.s
-.PHONY : src/main.s
+src/ui/GridRenderer.s: src/ui/GridRenderer.cpp.s
+.PHONY : src/ui/GridRenderer.s
 
 # target to generate assembly for a file
-src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_geom.dir/build.make CMakeFiles/xrct_geom.dir/src/main.cpp.s
-.PHONY : src/main.cpp.s
+src/ui/GridRenderer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/GridRenderer.cpp.s
+.PHONY : src/ui/GridRenderer.cpp.s
+
+src/ui/main.o: src/ui/main.cpp.o
+.PHONY : src/ui/main.o
+
+# target to build an object file
+src/ui/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/main.cpp.o
+.PHONY : src/ui/main.cpp.o
+
+src/ui/main.i: src/ui/main.cpp.i
+.PHONY : src/ui/main.i
+
+# target to preprocess a source file
+src/ui/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/main.cpp.i
+.PHONY : src/ui/main.cpp.i
+
+src/ui/main.s: src/ui/main.cpp.s
+.PHONY : src/ui/main.s
+
+# target to generate assembly for a file
+src/ui/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/xrct_ui.dir/build.make CMakeFiles/xrct_ui.dir/src/ui/main.cpp.s
+.PHONY : src/ui/main.cpp.s
 
 # Help Target
 help:
@@ -185,13 +209,16 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... xrct_geom"
+	@echo "... xrct_ui"
 	@echo "... src/GeometryEngine.o"
 	@echo "... src/GeometryEngine.i"
 	@echo "... src/GeometryEngine.s"
-	@echo "... src/main.o"
-	@echo "... src/main.i"
-	@echo "... src/main.s"
+	@echo "... src/ui/GridRenderer.o"
+	@echo "... src/ui/GridRenderer.i"
+	@echo "... src/ui/GridRenderer.s"
+	@echo "... src/ui/main.o"
+	@echo "... src/ui/main.i"
+	@echo "... src/ui/main.s"
 .PHONY : help
 
 
