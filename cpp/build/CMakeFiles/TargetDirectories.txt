@@ -1,3 +1,0 @@
-/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles/xrct_ui.dir
-/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles/edit_cache.dir
-/Users/aidanricher/xrct-shielding/cpp/build/CMakeFiles/rebuild_cache.dir

@@ -4,9 +4,17 @@ project(xrct_geometry)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(FetchContent)
+
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 
-include_directories(include external)
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3
+)
+
+FetchContent_MakeAvailable(nlohmann_json)
 
 add_executable(xrct_ui
     src/ui/main.cpp
@@ -15,12 +23,13 @@ add_executable(xrct_ui
 )
 
 target_include_directories(xrct_ui PRIVATE
-    ${CMAKE_SOURCE_DIR}/cpp/include
-    ${CMAKE_SOURCE_DIR}/cpp/external
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/external
 )
 
-target_link_libraries(xrct_ui
+target_link_libraries(xrct_ui PUBLIC
     SFML::Graphics
     SFML::Window
     SFML::System
+    nlohmann_json::nlohmann_json
 )
