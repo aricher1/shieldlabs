@@ -1,5 +1,6 @@
 #include "geometry/GeometryEngine.hpp"
 #include <iostream>
+#include <fstream>
 
 
 
@@ -12,7 +13,11 @@ int main() {
 
     for (const auto& wall : engine.get_walls()) {
 
-        //std::cout << "Wall: (" << wall.a.x_cm << ", " << wall.a.y_cm << ") -> (" << wall.b.x_cm << ", " << wall.b.y_cm << ")\n";
-        std::cout << engine.to_json() << std::endl;
+        // std::cout << "Wall: (" << wall.a.x_cm << ", " << wall.a.y_cm << ") -> (" << wall.b.x_cm << ", " << wall.b.y_cm << ")\n";
+        // std::cout << engine.to_json() << std::endl;
+
+        std::ofstream out("scene.json");
+        out << engine.to_json();
+        out.close();
     }
 }
