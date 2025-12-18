@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/aidanricher/xrct-shielding/cpp/include
+CXX_INCLUDES = -I/Users/aidanricher/xrct-shielding/cpp/include -I/Users/aidanricher/xrct-shielding/cpp/external/json/include
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64
 

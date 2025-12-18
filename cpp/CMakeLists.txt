@@ -4,6 +4,7 @@ project(xrct_geometry)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
+include_directories(external/json/include)
 
 add_executable(xrct_geom
     src/main.cpp

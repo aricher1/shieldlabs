@@ -3,7 +3,7 @@
 #include "Point.hpp"
 #include "Wall.hpp"
 #include <vector>
-
+#include <string>
 
 
 class GeometryEngine {
@@ -25,5 +25,7 @@ class GeometryEngine {
         void add_wall(Point a, Point b, double thickness_cm, int material_id);
 
         const std::vector<Wall>& get_walls() const;
+
+        std::string to_json() const;
 
 };

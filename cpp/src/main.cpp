@@ -12,6 +12,7 @@ int main() {
 
     for (const auto& wall : engine.get_walls()) {
 
-        std::cout << "Wall: (" << wall.a.x_cm << ", " << wall.a.y_cm << ") -> (" << wall.b.x_cm << ", " << wall.b.y_cm << ")\n";
+        //std::cout << "Wall: (" << wall.a.x_cm << ", " << wall.a.y_cm << ") -> (" << wall.b.x_cm << ", " << wall.b.y_cm << ")\n";
+        std::cout << engine.to_json() << std::endl;
     }
 }
