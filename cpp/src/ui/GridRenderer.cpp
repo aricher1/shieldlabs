@@ -73,14 +73,14 @@ void GridRenderer::handle_events() {
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             if (mouse->button == sf::Mouse::Button::Left) {
-                Point p = screen_to_world(mouse->position);
+                
+                sf::Vector2i mouse_px = sf::Mouse::getPosition(window);
+                sf::Vector2f coords = window.mapPixelToCoords(mouse_px);
 
-                /*
                 Point p = screen_to_world({
-                    static_cast<float>(mouse->position.x),
-                    static_cast<float>(mouse->position.y)
+                    static_cast<int>(coords.x),
+                    static_cast<int>(coords.y)
                 });
-                */
 
                 if (!drawing) {
                     start_point = p;
