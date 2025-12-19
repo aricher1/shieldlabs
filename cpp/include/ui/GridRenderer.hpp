@@ -12,7 +12,9 @@ class GridRenderer {
 
         sf::View grid_view;
         sf::Vector2u window_size;
-        sf::FloatRect grid_viewport;    
+        sf::FloatRect grid_viewport;
+        sf::Font font;
+        sf::Text length_text;    
 
         int grid_cells = 100;
         double cm_per_cell = 10.0;
@@ -22,6 +24,7 @@ class GridRenderer {
         Point preview_point;
 
         Point screen_to_world(sf::Vector2f mouse) const;
+        double distance_cm(Point a, Point b) const; // distance between 2 points for a wall segment
 
     public:
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);

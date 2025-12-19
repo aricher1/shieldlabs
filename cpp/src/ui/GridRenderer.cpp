@@ -1,6 +1,8 @@
 #include "ui/GridRenderer.hpp"
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <cmath>
 
 
@@ -9,7 +11,7 @@ static constexpr double CM_PER_CELL = 10.0;
 
 
 
-GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e) {
+GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e), length_text(font) {
     
     window_size = window.getSize();
 
@@ -23,6 +25,14 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     float scale = std::min(win_w, win_h);
 
     grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.f, (win_h - scale) / win_h / 2.f}, {scale / win_w, scale / win_h}});
+
+    if (!font.openFromFile("assets/fonts/Inter-Regular.otf")) {
+        std::cerr << "Failed to load font\n" << std::endl;
+    }
+
+    length_text.setFont(font);
+    length_text.setCharacterSize(14);
+    length_text.setFillColor(sf::Color::Black);
 
 }
 
@@ -52,6 +62,16 @@ Point GridRenderer::snap_to_grid(Point p) const {
         std::round(p.y_cm / spacing) * spacing
     
     };
+}
+
+
+double GridRenderer::distance_cm(Point a, Point b) const {
+    // euclidean distance
+    const double dx = b.x_cm - a.x_cm;
+    const double dy = b.y_cm - a.y_cm;
+
+    return std::sqrt(dx * dx + dy * dy);
+
 }
 
 
@@ -168,6 +188,18 @@ void GridRenderer::render() {
         preview[1].color = sf::Color(0, 0, 0, 120);
 
         window.draw(preview, 2, sf::PrimitiveType::Lines);
+
+        double len_cm = distance_cm(start_point, preview_point);
+
+        sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) / 2.0), static_cast<float>((start_point.y_cm + preview_point.y_cm) / 2.0)};
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(1) << len_cm << " cm";
+
+        length_text.setString(ss.str());
+        length_text.setPosition(mid);
+
+        window.draw(length_text);
 
     }
 
