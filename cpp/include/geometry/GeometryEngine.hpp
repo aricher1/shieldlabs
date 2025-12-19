@@ -28,4 +28,6 @@ class GeometryEngine {
 
         std::string to_json() const;
 
+        double get_grid_spacing_cm() const { return grid_spacing_cm; }
+
 };
