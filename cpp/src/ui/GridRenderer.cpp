@@ -7,6 +7,7 @@
 GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e) {
     const auto size = window.getSize();
     window_size = size;
+
     origin_px = {
         static_cast<float>(size.x) / 2.0f,
         static_cast<float>(size.y) / 2.0f
