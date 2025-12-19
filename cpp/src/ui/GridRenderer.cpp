@@ -74,7 +74,23 @@ void GridRenderer::handle_events() {
 
         }
 
+        if (const auto* move = event->getIf<sf::Event::MouseMoved>()) {
+            
+            if (!drawing) {
+                continue;
+            }
+
+            sf::Vector2i mouse_px {move->position.x, move->position.y};
+
+            sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
+
+            preview_point = snap_to_grid({mouse_world.x, mouse_world.y});
+
+        }
+
+
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
+            
             if (mouse->button == sf::Mouse::Button::Left) {
                 
                 sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
@@ -85,6 +101,7 @@ void GridRenderer::handle_events() {
 
                 if (!drawing) {
                     start_point = p;
+                    preview_point = p;
                     drawing = true;
                 } else {
                     std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm
@@ -137,6 +154,20 @@ void GridRenderer::render() {
         line[1].color = sf::Color(220, 220, 220);
 
         window.draw(line, 2, sf::PrimitiveType::Lines);
+
+    }
+
+    if (drawing) {
+
+        sf::Vertex preview[2];
+
+        preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
+        preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
+
+        preview[0].color = sf::Color(0, 0, 0, 120);
+        preview[1].color = sf::Color(0, 0, 0, 120);
+
+        window.draw(preview, 2, sf::PrimitiveType::Lines);
 
     }
 

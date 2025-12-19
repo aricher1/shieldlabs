@@ -19,6 +19,7 @@ class GridRenderer {
 
         bool drawing = false;
         Point start_point;
+        Point preview_point;
 
         Point screen_to_world(sf::Vector2f mouse) const;
 
