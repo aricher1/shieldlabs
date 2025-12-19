@@ -148,8 +148,8 @@ void GridRenderer::render() {
         wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
         wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
 
-        wall[0].color = sf::Color::Blue;
-        wall[1].color = sf::Color::Blue;
+        wall[0].color = sf::Color::Black;
+        wall[1].color = sf::Color::Black;
 
         window.draw(wall, 2, sf::PrimitiveType::Lines);
     }
