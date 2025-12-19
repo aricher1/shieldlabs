@@ -10,8 +10,11 @@ class GridRenderer {
         sf::RenderWindow& window;
         GeometryEngine& engine;
 
+        static constexpr float MIN_PIXELS_PER_CM = 0.1f;
+        static constexpr float MAX_PIXELS_PER_CM = 100.0f;
+
         float pixels_per_cm = 2.0f;
-        sf::Vector2f origin_px = {400.f, 300.f};
+        sf::Vector2f origin_px = {0.0f, 0.0f};
 
         bool drawing = false;
         Point start_point;
