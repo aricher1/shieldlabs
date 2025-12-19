@@ -49,11 +49,13 @@ void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int materia
     a = add_point(a);
     b = add_point(b);
 
-    if (std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm) < SNAP_EPS_CM) {
-        return;
+    const double length_cm = std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm);
+
+    if (length_cm < SNAP_EPS_CM) { 
+        return; 
     }
 
-    walls.push_back({a, b, thickness_cm, material_id});
+    walls.push_back({a, b, thickness_cm, material_id, length_cm});
 
 }
 

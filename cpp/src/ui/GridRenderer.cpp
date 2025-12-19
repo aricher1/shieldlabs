@@ -215,6 +215,17 @@ void GridRenderer::render() {
         wall[1].color = sf::Color::Black;
 
         window.draw(wall, 2, sf::PrimitiveType::Lines);
+
+        const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
+
+        length_text.setString(ss.str());
+        length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
+
+        window.draw(length_text);
+
     }
 
     window.setView(window.getDefaultView());

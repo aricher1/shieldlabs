@@ -8,4 +8,5 @@ struct Wall {
     Point b;
     double thickness_cm;
     int material_id;
+    double length_cm;
 };
