@@ -32,6 +32,16 @@ sf::Vector2f GridRenderer::world_to_screen(Point p) const {
 }
 
 
+Point GridRenderer::snap_to_grid(Point p) const {
+    const double spacing = engine.get_grid_spacing_cm();
+
+    return {
+        std::round(p.x_cm / spacing) * spacing,
+        std::round(p.y_cm / spacing) * spacing
+    };
+}
+
+
 void GridRenderer::handle_events() {
     while (const auto event = window.pollEvent()) {
         
@@ -77,10 +87,12 @@ void GridRenderer::handle_events() {
                 sf::Vector2i mouse_px = sf::Mouse::getPosition(window);
                 sf::Vector2f coords = window.mapPixelToCoords(mouse_px);
 
-                Point p = screen_to_world({
-                    static_cast<int>(coords.x),
-                    static_cast<int>(coords.y)
-                });
+                Point p = snap_to_grid(
+                    screen_to_world({
+                        static_cast<int>(coords.x),
+                        static_cast<int>(coords.y)
+                    })
+                );
 
                 if (!drawing) {
                     start_point = p;
