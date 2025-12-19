@@ -21,7 +21,6 @@ class GridRenderer {
         Point start_point;
 
         Point screen_to_world(sf::Vector2f mouse) const;
-        sf::Vector2f world_to_screen(Point p) const;
 
     public:
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
