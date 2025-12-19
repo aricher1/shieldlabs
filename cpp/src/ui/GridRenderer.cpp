@@ -6,6 +6,8 @@
 
 GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e) {
     const auto size = window.getSize();
+    window_size = size;
+
     origin_px = {
         static_cast<float>(size.x) / 2.0f,
         static_cast<float>(size.y) / 2.0f
@@ -38,10 +40,26 @@ void GridRenderer::handle_events() {
         }
 
         if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+            const Point center_world = screen_to_world({
+                static_cast<int>(window_size.x / 2),
+                static_cast<int>(window_size.y / 2)
+            });
+
+            const sf::Vector2u new_size = {resized->size.x, resized->size.y};
+            const float width_ratio = static_cast<float>(new_size.x) / static_cast<float>(window_size.x);
+
+            pixels_per_cm = std::clamp(
+                pixels_per_cm * width_ratio,
+                MIN_PIXELS_PER_CM,
+                MAX_PIXELS_PER_CM
+            );
+
             origin_px = {
-                static_cast<float>(resized->size.x) / 2.0f,
-                static_cast<float>(resized->size.y) / 2.0f
+                static_cast<float>(new_size.x) / 2.0f - static_cast<float>(center_world.x_cm * pixels_per_cm),
+                static_cast<float>(new_size.y) / 2.0f + static_cast<float>(center_world.y_cm * pixels_per_cm)
             };
+
+            window_size = new_size;
         }
 
         if (const auto* wheel = event->getIf<sf::Event::MouseWheelScrolled>()) {

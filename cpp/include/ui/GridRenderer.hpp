@@ -10,6 +10,8 @@ class GridRenderer {
         sf::RenderWindow& window;
         GeometryEngine& engine;
 
+        sf::Vector2u window_size;
+
         static constexpr float MIN_PIXELS_PER_CM = 0.1f;
         static constexpr float MAX_PIXELS_PER_CM = 100.0f;
 
