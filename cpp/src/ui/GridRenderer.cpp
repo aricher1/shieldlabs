@@ -1,5 +1,6 @@
 #include "ui/GridRenderer.hpp"
 #include "ui/AddWallCommand.hpp"
+#include "ui/DeleteWallCommand.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -10,6 +11,58 @@
 static constexpr int GRID_CELLS = 100;
 static constexpr double CM_PER_CELL = 10.0;
 
+
+namespace {
+
+    constexpr double SELECT_EPS_CM = 5.0; // select wall by clicking within 5cm of it
+    constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
+
+    double distance_point_to_segment(Point p, Point a, Point b) {
+
+        const double dx = b.x_cm - a.x_cm;
+        const double dy = b.y_cm - a.y_cm;
+
+        if (dx == 0.0 && dy == 0.0) {
+
+            return std::hypot(p.x_cm - a.x_cm, p.y_cm - a.y_cm);
+
+        }
+
+        const double t = ((p.x_cm - a.x_cm) * dx + (p.y_cm - a.y_cm) * dy) / (dx * dx + dy * dy);
+
+        const double clamped = std::clamp(t, 0.0, 1.0);
+
+        const double proj_x = a.x_cm + clamped * dx;
+        const double proj_y = a.y_cm + clamped * dy;
+
+        return std::hypot(p.x_cm - proj_x, p.y_cm - proj_y);
+
+    }
+
+    bool snaps_to_existing_point(const Point& p, const GeometryEngine& engine) {
+
+        for (const auto& w : engine.get_walls()) {
+
+            if (std::hypot(p.x_cm - w.a.x_cm, p.y_cm - w.a.y_cm) < SNAP_POINT_EPS_CM) {
+
+                return true;
+
+            }
+
+            if (std::hypot(p.x_cm - w.b.x_cm, p.y_cm - w.b.y_cm) < SNAP_POINT_EPS_CM) {
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+
+} // end of anonymous namespace
 
 
 GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e), length_text(font) {
@@ -114,6 +167,7 @@ void GridRenderer::handle_events() {
             /*
             - Cmd + Z = undo
             - Cmd + Shift + Z = redo
+            - Click near wall -> turns red -> delete or backspace = remove
             */
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -128,9 +182,16 @@ void GridRenderer::handle_events() {
 
                 }
             }
+
+            if ((key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) && selected_wall_index.has_value()) {
+
+                undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
+
+                selected_wall_index.reset();
+
+            }
+
         }
-
-
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             
@@ -141,6 +202,34 @@ void GridRenderer::handle_events() {
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
 
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
+
+                const bool snapped_to_point = snaps_to_existing_point(p, engine); // check if in selection mode or draw mode
+
+                if (!drawing && !snapped_to_point) { // selection mode only
+                    
+                    selected_wall_index.reset();
+
+                    const auto& walls = engine.get_walls();
+                    double best_dist = SELECT_EPS_CM;
+
+                    for (std::size_t i = 0; i < walls.size(); ++i) {
+
+                        double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
+                        if (d < best_dist) {
+
+                            best_dist = d;
+                            selected_wall_index = i;
+
+                        }
+                    }
+
+                    if (selected_wall_index.has_value()) {
+
+                        return;
+
+                    }
+        
+                }
 
                 if (!drawing) {
 
@@ -160,8 +249,6 @@ void GridRenderer::handle_events() {
                     wall.length_cm = std::hypot(wall.a.x_cm - wall.b.x_cm, wall.a.y_cm - wall.b.y_cm);
 
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
-
-                    // engine.add_wall(start_point, p, 20.0, 1.0);
                     
                     drawing = false;
                 
@@ -241,6 +328,42 @@ void GridRenderer::render() {
     }
 
     // draw walls
+    const auto& walls = engine.get_walls();
+    for (std::size_t i = 0; i < walls.size(); ++i) {
+
+        const auto& w = walls[i];
+        sf::Vertex wall[2];
+
+        wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
+        wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
+
+        if (selected_wall_index && *selected_wall_index == i) {
+
+            wall[0].color = sf::Color::Red;
+            wall[1].color = sf::Color::Red;
+
+        } else {
+
+            wall[0].color = sf::Color::Black;
+            wall[1].color = sf::Color::Black;
+
+        }
+
+        window.draw(wall, 2, sf::PrimitiveType::Lines);
+
+        const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
+
+        length_text.setString(ss.str());
+        length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
+
+        window.draw(length_text);
+
+    }
+
+    /*
     for (const auto& w : engine.get_walls()) {
         
         sf::Vertex wall[2];
@@ -264,6 +387,7 @@ void GridRenderer::render() {
         window.draw(length_text);
 
     }
+    */
 
     window.setView(window.getDefaultView());
 

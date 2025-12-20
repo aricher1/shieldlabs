@@ -78,6 +78,16 @@ void GeometryEngine::remove_last_wall() {
 }
 
 
+void GeometryEngine::remove_wall_at(std::size_t index) {
+
+    if (index < walls.size()) {
+
+        walls.erase(walls.begin() + index);
+
+    }
+}
+
+
 const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 

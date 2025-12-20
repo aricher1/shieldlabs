@@ -26,6 +26,7 @@ class GeometryEngine {
 
         void add_wall_direct(const Wall& w);
         void remove_last_wall();
+        void remove_wall_at(std::size_t index);
 
         const std::vector<Wall>& get_walls() const;
 
