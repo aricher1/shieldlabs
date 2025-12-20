@@ -166,6 +166,9 @@ void GridRenderer::handle_events() {
             - Cmd + Shift + Z = redo
             - Click near wall -> turns red -> delete or backspace = remove
             - Esc = cancel drawing
+            - W = draw wall
+            - S = place source point
+            - D = place dose point
             */
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -198,6 +201,25 @@ void GridRenderer::handle_events() {
 
                 }
             }
+
+            if (key->code == sf::Keyboard::Key::W) {
+
+                current_tool = Tool::DrawWall;
+
+            }
+
+            if (key->code == sf::Keyboard::Key::S) {
+
+                current_tool = Tool::PlaceSource;
+
+            }
+
+            if (key->code == sf::Keyboard::Key::D) {
+
+                current_tool = Tool::PlaceDose;
+
+            }
+
         }
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
@@ -209,6 +231,20 @@ void GridRenderer::handle_events() {
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
 
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
+
+                if (current_tool == Tool::PlaceSource) {
+
+                    engine.add_source(p);
+                    return;
+
+                }
+
+                if (current_tool == Tool::PlaceDose) {
+
+                    engine.add_dose(p);
+                    return;
+
+                }
 
                 const bool snapped_to_point = snaps_to_existing_point(p, engine); // check if in selection mode or draw mode
 
@@ -367,6 +403,29 @@ void GridRenderer::render() {
         length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
 
         window.draw(length_text);
+
+        // draw source + dose points
+        for (const auto& e : engine.get_entities()) {
+
+            sf::CircleShape marker;
+            marker.setRadius(5.0f);
+            marker.setOrigin(sf::Vector2f{5.0f, 5.0f});
+            marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
+
+            if (e.type == PointType::Source) {
+
+                marker.setFillColor(sf::Color::Red);
+
+            } else {
+                
+                marker.setFillColor(sf::Color::Transparent);
+                marker.setOutlineThickness(1.5f);
+                marker.setFillColor(sf::Color::Blue);
+
+            }
+
+            window.draw(marker);
+        }
 
     }
 

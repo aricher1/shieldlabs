@@ -91,6 +91,25 @@ void GeometryEngine::remove_wall_at(std::size_t index) {
 const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 
+void GeometryEngine::add_source(Point p) {
+
+    p = snap_to_grid(p);
+    entities.push_back({p, PointType::Source, ""});
+     
+}
+
+
+void GeometryEngine::add_dose(Point p) {
+
+    p = snap_to_grid(p);
+    entities.push_back({p, PointType::Dose, ""});
+
+}
+
+
+const std::vector<PointEntity>& GeometryEngine::get_entities() const { return entities; }
+
+
 std::string GeometryEngine::to_json() const {
 
     json j;
@@ -114,8 +133,29 @@ std::string GeometryEngine::to_json() const {
         });
     }
 
-    j["sources"] = json::array();           // CT machines, bathrooms, etc.
-    j["evaluation_points"] = json::array(); // humans, offices, waiting rooms
+    j["sources"] = json::array();
+    j["dose_points"] = json::array();
+
+    for (const auto& e : entities) {
+
+        json entry = {{"x", e.position.x_cm}, {"y", e.position.y_cm}};
+
+        if (!e.label.empty()) {
+
+            entry["label"] = e.label;
+
+        }
+
+        if (e.type == PointType::Source) {
+
+            j["sources"].push_back(entry);
+
+        } else {
+
+            j["dose_points"].push_back(entry);
+
+        }
+    }
 
     return j.dump(2);
 }
@@ -140,17 +180,39 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
     grid_cells  = j["grid"]["cells"];
     cm_per_cell = j["grid"]["cm_per_cell"];
     clear();
+    entities.clear();
 
-    for (const auto& jw : j["walls"]) {
+    if (j.contains("walls")) {
 
-        Point a{jw["a"]["x"], jw["a"]["y"]};
-        Point b{jw["b"]["x"], jw["b"]["y"]};
+        for (const auto& jw : j["walls"]) {
 
-        double thickness = jw["thickness_cm"];
-        int material_id  = jw["material_id"];
+            Point a{jw["a"]["x"], jw["a"]["y"]};
+            Point b{jw["b"]["x"], jw["b"]["y"]};
 
-        add_wall(a, b, thickness, material_id);
+            double thickness = jw["thickness_cm"];
+            int material_id  = jw["material_id"];
 
+            add_wall(a, b, thickness, material_id);
+
+        }
+    }
+
+    if (j.contains("sources")) {
+
+        for (const auto& s : j["sources"]) {
+            
+            entities.push_back({{s["x"], s["y"]}, PointType::Source, s.value("label", "")});
+        
+        }
+    }
+
+    if (j.contains("dose_points")) {
+
+        for (const auto& d : j["dose_points"]) {
+
+            entities.push_back({{d["x"], d["y"]}, PointType::Dose, d.value("label", "")});
+
+        }
     }
 
     return true;

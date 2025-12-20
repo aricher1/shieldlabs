@@ -6,12 +6,21 @@
 
 
 
+enum class Tool {
+    DrawWall,
+    PlaceSource,
+    PlaceDose
+};
+
+
 class GridRenderer {
 
     private:
         sf::RenderWindow& window;
         GeometryEngine& engine;
         UndoStack undo_stack;
+        
+        Tool current_tool = Tool::DrawWall;
 
         std::optional<std::size_t> selected_wall_index;
 
