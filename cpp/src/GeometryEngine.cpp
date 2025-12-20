@@ -60,6 +60,24 @@ void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int materia
 }
 
 
+void GeometryEngine::add_wall_direct(const Wall& w) {
+
+    walls.push_back(w);
+
+}
+
+
+void GeometryEngine::remove_last_wall() {
+
+    if(!walls.empty()) {
+
+        walls.pop_back();
+
+    }
+
+}
+
+
 const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 

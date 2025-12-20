@@ -24,6 +24,9 @@ class GeometryEngine {
 
         void add_wall(Point a, Point b, double thickness_cm, int material_id);
 
+        void add_wall_direct(const Wall& w);
+        void remove_last_wall();
+
         const std::vector<Wall>& get_walls() const;
 
         std::string to_json() const;

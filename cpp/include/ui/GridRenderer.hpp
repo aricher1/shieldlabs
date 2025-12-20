@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "geometry/GeometryEngine.hpp"
+#include "ui/UndoStack.hpp"
 
 
 
@@ -9,6 +10,7 @@ class GridRenderer {
     private:
         sf::RenderWindow& window;
         GeometryEngine& engine;
+        UndoStack undo_stack;
 
         sf::View grid_view;
         sf::Vector2u window_size;

@@ -1,4 +1,5 @@
 #include "ui/GridRenderer.hpp"
+#include "ui/AddWallCommand.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -108,6 +109,28 @@ void GridRenderer::handle_events() {
 
         }
 
+        if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+            
+            /*
+            - Cmd + Z = undo
+            - Cmd + Shift + Z = redo
+            */
+
+            if (key->code == sf::Keyboard::Key::Z && key->system) {
+
+                if (key->shift) {
+
+                    undo_stack.redo();
+
+                } else {
+
+                    undo_stack.undo();
+
+                }
+            }
+        }
+
+
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             
@@ -120,14 +143,28 @@ void GridRenderer::handle_events() {
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
 
                 if (!drawing) {
+
                     start_point = p;
                     preview_point = p;
                     drawing = true;
+                
                 } else {
-                    std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm
-                              << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
-                    engine.add_wall(start_point, p, 20.0, 1.0);
+                    
+                    std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
+
+                    Wall wall;
+                    wall.a = start_point;
+                    wall.b = p;
+                    wall.thickness_cm = 20.0;
+                    wall.material_id = 1;
+                    wall.length_cm = std::hypot(wall.a.x_cm - wall.b.x_cm, wall.a.y_cm - wall.b.y_cm);
+
+                    undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
+
+                    // engine.add_wall(start_point, p, 20.0, 1.0);
+                    
                     drawing = false;
+                
                 }
             }
         }
