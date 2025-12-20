@@ -6,14 +6,14 @@ using json = nlohmann::json;
 
 constexpr double SNAP_EPS_CM = 1e-3;
 
-GeometryEngine::GeometryEngine(double grid_spacing_cm) : grid_spacing_cm(grid_spacing_cm) {}
+GeometryEngine::GeometryEngine(int cells, double cm) : grid_cells(cells), cm_per_cell(cm) {}
 
 
 Point GeometryEngine::snap_to_grid(Point p) const {
     
     return {
-        std::round(p.x_cm / grid_spacing_cm) * grid_spacing_cm,
-        std::round(p.y_cm / grid_spacing_cm) * grid_spacing_cm
+        std::round(p.x_cm / cm_per_cell) * cm_per_cell,
+        std::round(p.y_cm / cm_per_cell) * cm_per_cell
     };
 
 }
@@ -94,21 +94,28 @@ const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 std::string GeometryEngine::to_json() const {
 
     json j;
+
+    j["version"] = 1;
     j["units"] = "cm";
+
+    j["grid"] = {
+        {"cells", grid_cells},
+        {"cm_per_cell", cm_per_cell}
+    };
 
     j["walls"] = json::array();
     
     for (const auto& w : walls) {
         j["walls"].push_back({
-            {"a", {w.a.x_cm, w.a.y_cm}},
-            {"b", {w.b.x_cm, w.b.y_cm}},
-            {"thickness", w.thickness_cm},
+            {"a", {{"x", w.a.x_cm}, {"y", w.a.y_cm}}},
+            {"b", {{"x",w.b.x_cm}, {"y", w.b.y_cm}}},
+            {"thickness_cm", w.thickness_cm},
             {"material_id", w.material_id}
         });
     }
 
-    j["sources"] = json::array();
-    j["evaluation_points"] = json::array();
+    j["sources"] = json::array();           // CT machines, bathrooms, etc.
+    j["evaluation_points"] = json::array(); // humans, offices, waiting rooms
 
     return j.dump(2);
 }

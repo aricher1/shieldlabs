@@ -8,9 +8,6 @@
 #include <cmath>
 
 
-static constexpr int GRID_CELLS = 100;
-static constexpr double CM_PER_CELL = 10.0;
-
 
 namespace {
 
@@ -69,7 +66,7 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     
     window_size = window.getSize();
 
-    const float world_size = static_cast<float>(GRID_CELLS * CM_PER_CELL);
+    const float world_size = static_cast<float>(engine.get_grid_cells() * engine.get_cm_per_cell());
 
     grid_view.setSize(sf::Vector2f{world_size, world_size});
     grid_view.setCenter(sf::Vector2f{0.f, 0.f});
@@ -93,7 +90,7 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
 
 Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
     
-    const double world_size_cm = GRID_CELLS * CM_PER_CELL;
+    const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
     
     const double nx = mouse.x / grid_view.getSize().x;
     const double ny = mouse.y / grid_view.getSize().y;
@@ -274,14 +271,14 @@ void GridRenderer::render() {
     window.setView(grid_view);
 
     // draw grid
-    const double half = (GRID_CELLS * CM_PER_CELL) / 2.0;
+    const double half = (engine.get_grid_cells() * engine.get_cm_per_cell()) / 2.0;
 
     const double min_x = -half;
     const double max_x = half;
     const double min_y = -half;
     const double max_y = half;
 
-    const double grid_spacing_cm = CM_PER_CELL;
+    const double grid_spacing_cm = engine.get_cm_per_cell();
 
     for (double x = min_x; x <= max_x; x += grid_spacing_cm) {
 
@@ -372,32 +369,6 @@ void GridRenderer::render() {
         window.draw(length_text);
 
     }
-
-    /*
-    for (const auto& w : engine.get_walls()) {
-        
-        sf::Vertex wall[2];
-
-        wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
-        wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
-
-        wall[0].color = sf::Color::Black;
-        wall[1].color = sf::Color::Black;
-
-        window.draw(wall, 2, sf::PrimitiveType::Lines);
-
-        const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
-
-        std::ostringstream ss;
-        ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
-
-        length_text.setString(ss.str());
-        length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
-
-        window.draw(length_text);
-
-    }
-    */
 
     window.setView(window.getDefaultView());
 
