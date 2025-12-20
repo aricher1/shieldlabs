@@ -37,5 +37,7 @@ class GeometryEngine {
         const std::vector<Wall>& get_walls() const;
 
         std::string to_json() const;
+        bool load_from_json(const std::string& json_str);
+        void clear();
 
 };

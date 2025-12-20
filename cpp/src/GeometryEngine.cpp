@@ -119,3 +119,48 @@ std::string GeometryEngine::to_json() const {
 
     return j.dump(2);
 }
+
+
+bool GeometryEngine::load_from_json(const std::string& json_str) {
+
+    json j;
+    try {
+
+        j = json::parse(json_str);
+
+    } catch (...) {
+
+        return false;
+
+    }
+
+    if (!j.contains("version") || j["version"] != 1) { return false; }
+    if (!j.contains("grid")) { return false; }
+
+    grid_cells  = j["grid"]["cells"];
+    cm_per_cell = j["grid"]["cm_per_cell"];
+    clear();
+
+    for (const auto& jw : j["walls"]) {
+
+        Point a{jw["a"]["x"], jw["a"]["y"]};
+        Point b{jw["b"]["x"], jw["b"]["y"]};
+
+        double thickness = jw["thickness_cm"];
+        int material_id  = jw["material_id"];
+
+        add_wall(a, b, thickness, material_id);
+
+    }
+
+    return true;
+
+}
+
+
+void GeometryEngine::clear() {
+
+    walls.clear();
+    points.clear();
+
+}
