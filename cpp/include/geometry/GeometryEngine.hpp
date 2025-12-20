@@ -35,6 +35,8 @@ class GeometryEngine {
 
         void remove_last_wall();
         void remove_wall_at(std::size_t index);
+        void remove_entity_at(std::size_t index);
+        void add_entitiy_direct(const PointEntity& e);
         const std::vector<Wall>& get_walls() const;
 
         void add_source(Point p);

@@ -8,7 +8,7 @@
 
 int main() {
 
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Grid", sf::Style::Titlebar | sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Close);
     GeometryEngine engine(100, 10.0);
     GridRenderer renderer(window, engine);
 

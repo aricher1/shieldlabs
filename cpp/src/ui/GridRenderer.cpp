@@ -1,6 +1,8 @@
 #include "ui/GridRenderer.hpp"
 #include "ui/AddWallCommand.hpp"
 #include "ui/DeleteWallCommand.hpp"
+#include "ui/RemoveEntityCommand.hpp"
+#include "ui/AddEntityCommand.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -11,7 +13,7 @@
 
 namespace {
 
-    constexpr double SELECT_EPS_CM = 5.0; // select wall by clicking within 5cm of it
+    constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 10cm of it
     constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
 
     double distance_point_to_segment(Point p, Point a, Point b) {
@@ -33,6 +35,12 @@ namespace {
         const double proj_y = a.y_cm + clamped * dy;
 
         return std::hypot(p.x_cm - proj_x, p.y_cm - proj_y);
+
+    }
+
+    double distance_point_to_point(Point a, Point b) {
+
+        return std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm);
 
     }
 
@@ -184,12 +192,24 @@ void GridRenderer::handle_events() {
                 }
             }
 
-            if ((key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) && selected_wall_index.has_value()) {
+            if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
 
-                undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
+                // Priority 1: point entities
+                if (selected_entity_index.has_value()) {
 
-                selected_wall_index.reset();
+                    undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, *selected_entity_index));
+                    selected_entity_index.reset();
+                    selected_wall_index.reset();
 
+                }   
+
+                // Priority 2: walls         
+                else if (selected_wall_index.has_value()) {
+
+                    undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
+                    selected_wall_index.reset();
+
+                }
             }
 
             if (key->code == sf::Keyboard::Key::Escape) {
@@ -232,16 +252,48 @@ void GridRenderer::handle_events() {
 
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
 
+                if (!drawing && current_tool != Tool::DrawWall) {
+
+                    selected_entity_index.reset();
+
+                    const auto& entities = engine.get_entities();
+                    double best_dist = SELECT_EPS_CM;
+
+                    for (std::size_t i = 0; i < entities.size(); ++i) {
+
+                        double d = distance_point_to_point(p, entities[i].position);
+                        if (d < best_dist) {
+
+                            best_dist = d;
+                            selected_entity_index = i;
+
+                        }
+                    }
+
+                    if (selected_entity_index.has_value()) { return; }
+
+                }
+
                 if (current_tool == Tool::PlaceSource) {
 
-                    engine.add_source(p);
+                    PointEntity e;
+                    e.position = p;
+                    e.type = PointType::Source;
+                    e.label = "";
+
+                    undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
 
                 }
 
                 if (current_tool == Tool::PlaceDose) {
 
-                    engine.add_dose(p);
+                    PointEntity e;
+                    e.position = p;
+                    e.type = PointType::Dose;
+                    e.label = "";
+
+                    undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
 
                 }
@@ -266,11 +318,7 @@ void GridRenderer::handle_events() {
                         }
                     }
 
-                    if (selected_wall_index.has_value()) {
-
-                        return;
-
-                    }
+                    if (selected_wall_index.has_value()) { return; }
         
                 }
 
@@ -403,33 +451,36 @@ void GridRenderer::render() {
         length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
 
         window.draw(length_text);
-
-        // draw source + dose points
-        for (const auto& e : engine.get_entities()) {
-
-            sf::CircleShape marker;
-            marker.setRadius(5.0f);
-            marker.setOrigin(sf::Vector2f{5.0f, 5.0f});
-            marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
-
-            if (e.type == PointType::Source) {
-
-                marker.setFillColor(sf::Color::Red);
-
-            } else {
-                
-                marker.setFillColor(sf::Color::Transparent);
-                marker.setOutlineThickness(1.5f);
-                marker.setFillColor(sf::Color::Blue);
-
-            }
-
-            window.draw(marker);
-        }
-
     }
 
-    window.setView(window.getDefaultView());
+    // draw source + dose points
+    const auto& entities = engine.get_entities();
+    for (std::size_t i = 0; i < entities.size(); ++i) {
 
+        const auto& e = entities[i];
+
+        sf::CircleShape marker;
+        marker.setRadius(5.0f);
+        marker.setOrigin(sf::Vector2f{5.0f, 5.0f});
+        marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
+
+        const bool selected = selected_entity_index.has_value() && *selected_entity_index == i;
+
+        if (e.type == PointType::Source) {
+
+            marker.setFillColor(selected ? sf::Color::Green : sf::Color::Red);
+
+        } else {
+                
+            marker.setFillColor(sf::Color::Transparent);
+            marker.setOutlineThickness(1.5f);
+            marker.setOutlineColor(selected ? sf::Color::Green : sf::Color::Blue);
+
+        }
+
+        window.draw(marker);
+    } 
+
+    window.setView(window.getDefaultView());
     window.display();
 }

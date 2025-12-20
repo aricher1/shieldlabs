@@ -19,10 +19,11 @@ class GridRenderer {
         sf::RenderWindow& window;
         GeometryEngine& engine;
         UndoStack undo_stack;
-        
+
         Tool current_tool = Tool::DrawWall;
 
         std::optional<std::size_t> selected_wall_index;
+        std::optional<std::size_t> selected_entity_index;
 
         sf::View grid_view;
         sf::Vector2u window_size;

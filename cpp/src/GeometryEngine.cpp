@@ -88,6 +88,23 @@ void GeometryEngine::remove_wall_at(std::size_t index) {
 }
 
 
+void GeometryEngine::remove_entity_at(std::size_t index) {
+
+    if (index < entities.size()) {
+
+        entities.erase(entities.begin() + index);
+
+    }
+}
+
+
+void GeometryEngine::add_entitiy_direct(const PointEntity& e) {
+
+    entities.push_back(e);
+
+}
+
+
 const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 
