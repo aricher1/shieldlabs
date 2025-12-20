@@ -168,6 +168,7 @@ void GridRenderer::handle_events() {
             - Cmd + Z = undo
             - Cmd + Shift + Z = redo
             - Click near wall -> turns red -> delete or backspace = remove
+            - Esc = cancel drawing
             */
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -191,6 +192,15 @@ void GridRenderer::handle_events() {
 
             }
 
+            if (key->code == sf::Keyboard::Key::Escape) {
+
+                if (drawing) {
+
+                    drawing = false; // cancel drawing
+                    preview_point = start_point;
+
+                }
+            }
         }
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
