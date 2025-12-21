@@ -39,7 +39,7 @@ class GridRenderer {
         sf::Text length_text;    
 
         int grid_cells = 100;
-        double cm_per_cell = 10.0;
+        double cm_per_cell = 1.0;
 
         bool drawing = false;
         bool blueprint_finalized = false;

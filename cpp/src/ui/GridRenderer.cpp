@@ -109,6 +109,7 @@ Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
 
 Point GridRenderer::snap_to_grid(Point p) const {
     
+    // const double spacing = 10.0;
     const double spacing = cm_per_cell;
 
     return {
@@ -122,19 +123,23 @@ Point GridRenderer::snap_to_grid(Point p) const {
 
 void GridRenderer::finalize_blueprint() {
 
-    if (blueprint_finalized) { return; } // default value is false
-
-    blueprint_finalized = true;
+    blueprint_finalized = !blueprint_finalized;
 
     // cancel any current edits
     drawing = false;
     selected_wall_index.reset();
     selected_entity_index.reset();
 
-    // print to console for now
-    std::cout << "========= Final Blueprint =========\n";
-    std::cout << engine.to_json() << "\n";
+    if (blueprint_finalized) {
+        // print to console for now
+        std::cout << "========= Final Blueprint =========\n";
+        std::cout << engine.to_json() << "\n";
+    
+    } else {
 
+        std::cout << "========= Editing Resumed =========\n";
+
+    }
 }
 
 
@@ -236,7 +241,17 @@ void GridRenderer::handle_events() {
             */
 
 
-            // drag, duplicate highlighted entities
+            /* 
+            To Do
+            - cancel finalize blueprint feature
+            - fix grid logic (smallest possible cm_per_cell, float or int?)
+            - edit wall length feature
+            - error walls not connected
+            - drag entities
+            - duplicate highlighted entities
+            - doors 
+            - windows
+            */
 
             if (key->code == sf::Keyboard::Key::F) {
 

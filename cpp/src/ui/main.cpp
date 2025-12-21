@@ -9,7 +9,8 @@
 int main() {
 
     sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Close);
-    GeometryEngine engine(100, 10.0);
+    GeometryEngine engine(1000, 1.0);
+    // GeometryEngine engine(100, 10.0);
     GridRenderer renderer(window, engine);
 
     /* load test JSON
