@@ -6,6 +6,12 @@
 
 
 
+enum class InteractionMode {
+    Draw,
+    Select,
+};
+
+
 enum class Tool {
     DrawWall,
     PlaceSource,
@@ -20,6 +26,7 @@ class GridRenderer {
         GeometryEngine& engine;
         UndoStack undo_stack;
 
+        InteractionMode interaction_mode = InteractionMode::Draw;
         Tool current_tool = Tool::DrawWall;
 
         std::optional<std::size_t> selected_wall_index;
@@ -45,6 +52,7 @@ class GridRenderer {
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
 
         Point snap_to_grid(Point p) const; 
+        void handle_select_click(const Point& p);
         void handle_events();
         void render();
 };

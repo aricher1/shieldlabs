@@ -13,7 +13,7 @@
 
 namespace {
 
-    constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 10cm of it
+    constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 25cm of it
     constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
 
     double distance_point_to_segment(Point p, Point a, Point b) {
@@ -124,6 +124,47 @@ Point GridRenderer::snap_to_grid(Point p) const {
 }
 
 
+void GridRenderer::handle_select_click(const Point& p) {
+
+    selected_entity_index.reset();
+    selected_wall_index.reset();
+
+    // entity selection
+    const auto& entities = engine.get_entities();
+    double best_entity_dist = SELECT_EPS_CM;
+
+    for (std::size_t i = 0; i < entities.size(); ++i) {
+
+        double d = distance_point_to_point(p, entities[i].position);
+
+        if (d < best_entity_dist) {
+
+            best_entity_dist = d;
+            selected_entity_index = i;
+        
+        }
+    }
+
+    if (selected_entity_index.has_value()) { return ; }
+
+    // wall selection
+    const auto& walls = engine.get_walls();
+    double best_wall_dist = SELECT_EPS_CM;
+
+    for (std::size_t i = 0; i < walls.size(); ++i) {
+
+        double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
+
+        if (d < best_wall_dist) {
+
+            best_wall_dist = d;
+            selected_wall_index = i;
+
+        }
+    }
+}
+
+
 double GridRenderer::distance_cm(Point a, Point b) const {
     // euclidean distance
     const double dx = b.x_cm - a.x_cm;
@@ -172,12 +213,24 @@ void GridRenderer::handle_events() {
             /*
             - Cmd + Z = undo
             - Cmd + Shift + Z = redo
-            - Click near wall -> turns red -> delete or backspace = remove
+            - Click near wall -> turns green -> delete or backspace = remove
             - Esc = cancel drawing
             - W = draw wall
             - S = place source point
             - D = place dose point
+            - Space = switch between draw and select mode
             */
+
+            if (key->code == sf::Keyboard::Key::Space) {
+                
+                interaction_mode = (interaction_mode == InteractionMode::Draw) ? InteractionMode::Select : InteractionMode::Draw;
+
+                // clear selection when switching modes
+                selected_wall_index.reset();
+                selected_entity_index.reset();
+                drawing = false;
+
+            }
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
 
@@ -247,30 +300,13 @@ void GridRenderer::handle_events() {
             if (mouse->button == sf::Mouse::Button::Left) {
                 
                 sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
-
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
-
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
 
-                if (!drawing && current_tool != Tool::DrawWall) {
+                if (interaction_mode == InteractionMode::Select) {
 
-                    selected_entity_index.reset();
-
-                    const auto& entities = engine.get_entities();
-                    double best_dist = SELECT_EPS_CM;
-
-                    for (std::size_t i = 0; i < entities.size(); ++i) {
-
-                        double d = distance_point_to_point(p, entities[i].position);
-                        if (d < best_dist) {
-
-                            best_dist = d;
-                            selected_entity_index = i;
-
-                        }
-                    }
-
-                    if (selected_entity_index.has_value()) { return; }
+                    handle_select_click(p);
+                    return;
 
                 }
 
@@ -296,30 +332,6 @@ void GridRenderer::handle_events() {
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
 
-                }
-
-                const bool snapped_to_point = snaps_to_existing_point(p, engine); // check if in selection mode or draw mode
-
-                if (!drawing && !snapped_to_point) { // selection mode only
-                    
-                    selected_wall_index.reset();
-
-                    const auto& walls = engine.get_walls();
-                    double best_dist = SELECT_EPS_CM;
-
-                    for (std::size_t i = 0; i < walls.size(); ++i) {
-
-                        double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
-                        if (d < best_dist) {
-
-                            best_dist = d;
-                            selected_wall_index = i;
-
-                        }
-                    }
-
-                    if (selected_wall_index.has_value()) { return; }
-        
                 }
 
                 if (!drawing) {
@@ -468,13 +480,13 @@ void GridRenderer::render() {
 
         if (e.type == PointType::Source) {
 
-            marker.setFillColor(selected ? sf::Color::Green : sf::Color::Red);
+            marker.setFillColor(selected ? sf::Color::Red : sf::Color::Green);
 
         } else {
                 
             marker.setFillColor(sf::Color::Transparent);
             marker.setOutlineThickness(1.5f);
-            marker.setOutlineColor(selected ? sf::Color::Green : sf::Color::Blue);
+            marker.setOutlineColor(selected ? sf::Color::Red : sf::Color::Blue);
 
         }
 
