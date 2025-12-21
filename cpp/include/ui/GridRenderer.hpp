@@ -42,6 +42,7 @@ class GridRenderer {
         double cm_per_cell = 10.0;
 
         bool drawing = false;
+        bool blueprint_finalized = false;
         Point start_point;
         Point preview_point;
 
@@ -51,7 +52,8 @@ class GridRenderer {
     public:
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
 
-        Point snap_to_grid(Point p) const; 
+        Point snap_to_grid(Point p) const;
+        void finalize_blueprint(); 
         void handle_select_click(const Point& p);
         void handle_events();
         void render();

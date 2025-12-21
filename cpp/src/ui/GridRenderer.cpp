@@ -124,6 +124,24 @@ Point GridRenderer::snap_to_grid(Point p) const {
 }
 
 
+void GridRenderer::finalize_blueprint() {
+
+    if (blueprint_finalized) { return; } // default value is false
+
+    blueprint_finalized = true;
+
+    // cancel any current edits
+    drawing = false;
+    selected_wall_index.reset();
+    selected_entity_index.reset();
+
+    // print to console for now
+    std::cout << "========= Final Blueprint =========\n";
+    std::cout << engine.to_json() << "\n";
+
+}
+
+
 void GridRenderer::handle_select_click(const Point& p) {
 
     selected_entity_index.reset();
@@ -210,7 +228,8 @@ void GridRenderer::handle_events() {
 
         if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
             
-            /*
+            /* 
+            ======== Controls ========
             - Cmd + Z = undo
             - Cmd + Shift + Z = redo
             - Click near wall -> turns green -> delete or backspace = remove
@@ -219,7 +238,14 @@ void GridRenderer::handle_events() {
             - S = place source point
             - D = place dose point
             - Space = switch between draw and select mode
+            - F = finalize blueprint
             */
+
+            if (key->code == sf::Keyboard::Key::F) {
+
+                finalize_blueprint();
+
+            }
 
             if (key->code == sf::Keyboard::Key::Space) {
                 
@@ -298,7 +324,10 @@ void GridRenderer::handle_events() {
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             
             if (mouse->button == sf::Mouse::Button::Left) {
-                
+
+                // stop editing once finalized                
+                if (blueprint_finalized) { return; }
+
                 sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
                 Point p = snap_to_grid({mouse_world.x, mouse_world.y});
