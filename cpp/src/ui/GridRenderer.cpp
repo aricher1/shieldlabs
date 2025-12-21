@@ -28,9 +28,7 @@ namespace {
         }
 
         const double t = ((p.x_cm - a.x_cm) * dx + (p.y_cm - a.y_cm) * dy) / (dx * dx + dy * dy);
-
         const double clamped = std::clamp(t, 0.0, 1.0);
-
         const double proj_x = a.x_cm + clamped * dx;
         const double proj_y = a.y_cm + clamped * dy;
 
@@ -73,7 +71,6 @@ namespace {
 GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e), length_text(font) {
     
     window_size = window.getSize();
-
     const float world_size = static_cast<float>(engine.get_grid_cells() * engine.get_cm_per_cell());
 
     grid_view.setSize(sf::Vector2f{world_size, world_size});
@@ -99,7 +96,6 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
 Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
     
     const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
-    
     const double nx = mouse.x / grid_view.getSize().x;
     const double ny = mouse.y / grid_view.getSize().y;
 
@@ -219,9 +215,7 @@ void GridRenderer::handle_events() {
             }
 
             sf::Vector2i mouse_px {move->position.x, move->position.y};
-
             sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
-
             preview_point = snap_to_grid({mouse_world.x, mouse_world.y});
 
         }
@@ -241,6 +235,9 @@ void GridRenderer::handle_events() {
             - F = finalize blueprint
             */
 
+
+            // drag, duplicate highlighted entities
+
             if (key->code == sf::Keyboard::Key::F) {
 
                 finalize_blueprint();
@@ -250,7 +247,6 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::Space) {
                 
                 interaction_mode = (interaction_mode == InteractionMode::Draw) ? InteractionMode::Select : InteractionMode::Draw;
-
                 // clear selection when switching modes
                 selected_wall_index.reset();
                 selected_entity_index.reset();
@@ -397,12 +393,10 @@ void GridRenderer::render() {
 
     // draw grid
     const double half = (engine.get_grid_cells() * engine.get_cm_per_cell()) / 2.0;
-
     const double min_x = -half;
     const double max_x = half;
     const double min_y = -half;
     const double max_y = half;
-
     const double grid_spacing_cm = engine.get_cm_per_cell();
 
     for (double x = min_x; x <= max_x; x += grid_spacing_cm) {
@@ -439,7 +433,6 @@ void GridRenderer::render() {
 
         preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
         preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-
         preview[0].color = sf::Color(0, 0, 0, 120);
         preview[1].color = sf::Color(0, 0, 0, 120);
 
@@ -471,8 +464,8 @@ void GridRenderer::render() {
 
         if (selected_wall_index && *selected_wall_index == i) {
 
-            wall[0].color = sf::Color::Red;
-            wall[1].color = sf::Color::Red;
+            wall[0].color = sf::Color::Green;
+            wall[1].color = sf::Color::Green;
 
         } else {
 
@@ -509,13 +502,13 @@ void GridRenderer::render() {
 
         if (e.type == PointType::Source) {
 
-            marker.setFillColor(selected ? sf::Color::Red : sf::Color::Green);
+            marker.setFillColor(selected ? sf::Color::Green : sf::Color::Red);
 
         } else {
                 
             marker.setFillColor(sf::Color::Transparent);
             marker.setOutlineThickness(1.5f);
-            marker.setOutlineColor(selected ? sf::Color::Red : sf::Color::Blue);
+            marker.setOutlineColor(selected ? sf::Color::Green : sf::Color::Blue);
 
         }
 
