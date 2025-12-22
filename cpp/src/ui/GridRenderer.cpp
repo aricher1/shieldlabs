@@ -107,20 +107,6 @@ Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
 }
 
 
-Point GridRenderer::snap_to_grid(Point p) const {
-    
-    // const double spacing = 10.0;
-    const double spacing = cm_per_cell;
-
-    return {
-
-        std::round(p.x_cm / spacing) * spacing,
-        std::round(p.y_cm / spacing) * spacing
-    
-    };
-}
-
-
 void GridRenderer::finalize_blueprint() {
 
     blueprint_finalized = !blueprint_finalized;
@@ -221,7 +207,7 @@ void GridRenderer::handle_events() {
 
             sf::Vector2i mouse_px {move->position.x, move->position.y};
             sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
-            preview_point = snap_to_grid({mouse_world.x, mouse_world.y});
+            preview_point = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
         }
 
@@ -243,8 +229,6 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
-            - cancel finalize blueprint feature
-            - fix grid logic (smallest possible cm_per_cell, float or int?)
             - edit wall length feature
             - error walls not connected
             - drag entities
@@ -341,7 +325,7 @@ void GridRenderer::handle_events() {
 
                 sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
-                Point p = snap_to_grid({mouse_world.x, mouse_world.y});
+                Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
                 if (interaction_mode == InteractionMode::Select) {
 

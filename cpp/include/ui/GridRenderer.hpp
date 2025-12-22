@@ -52,7 +52,6 @@ class GridRenderer {
     public:
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
 
-        Point snap_to_grid(Point p) const;
         void finalize_blueprint(); 
         void handle_select_click(const Point& p);
         void handle_events();

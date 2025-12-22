@@ -18,7 +18,6 @@ class GeometryEngine {
 
         std::vector<PointEntity> entities;
 
-        Point snap_to_grid(Point p) const;
         Point reuse_or_add(Point p);
 
     public:
@@ -29,6 +28,7 @@ class GeometryEngine {
         void set_scale(int cells, double cm);
 
         Point add_point(Point p);
+        Point snap_to_grid(Point p) const;
 
         void add_wall(Point a, Point b, double thickness_cm, int material_id);
         void add_wall_direct(const Wall& w);
