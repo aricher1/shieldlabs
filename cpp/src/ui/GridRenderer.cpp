@@ -109,6 +109,40 @@ Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
 
 void GridRenderer::finalize_blueprint() {
 
+    // if we're trying to finalize, validate first
+    if (!blueprint_finalized) {
+
+        // resolve all intersections
+        // engine.resolve_intersections();
+        
+        // print intersections to console for now
+        auto intersections = engine.find_intersections();
+        std::cout << "Intersections found: " << intersections.size() << "\n";
+
+        // validate result
+        auto result = engine.validate_connectivity();
+
+        if (!result.ok) {
+
+            std::cout << "========= FINALIZATION FAILED =========\n";
+            std::cout << "Walls are not fully connected.\n";
+
+            for (const auto& issue : result.dangling_points) {
+                std::cout << "Dangling point at ("
+                          << issue.point.x_cm << ", "
+                          << issue.point.y_cm
+                          << "), degree = "
+                          << issue.degree << "\n";
+            }
+
+            std::cout << "======================================\n";
+
+            // Stay in edit mode
+            return;
+        }
+    }
+
+    // Toggle finalized state
     blueprint_finalized = !blueprint_finalized;
 
     // cancel any current edits
@@ -117,10 +151,10 @@ void GridRenderer::finalize_blueprint() {
     selected_entity_index.reset();
 
     if (blueprint_finalized) {
-        // print to console for now
+
         std::cout << "========= Final Blueprint =========\n";
         std::cout << engine.to_json() << "\n";
-    
+
     } else {
 
         std::cout << "========= Editing Resumed =========\n";
@@ -229,8 +263,8 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
-            - edit wall length feature
             - error walls not connected
+            - edit wall length feature
             - drag entities
             - duplicate highlighted entities
             - doors 
