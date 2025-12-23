@@ -15,6 +15,7 @@ namespace {
 
     constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 25cm of it
     constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
+    constexpr float PICK_RADIUS_PX = 10.0f;
 
     double distance_point_to_segment(Point p, Point a, Point b) {
 
@@ -64,6 +65,28 @@ namespace {
 
     }
 
+    static double project_t_onto_wall(const Point& p, const Wall& w) {
+
+        double dx = w.b.x_cm - w.a.x_cm;
+        double dy = w.b.y_cm - w.a.y_cm;
+        double len2 = dx * dx + dy * dy;
+
+        if (len2 < 1e-9) {
+            return 0.0;
+        }
+
+        double t = ((p.x_cm - w.a.x_cm) * dx + (p.y_cm- w.a.y_cm) * dy) / len2;
+
+        return std::clamp(t, 0.0, 1.0);
+
+    }
+
+    static Point lerp_point(const Point& a, const Point& b, double t) {
+
+        return {a.x_cm + t * (b.x_cm - a.x_cm), a.y_cm + t * (b.y_cm - a.y_cm)};
+
+    }
+
 
 } // end of anonymous namespace
 
@@ -89,6 +112,15 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     length_text.setFont(font);
     length_text.setCharacterSize(14);
     length_text.setFillColor(sf::Color::Black);
+
+}
+
+
+double GridRenderer::pixel_radius_to_world_cm(float px) const {
+
+    sf::Vector2f p0 = window.mapPixelToCoords({0, 0}, grid_view);
+    sf::Vector2f p1 = window.mapPixelToCoords({(int)px, 0}, grid_view);
+    return std::abs(p1.x - p0.x);
 
 }
 
@@ -202,13 +234,25 @@ void GridRenderer::handle_events() {
 
         if (const auto* move = event->getIf<sf::Event::MouseMoved>()) {
             
+            sf::Vector2i mouse_px {move->position.x, move->position.y};
+            sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
+            Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
+
+            if (placing_opening) {
+
+                const Wall& w = engine.get_walls()[opening_wall_index];
+                double t = project_t_onto_wall(p, w);
+                preview_point = lerp_point(w.a, w.b, t);
+                continue;
+
+            }
+
             if (!drawing) {
                 continue;
             }
 
-            sf::Vector2i mouse_px {move->position.x, move->position.y};
-            sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
-            preview_point = engine.snap_to_grid({mouse_world.x, mouse_world.y});
+            
+            preview_point = p;
 
         }
 
@@ -348,6 +392,58 @@ void GridRenderer::handle_events() {
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
                 Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
+                if (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen) {
+
+                    if (placing_opening) { 
+                        
+                        double len = distance_cm(start_point, preview_point);
+                        if (len > 1.0) {
+
+                            const Wall& w = engine.get_walls()[opening_wall_index];
+                            Point mid{(start_point.x_cm + preview_point.x_cm) * 0.5, (start_point.y_cm + preview_point.y_cm) * 0.5};
+
+                            WallOpening o;
+                            o.center_t = project_t_onto_wall(mid, w);
+                            o.length_cm = len;
+                            o.type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
+
+                            engine.get_walls_mutable()[opening_wall_index].openings.push_back(o);
+                        }
+
+                        placing_opening = false;
+                        return;
+                    } 
+
+                    double best_dist = pixel_radius_to_world_cm(PICK_RADIUS_PX);
+                    std::optional<size_t> hit_wall;
+
+                    for (size_t i = 0; i < engine.get_walls().size(); ++i) {
+
+                        const auto& w = engine.get_walls()[i];
+                        double d = distance_point_to_segment(p, w.a, w.b);
+                        if (d < best_dist) {
+                            best_dist = d;
+                            hit_wall = i;
+                        }
+
+                    }
+
+                    if (!hit_wall.has_value()) { return; } // didn't click on wall
+
+                    opening_wall_index = *hit_wall;
+                    opening_type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
+
+                    const Wall& w = engine.get_walls()[opening_wall_index];
+                    
+                    double t = project_t_onto_wall(p, w);
+                    start_point = lerp_point(w.a, w.b, t);
+                    preview_point = start_point;
+
+                    placing_opening = true;
+                    drawing = false;
+                    return;
+                }
+
                 if (interaction_mode == InteractionMode::Select) {
 
                     handle_select_click(p);
@@ -377,6 +473,10 @@ void GridRenderer::handle_events() {
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
 
+                }
+
+                if (placing_opening) {
+                    return;
                 }
 
                 if (!drawing) {
@@ -495,6 +595,50 @@ void GridRenderer::render() {
         }
 
         window.draw(wall, 2, sf::PrimitiveType::Lines);
+        
+        if (placing_opening && i == opening_wall_index) {
+
+            sf::Vertex preview[2];
+            
+            preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
+            preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
+
+            sf::Color c = (opening_type == OpeningType::Door) ? sf::Color(150, 75, 0) : (opening_type == OpeningType::Window) ? sf::Color(255, 165, 0) : sf::Color(180, 180, 180);
+            preview[0].color = c;
+            preview[1].color = c;
+
+            window.draw(preview, 2, sf::PrimitiveType::Lines);
+
+        }
+
+        for (const auto& o : w.openings) {
+
+            double half_t = (o.length_cm * 0.5) / w.length_cm;
+            double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
+            double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
+
+            Point p0 = lerp_point(w.a, w.b, t0);
+            Point p1 = lerp_point(w.a, w.b, t1);
+
+            sf::Vertex opening[2];
+            opening[0].position = {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)};
+            opening[1].position = {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)};
+
+            switch (o.type) {
+                case OpeningType::Door:
+                    opening[0].color = opening[1].color = sf::Color(150, 75, 0);
+                    break;
+                case OpeningType::Window:
+                    opening[0].color = opening[1].color = sf::Color(255, 165, 0);
+                    break;
+                case OpeningType::Open:
+                    opening[0].color = opening[1].color = sf::Color(180, 180, 180);
+                    break;
+            }
+
+            window.draw(opening, 2, sf::PrimitiveType::Lines);
+
+        }
 
         const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
 

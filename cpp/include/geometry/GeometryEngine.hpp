@@ -28,6 +28,7 @@ class GeometryEngine {
         int get_grid_cells() const { return grid_cells; }
         double get_cm_per_cell() const { return cm_per_cell; }
         void set_scale(int cells, double cm);
+        std::vector<Wall>& get_walls_mutable() { return walls; }
 
         Point add_point(Point p);
         Point snap_to_grid(Point p) const;
