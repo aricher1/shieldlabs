@@ -109,39 +109,6 @@ Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
 
 void GridRenderer::finalize_blueprint() {
 
-    // if we're trying to finalize, validate first
-    if (!blueprint_finalized) {
-
-        // resolve all intersections
-        // engine.resolve_intersections();
-        
-        // print intersections to console for now
-        auto intersections = engine.find_intersections();
-        std::cout << "Intersections found: " << intersections.size() << "\n";
-
-        // validate result
-        auto result = engine.validate_connectivity();
-
-        if (!result.ok) {
-
-            std::cout << "========= FINALIZATION FAILED =========\n";
-            std::cout << "Walls are not fully connected.\n";
-
-            for (const auto& issue : result.dangling_points) {
-                std::cout << "Dangling point at ("
-                          << issue.point.x_cm << ", "
-                          << issue.point.y_cm
-                          << "), degree = "
-                          << issue.degree << "\n";
-            }
-
-            std::cout << "======================================\n";
-
-            // Stay in edit mode
-            return;
-        }
-    }
-
     // Toggle finalized state
     blueprint_finalized = !blueprint_finalized;
 

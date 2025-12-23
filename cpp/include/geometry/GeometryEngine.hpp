@@ -8,32 +8,6 @@
 
 
 
-struct ConnectivityIssue {
-    Point point;
-    int degree; // number of walls touching this point
-};
-
-
-struct ConnectivityResult {
-    bool ok;
-    std::vector<ConnectivityIssue> dangling_points;
-};
-
-
-enum class IntersectionType {
-    Cross,
-    EndpointTouch
-};
-
-
-struct WallIntersection {
-    size_t wall_i;
-    size_t wall_j;
-    double ti;              // 0..1 along wall_i
-    double tj;              // 0..1 along wall_j
-    Point p;                // intersection point
-    IntersectionType type;
-};
 
 class GeometryEngine {
 
@@ -71,12 +45,8 @@ class GeometryEngine {
         void add_dose(Point p);
         const std::vector<PointEntity>& get_entities() const;
 
-        std::vector<WallIntersection> find_intersections() const;
-        void resolve_intersections();
-
         std::string to_json() const;
         bool load_from_json(const std::string& json_str);
-        ConnectivityResult validate_connectivity() const;
         void clear();
 
 };
