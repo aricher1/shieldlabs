@@ -34,6 +34,8 @@ class GridRenderer {
 
         std::optional<std::size_t> selected_wall_index;
         std::optional<std::size_t> selected_entity_index;
+        std::optional<std::size_t> selected_opening_index;
+        std::optional<std::size_t> selected_opening_wall_index;
 
         sf::View grid_view;
         sf::Vector2u window_size;

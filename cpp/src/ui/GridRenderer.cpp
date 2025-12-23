@@ -3,6 +3,8 @@
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
 #include "ui/AddEntityCommand.hpp"
+#include "ui/AddOpeningCommand.hpp"
+#include "ui/RemoveOpeningCommand.hpp"
 #include "ui/Cosmetics.hpp"
 #include <algorithm>
 #include <iostream>
@@ -181,6 +183,8 @@ void GridRenderer::handle_select_click(const Point& p) {
 
     selected_entity_index.reset();
     selected_wall_index.reset();
+    selected_opening_index.reset();
+    selected_opening_wall_index.reset();
 
     // entity selection
     const auto& entities = engine.get_entities();
@@ -215,6 +219,40 @@ void GridRenderer::handle_select_click(const Point& p) {
 
         }
     }
+
+    // opening selection
+    if (selected_wall_index.has_value()) {
+
+        const auto& w = engine.get_walls()[*selected_wall_index];
+
+        double best_dist = SELECT_EPS_CM;
+        std::optional<std::size_t> hit_opening;
+
+        for (std::size_t i = 0; i < w.openings.size(); ++i) {
+
+            const auto& o = w.openings[i];
+
+            double half_t = (o.length_cm * 0.5) / w.length_cm;
+            double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
+            double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
+
+            Point p0 = lerp_point(w.a, w.b, t0);
+            Point p1 = lerp_point(w.a, w.b, t1);
+
+            double d = distance_point_to_segment(p, p0, p1);
+
+            if (d < best_dist) {
+                best_dist = d;
+                hit_opening = i;
+            }
+        }
+
+        if (hit_opening.has_value()) {
+            selected_opening_wall_index = *selected_wall_index;
+            selected_opening_index = *hit_opening;
+        }
+    }
+
 }
 
 
@@ -308,11 +346,14 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::Space) {
                 
                 interaction_mode = (interaction_mode == InteractionMode::Draw) ? InteractionMode::Select : InteractionMode::Draw;
-                // clear selection when switching modes
+                // cancel all active interactions
                 selected_wall_index.reset();
                 selected_entity_index.reset();
+                selected_opening_index.reset();
+                selected_opening_wall_index.reset();
                 drawing = false;
-
+                placing_opening = false;
+                opening_wall_index = 0;
             }
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -329,22 +370,32 @@ void GridRenderer::handle_events() {
             }
 
             if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
+                
+                // Priority 1: openings
+                if (selected_opening_index.has_value()) {
 
-                // Priority 1: point entities
+                    undo_stack.execute(std::make_unique<RemoveOpeningCommand>(engine, *selected_opening_wall_index, *selected_opening_index));
+                    selected_opening_index.reset();
+                    selected_opening_wall_index.reset();
+                    selected_wall_index.reset();
+                    return;
+                }
+
+                // Priority 2: point entities
                 if (selected_entity_index.has_value()) {
 
                     undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, *selected_entity_index));
                     selected_entity_index.reset();
                     selected_wall_index.reset();
-
+                    return;
                 }   
 
-                // Priority 2: walls         
+                // Priority 3: walls         
                 else if (selected_wall_index.has_value()) {
 
                     undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
                     selected_wall_index.reset();
-
+                    return;
                 }
             }
 
@@ -407,7 +458,7 @@ void GridRenderer::handle_events() {
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
                 Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
-                if (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen) {
+                if (interaction_mode == InteractionMode::Draw && (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen)) {
 
                     if (placing_opening) { 
                         
@@ -422,7 +473,9 @@ void GridRenderer::handle_events() {
                             o.length_cm = len;
                             o.type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
 
-                            engine.get_walls_mutable()[opening_wall_index].openings.push_back(o);
+                            auto& openings = engine.get_walls_mutable()[opening_wall_index].openings;
+                            std::size_t opening_index = openings.size();
+                            undo_stack.execute(std::make_unique<AddOpeningCommand>(engine, opening_wall_index, opening_index, o));
                         }
 
                         placing_opening = false;
@@ -665,10 +718,15 @@ void GridRenderer::render() {
             opening[1].position = {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)};
 
             sf::Color c;
-            switch (o.type) {
-                case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
-                case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
-                case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
+
+            if (selected_opening_index.has_value() && selected_opening_wall_index.has_value() && selected_opening_wall_index == i && &o == &w.openings[*selected_opening_index]) {
+                c = Cosmetics::WALL_SELECTED;
+            } else {
+                switch (o.type) {
+                    case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
+                    case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
+                    case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
+                }
             }
 
             auto rect = make_thick_segment({static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)}, {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
@@ -685,7 +743,10 @@ void GridRenderer::render() {
 
             // perpendicular offset so text sits beside opening once placed
             sf::Vector2f normal{-direction.y, direction.x};
-            sf::Vector2f text_position = mid + normal * (Cosmetics::OPENING_THICKNESS * 1.2f);
+            if (std::abs(direction.x) > std::abs(direction.y)) {
+                normal = sf::Vector2f{direction.y, -direction.x};
+            }
+            sf::Vector2f text_position = mid + normal * (Cosmetics::OPENING_THICKNESS * 1.0f);
 
             // actual text
             std::ostringstream ss;
@@ -696,6 +757,10 @@ void GridRenderer::render() {
                 case OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
                 case OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
                 case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
+            }
+
+            if (selected_opening_index.has_value() && selected_opening_wall_index.has_value() && *selected_wall_index == i && &o == &w.openings[*selected_opening_index]) {
+                length_text.setFillColor(Cosmetics::WALL_SELECTED);
             }
 
             length_text.setPosition(text_position);

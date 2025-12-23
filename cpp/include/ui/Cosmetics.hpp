@@ -19,7 +19,7 @@ namespace Cosmetics {
     // opening colours
     inline const sf::Color DOOR_COLOR = sf::Color(120, 60, 20);
     inline const sf::Color WINDOW_COLOR = sf::Color(0, 120, 255);
-    inline const sf::Color OPEN_COLOR = sf::Color(220, 220, 220);
+    inline const sf::Color OPEN_COLOR = sf::Color(0, 140, 140);
 
     // points
     constexpr float POINT_RADIUS = 5.0f;
