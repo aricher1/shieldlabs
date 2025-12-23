@@ -225,6 +225,9 @@ void GridRenderer::handle_events() {
             - D = place dose point
             - Space = switch between draw and select mode
             - F = finalize blueprint
+            - O = draw opening
+            - L = draw door
+            - M = draw window
             */
 
 
@@ -311,6 +314,24 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::D) {
 
                 current_tool = Tool::PlaceDose;
+
+            }
+
+            if (key->code == sf::Keyboard::Key::O) {
+
+                current_tool = Tool::PlaceOpen;
+
+            }
+
+            if (key->code == sf::Keyboard::Key::L) {
+
+                current_tool = Tool::PlaceDoor;
+
+            }
+
+            if (key->code == sf::Keyboard::Key::M) {
+
+                current_tool = Tool::PlaceWindow;
 
             }
 

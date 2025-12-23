@@ -49,6 +49,11 @@ class GridRenderer {
         Point start_point;
         Point preview_point;
 
+        bool placing_opening = false;
+        size_t opening_wall_index = 0;
+        double opening_center_t = 0.0;
+        OpeningType opening_type;
+
         Point screen_to_world(sf::Vector2f mouse) const;
         double distance_cm(Point a, Point b) const; // distance between 2 points for a wall segment
 
