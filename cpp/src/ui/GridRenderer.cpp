@@ -230,8 +230,7 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
-            - error walls not connected
-            - edit wall length feature
+            - error walls not connected (might not be a good idea)
             - drag entities
             - duplicate highlighted entities
             - doors 

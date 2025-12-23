@@ -13,9 +13,12 @@ enum class InteractionMode {
 
 
 enum class Tool {
-    DrawWall,
-    PlaceSource,
-    PlaceDose
+    DrawWall,           // wall segment
+    PlaceSource,        // source point
+    PlaceDose,          // dose point
+    PlaceDoor,          // door
+    PlaceWindow,        // window
+    PlaceOpen           // open segment in wall (neither door or window)
 };
 
 
