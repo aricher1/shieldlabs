@@ -3,6 +3,7 @@
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
 #include "ui/AddEntityCommand.hpp"
+#include "ui/Cosmetics.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -85,6 +86,20 @@ namespace {
 
         return {a.x_cm + t * (b.x_cm - a.x_cm), a.y_cm + t * (b.y_cm - a.y_cm)};
 
+    }
+
+    sf::RectangleShape make_thick_segment(sf::Vector2f a, sf::Vector2f b, float thickness, sf::Color color) {
+
+        sf::Vector2f d = b - a;
+        float length = std::sqrt(d.x * d.x + d.y * d.y);
+
+        sf::RectangleShape r({length, thickness});
+        r.setFillColor(color);
+        r.setOrigin(sf::Vector2f{0.f, thickness * 0.5f});
+        r.setPosition(a);
+        r.setRotation(sf::degrees(std::atan2(d.y, d.x) * 180.f / M_PI));
+        return r;
+    
     }
 
 
@@ -526,8 +541,8 @@ void GridRenderer::render() {
         line[0].position = sf::Vector2f{static_cast<float>(x), static_cast<float>(min_y)};
         line[1].position = sf::Vector2f{static_cast<float>(x), static_cast<float>(max_y)};
 
-        line[0].color = sf::Color(220, 220, 220);
-        line[1].color = sf::Color(220, 220, 220);
+        line[0].color = Cosmetics::GRID_COLOR;
+        line[1].color = Cosmetics::GRID_COLOR;
 
         window.draw(line, 2, sf::PrimitiveType::Lines);
 
@@ -540,8 +555,8 @@ void GridRenderer::render() {
         line[0].position = sf::Vector2f{static_cast<float>(min_x), static_cast<float>(y)};
         line[1].position = sf::Vector2f{static_cast<float>(max_x), static_cast<float>(y)};
 
-        line[0].color = sf::Color(220, 220, 220);
-        line[1].color = sf::Color(220, 220, 220);
+        line[0].color = Cosmetics::GRID_COLOR;
+        line[1].color = Cosmetics::GRID_COLOR;
 
         window.draw(line, 2, sf::PrimitiveType::Lines);
 
@@ -553,9 +568,10 @@ void GridRenderer::render() {
 
         preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
         preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-        preview[0].color = sf::Color(0, 0, 0, 120);
-        preview[1].color = sf::Color(0, 0, 0, 120);
-
+        
+        preview[0].color = Cosmetics::WALL_NORMAL;
+        preview[1].color = Cosmetics::WALL_NORMAL;
+        
         window.draw(preview, 2, sf::PrimitiveType::Lines);
 
         double len_cm = distance_cm(start_point, preview_point);
@@ -602,13 +618,37 @@ void GridRenderer::render() {
             
             preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
             preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
+            
+            sf::Color c;
+            switch (opening_type) {
+                case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
+                case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
+                case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
+            }
+            auto rect = make_thick_segment({static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)}, {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
+            
+            window.draw(rect);
 
-            sf::Color c = (opening_type == OpeningType::Door) ? sf::Color(150, 75, 0) : (opening_type == OpeningType::Window) ? sf::Color(255, 165, 0) : sf::Color(180, 180, 180);
-            preview[0].color = c;
-            preview[1].color = c;
+            // draw text
+            double len_cm = distance_cm(start_point, preview_point);
+            sf::Vector2f mid{
+                static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), 
+                static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)
+            };
 
-            window.draw(preview, 2, sf::PrimitiveType::Lines);
+            std::ostringstream ss;
+            ss << std::fixed << std::setprecision(1) << len_cm << " cm";
+            length_text.setString(ss.str());
 
+            // color matches opening type on top of wall
+            switch (opening_type) {
+                case OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
+                case OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
+                case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
+            }
+
+            length_text.setPosition(mid);
+            window.draw(length_text);
         }
 
         for (const auto& o : w.openings) {
@@ -624,20 +664,42 @@ void GridRenderer::render() {
             opening[0].position = {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)};
             opening[1].position = {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)};
 
+            sf::Color c;
             switch (o.type) {
-                case OpeningType::Door:
-                    opening[0].color = opening[1].color = sf::Color(150, 75, 0);
-                    break;
-                case OpeningType::Window:
-                    opening[0].color = opening[1].color = sf::Color(255, 165, 0);
-                    break;
-                case OpeningType::Open:
-                    opening[0].color = opening[1].color = sf::Color(180, 180, 180);
-                    break;
+                case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
+                case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
+                case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
             }
 
-            window.draw(opening, 2, sf::PrimitiveType::Lines);
+            auto rect = make_thick_segment({static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)}, {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
 
+            window.draw(rect);
+
+            // place text
+            sf::Vector2f mid{static_cast<float>((p0.x_cm + p1.x_cm) * 0.5), static_cast<float>((p0.y_cm + p1.y_cm) * 0.5)};
+            sf::Vector2f direction{static_cast<float>(p1.x_cm - p0.x_cm), static_cast<float>(p1.y_cm - p0.y_cm)};
+            float mag = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+            if (mag > 0.f) {
+                direction /= mag;
+            }
+
+            // perpendicular offset so text sits beside opening once placed
+            sf::Vector2f normal{-direction.y, direction.x};
+            sf::Vector2f text_position = mid + normal * (Cosmetics::OPENING_THICKNESS * 1.2f);
+
+            // actual text
+            std::ostringstream ss;
+            ss << std::fixed << std::setprecision(1) << o.length_cm << " cm";
+            length_text.setString(ss.str());
+
+            switch (o.type) {
+                case OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
+                case OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
+                case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
+            }
+
+            length_text.setPosition(text_position);
+            window.draw(length_text);
         }
 
         const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
@@ -645,6 +707,7 @@ void GridRenderer::render() {
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
 
+        length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
         length_text.setString(ss.str());
         length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
 
@@ -658,21 +721,21 @@ void GridRenderer::render() {
         const auto& e = entities[i];
 
         sf::CircleShape marker;
-        marker.setRadius(5.0f);
-        marker.setOrigin(sf::Vector2f{5.0f, 5.0f});
+        marker.setRadius(Cosmetics::POINT_RADIUS);
+        marker.setOrigin(sf::Vector2f{Cosmetics::POINT_RADIUS, Cosmetics::POINT_RADIUS});
         marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
 
         const bool selected = selected_entity_index.has_value() && *selected_entity_index == i;
 
         if (e.type == PointType::Source) {
 
-            marker.setFillColor(selected ? sf::Color::Green : sf::Color::Red);
+            marker.setFillColor(selected ? Cosmetics::SOURCE_SELECTED_COLOR : Cosmetics::SOURCE_COLOR);
 
         } else {
                 
             marker.setFillColor(sf::Color::Transparent);
-            marker.setOutlineThickness(1.5f);
-            marker.setOutlineColor(selected ? sf::Color::Green : sf::Color::Blue);
+            marker.setOutlineThickness(Cosmetics::POINT_OUTLINE_THICKNESS);
+            marker.setOutlineColor(selected ? Cosmetics::DOSE_SELECTED_COLOR : Cosmetics::DOSE_COLOR);
 
         }
 
