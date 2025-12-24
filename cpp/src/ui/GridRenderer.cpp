@@ -334,8 +334,6 @@ void GridRenderer::handle_events() {
             - error walls not connected (might not be a good idea)
             - drag entities
             - duplicate highlighted entities
-            - doors 
-            - windows
             */
 
             if (key->code == sf::Keyboard::Key::F) {
