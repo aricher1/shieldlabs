@@ -13,10 +13,7 @@ GeometryEngine::GeometryEngine(int cells, double cm) : grid_cells(cells), cm_per
 
 Point GeometryEngine::snap_to_grid(Point p) const {
     
-    return {
-        std::round(p.x_cm / cm_per_cell) * cm_per_cell,
-        std::round(p.y_cm / cm_per_cell) * cm_per_cell
-    };
+    return {std::round(p.x_cm / cm_per_cell) * cm_per_cell, std::round(p.y_cm / cm_per_cell) * cm_per_cell};
 
 }
 
@@ -31,26 +28,21 @@ Point GeometryEngine::reuse_or_add(Point p) {
             return existing;
         }
     }
-    
-    points.push_back(p);
+    points.push_back(p);    
     
     return p;
 }
 
 
 Point GeometryEngine::add_point(Point p) {
-
     p = snap_to_grid(p);
-
     return reuse_or_add(p);
 }
 
 
 void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int material_id) {
-
     a = add_point(a);
     b = add_point(b);
-
     const double length_cm = std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm);
 
     if (length_cm < SNAP_EPS_CM) { 
@@ -58,52 +50,37 @@ void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int materia
     }
 
     walls.push_back({a, b, thickness_cm, material_id, length_cm});
-
 }
 
 
 void GeometryEngine::add_wall_direct(const Wall& w) {
-
     walls.push_back(w);
-
 }
 
 
 void GeometryEngine::remove_last_wall() {
-
     if(!walls.empty()) {
-
         walls.pop_back();
-
     }
-
 }
 
 
 void GeometryEngine::remove_wall_at(std::size_t index) {
-
     if (index < walls.size()) {
-
         walls.erase(walls.begin() + index);
-
     }
 }
 
 
 void GeometryEngine::remove_entity_at(std::size_t index) {
-
     if (index < entities.size()) {
-
         entities.erase(entities.begin() + index);
-
     }
 }
 
 
 void GeometryEngine::add_entitiy_direct(const PointEntity& e) {
-
     entities.push_back(e);
-
 }
 
 
@@ -111,18 +88,14 @@ const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 
 void GeometryEngine::add_source(Point p) {
-
     p = snap_to_grid(p);
     entities.push_back({p, PointType::Source, ""});
-     
 }
 
 
 void GeometryEngine::add_dose(Point p) {
-
     p = snap_to_grid(p);
     entities.push_back({p, PointType::Dose, ""});
-
 }
 
 

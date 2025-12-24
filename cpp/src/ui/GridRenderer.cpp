@@ -145,8 +145,8 @@ void GridRenderer::finalize_blueprint() {
 
     // cancel any current edits
     drawing = false;
-    selected_wall_index.reset();
-    selected_entity_index.reset();
+    placing_opening = false;
+    selection.clear();
 
     if (blueprint_finalized) {
         std::cout << "========= Final Blueprint =========\n";
@@ -159,73 +159,72 @@ void GridRenderer::finalize_blueprint() {
 
 void GridRenderer::handle_select_click(const Point& p) {
 
-    selected_entity_index.reset();
-    selected_wall_index.reset();
-    selected_opening_index.reset();
-    selected_opening_wall_index.reset();
+    selection.clear();
 
     // entity selection
-    const auto& entities = engine.get_entities();
-    double best_entity_dist = SELECT_EPS_CM;
+    {
+        const auto& entities = engine.get_entities();
+        double best_entity_dist = SELECT_EPS_CM;
 
-    for (std::size_t i = 0; i < entities.size(); ++i) {
-        double d = distance_point_to_point(p, entities[i].position);
+        for (std::size_t i = 0; i < entities.size(); ++i) {
+            double d = distance_point_to_point(p, entities[i].position);
 
-        if (d < best_entity_dist) {
-            best_entity_dist = d;
-            selected_entity_index = i;
-        }
-    }
-
-    if (selected_entity_index.has_value()) { return ; }
-
-    // wall selection
-    const auto& walls = engine.get_walls();
-    double best_wall_dist = SELECT_EPS_CM;
-
-    for (std::size_t i = 0; i < walls.size(); ++i) {
-        double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
-
-        if (d < best_wall_dist) {
-            best_wall_dist = d;
-            selected_wall_index = i;
-        }
-    }
-
-    // opening selection
-    if (selected_wall_index.has_value()) {
-
-        const auto& w = engine.get_walls()[*selected_wall_index];
-
-        double best_dist = SELECT_EPS_CM;
-        std::optional<std::size_t> hit_opening;
-
-        for (std::size_t i = 0; i < w.openings.size(); ++i) {
-
-            const auto& o = w.openings[i];
-
-            double half_t = (o.length_cm * 0.5) / w.length_cm;
-            double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
-            double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
-
-            Point p0 = lerp_point(w.a, w.b, t0);
-            Point p1 = lerp_point(w.a, w.b, t1);
-
-            double d = distance_point_to_segment(p, p0, p1);
-
-            if (d < best_dist) {
-                best_dist = d;
-                hit_opening = i;
+            if (d < best_entity_dist) {
+                best_entity_dist = d;
+                selection.type = Selection::Type::Entity;
+                selection.entity_index = i;
             }
         }
 
-        if (hit_opening.has_value()) {
-            selected_opening_wall_index = *selected_wall_index;
-            selected_opening_index = *hit_opening;
-            selected_wall_index.reset();
-        }
+        if (selection.type == Selection::Type::Entity) { return; }
     }
 
+    // opening selection
+    {
+        const auto& walls = engine.get_walls();
+        double best_dist = SELECT_EPS_CM;
+
+        for (std::size_t wi = 0; wi < walls.size(); ++wi) {
+            const auto& w = walls[wi];
+
+            for (std::size_t oi = 0; oi < w.openings.size(); ++oi) {
+                const auto& o = w.openings[oi];
+
+                double half_t = (o.length_cm * 0.5) / w.length_cm;
+                double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
+                double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
+
+                Point p0 = lerp_point(w.a, w.b, t0);
+                Point p1 = lerp_point(w.a, w.b, t1);
+
+                double d = distance_point_to_segment(p, p0, p1);
+                if (d < best_dist) {
+                    best_dist = d;
+                    selection.type = Selection::Type::Opening;
+                    selection.wall_index = wi;
+                    selection.opening_index = oi;
+                }
+            }
+        }
+
+        if (selection.type == Selection::Type::Opening) { return; }
+    }
+
+    // wall selection
+    {
+        const auto& walls = engine.get_walls();
+        double best_wall_dist = SELECT_EPS_CM;
+
+        for (std::size_t i = 0; i < walls.size(); ++i) {
+            double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
+
+            if (d < best_wall_dist) {
+                best_wall_dist = d;
+                selection.type = Selection::Type::Wall;
+                selection.wall_index = i;
+            }
+        }
+    }
 }
 
 
@@ -312,13 +311,9 @@ void GridRenderer::handle_events() {
                 
                 interaction_mode = (interaction_mode == InteractionMode::Draw) ? InteractionMode::Select : InteractionMode::Draw;
                 // cancel all active interactions
-                selected_wall_index.reset();
-                selected_entity_index.reset();
-                selected_opening_index.reset();
-                selected_opening_wall_index.reset();
+                selection.clear();
                 drawing = false;
                 placing_opening = false;
-                opening_wall_index = 0;
             }
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -353,10 +348,7 @@ void GridRenderer::handle_events() {
                 }
 
                 // clear all selections and cancel interactions
-                selected_wall_index.reset();
-                selected_entity_index.reset();
-                selected_opening_index.reset();
-                selected_opening_wall_index.reset();
+                selection.clear();
                 drawing = false;
                 placing_opening = false;
 
@@ -366,29 +358,26 @@ void GridRenderer::handle_events() {
             }
 
             if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
-        
-                // Priority 1: openings
-                if (selected_opening_index.has_value()) {
-                    undo_stack.execute(std::make_unique<RemoveOpeningCommand>(engine, *selected_opening_wall_index, *selected_opening_index));
-                    selected_opening_index.reset();
-                    selected_opening_wall_index.reset();
-                    selected_wall_index.reset();
-                    return;
-                }
+                
+                switch (selection.type) {
+                    
+                    case Selection::Type::Opening:
+                        undo_stack.execute(std::make_unique<RemoveOpeningCommand>(engine, selection.wall_index, selection.opening_index));
+                        selection.clear();
+                        return;
+                    
+                    case Selection::Type::Entity:
+                        undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, selection.entity_index));
+                        selection.clear();
+                        return;
 
-                // Priority 2: point entities
-                if (selected_entity_index.has_value()) {
-                    undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, *selected_entity_index));
-                    selected_entity_index.reset();
-                    selected_wall_index.reset();
-                    return;
-                }   
-
-                // Priority 3: walls         
-                else if (selected_wall_index.has_value()) {
-                    undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
-                    selected_wall_index.reset();
-                    return;
+                    case Selection::Type::Wall:
+                        undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, selection.wall_index));
+                        selection.clear();
+                        return;
+                    
+                    default:
+                        break;
                 }
             }
 
@@ -584,7 +573,7 @@ void GridRenderer::render() {
         sf::Vertex wall[2];
         wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
         wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
-        if (selected_wall_index && *selected_wall_index == i) {
+        if (selection.type == Selection::Type::Wall && selection.wall_index == i) {
             wall[0].color = sf::Color::Green;
             wall[1].color = sf::Color::Green;
         } else {
@@ -644,7 +633,7 @@ void GridRenderer::render() {
 
             sf::Color c;
 
-            if (selected_opening_index.has_value() && selected_opening_wall_index.has_value() && selected_opening_wall_index == i && &o == &w.openings[*selected_opening_index]) {
+            if (selection.type == Selection::Type::Opening && selection.wall_index == i && selection.opening_index == (&o - &w.openings[0])) {
                 c = Cosmetics::WALL_SELECTED;
             } else {
                 switch (o.type) {
@@ -684,7 +673,7 @@ void GridRenderer::render() {
                 case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
             }
 
-            if (selected_opening_index.has_value() && selected_opening_wall_index.has_value() && *selected_wall_index == i && &o == &w.openings[*selected_opening_index]) {
+            if (selection.type == Selection::Type::Opening && selection.wall_index == i && selection.opening_index == (&o - &w.openings[0])) {
                 length_text.setFillColor(Cosmetics::WALL_SELECTED);
             }
 
@@ -715,7 +704,7 @@ void GridRenderer::render() {
         marker.setOrigin(sf::Vector2f{Cosmetics::POINT_RADIUS, Cosmetics::POINT_RADIUS});
         marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
 
-        const bool selected = selected_entity_index.has_value() && *selected_entity_index == i;
+        const bool selected = selection.type == Selection::Type::Entity && selection.entity_index == i;
 
         if (e.type == PointType::Source) {
 

@@ -22,20 +22,39 @@ enum class Tool {
 };
 
 
+struct Selection {
+    enum class Type {
+        None,
+        Wall,
+        Opening,
+        Entity
+    };
+
+    Type type = Type::None;
+    std::size_t wall_index = 0;
+    std::size_t opening_index = 0;
+    std::size_t entity_index = 0;
+
+    void clear() {
+        type = Type::None;
+        wall_index = 0;
+        opening_index = 0;
+        entity_index = 0;
+    }
+
+};
+
+
 class GridRenderer {
 
     private:
         sf::RenderWindow& window;
         GeometryEngine& engine;
         UndoStack undo_stack;
+        Selection selection;
 
         InteractionMode interaction_mode = InteractionMode::Draw;
         Tool current_tool = Tool::DrawWall;
-
-        std::optional<std::size_t> selected_wall_index;
-        std::optional<std::size_t> selected_entity_index;
-        std::optional<std::size_t> selected_opening_index;
-        std::optional<std::size_t> selected_opening_wall_index;
 
         sf::View grid_view;
         sf::Vector2u window_size;
