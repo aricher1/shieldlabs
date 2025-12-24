@@ -23,14 +23,11 @@ namespace {
     constexpr double SHIFT_MOVE_MULTIPLIER = 10.0; // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
 
     double distance_point_to_segment(Point p, Point a, Point b) {
-
         const double dx = b.x_cm - a.x_cm;
         const double dy = b.y_cm - a.y_cm;
 
         if (dx == 0.0 && dy == 0.0) {
-
             return std::hypot(p.x_cm - a.x_cm, p.y_cm - a.y_cm);
-
         }
 
         const double t = ((p.x_cm - a.x_cm) * dx + (p.y_cm - a.y_cm) * dy) / (dx * dx + dy * dy);
@@ -39,13 +36,10 @@ namespace {
         const double proj_y = a.y_cm + clamped * dy;
 
         return std::hypot(p.x_cm - proj_x, p.y_cm - proj_y);
-
     }
 
     double distance_point_to_point(Point a, Point b) {
-
         return std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm);
-
     }
 
     bool snaps_to_existing_point(const Point& p, const GeometryEngine& engine) {
@@ -53,57 +47,43 @@ namespace {
         for (const auto& w : engine.get_walls()) {
 
             if (std::hypot(p.x_cm - w.a.x_cm, p.y_cm - w.a.y_cm) < SNAP_POINT_EPS_CM) {
-
                 return true;
-
             }
 
             if (std::hypot(p.x_cm - w.b.x_cm, p.y_cm - w.b.y_cm) < SNAP_POINT_EPS_CM) {
-
                 return true;
-
             }
-
         }
-
         return false;
-
     }
 
     static double project_t_onto_wall(const Point& p, const Wall& w) {
-
         double dx = w.b.x_cm - w.a.x_cm;
         double dy = w.b.y_cm - w.a.y_cm;
         double len2 = dx * dx + dy * dy;
-
         if (len2 < 1e-9) {
             return 0.0;
         }
-
         double t = ((p.x_cm - w.a.x_cm) * dx + (p.y_cm- w.a.y_cm) * dy) / len2;
 
         return std::clamp(t, 0.0, 1.0);
-
     }
 
     static Point lerp_point(const Point& a, const Point& b, double t) {
-
         return {a.x_cm + t * (b.x_cm - a.x_cm), a.y_cm + t * (b.y_cm - a.y_cm)};
-
     }
 
     sf::RectangleShape make_thick_segment(sf::Vector2f a, sf::Vector2f b, float thickness, sf::Color color) {
 
         sf::Vector2f d = b - a;
         float length = std::sqrt(d.x * d.x + d.y * d.y);
-
         sf::RectangleShape r({length, thickness});
         r.setFillColor(color);
         r.setOrigin(sf::Vector2f{0.f, thickness * 0.5f});
         r.setPosition(a);
         r.setRotation(sf::degrees(std::atan2(d.y, d.x) * 180.f / M_PI));
+        
         return r;
-    
     }
 
 
@@ -114,47 +94,35 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     
     window_size = window.getSize();
     const float world_size = static_cast<float>(engine.get_grid_cells() * engine.get_cm_per_cell());
-
     grid_view.setSize(sf::Vector2f{world_size, world_size});
     grid_view.setCenter(sf::Vector2f{0.f, 0.f});
-
     float win_w = static_cast<float>(window_size.x);
     float win_h = static_cast<float>(window_size.y);
     float scale = std::min(win_w, win_h);
-
     grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.f, (win_h - scale) / win_h / 2.f}, {scale / win_w, scale / win_h}});
-
     if (!font.openFromFile("assets/fonts/Inter-Regular.otf")) {
         std::cerr << "Failed to load font\n" << std::endl;
     }
-
     length_text.setFont(font);
     length_text.setCharacterSize(14);
     length_text.setFillColor(sf::Color::Black);
-
 }
 
 
 double GridRenderer::pixel_radius_to_world_cm(float px) const {
-
     sf::Vector2f p0 = window.mapPixelToCoords({0, 0}, grid_view);
     sf::Vector2f p1 = window.mapPixelToCoords({(int)px, 0}, grid_view);
+    
     return std::abs(p1.x - p0.x);
-
 }
 
 
 Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
-    
     const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
     const double nx = mouse.x / grid_view.getSize().x;
     const double ny = mouse.y / grid_view.getSize().y;
 
-    return {
-
-        (nx - 0.5) * world_size_cm, (0.5 - ny) * world_size_cm
-    
-    };
+    return {(nx - 0.5) * world_size_cm, (0.5 - ny) * world_size_cm};
 }
 
 
@@ -169,14 +137,10 @@ void GridRenderer::finalize_blueprint() {
     selected_entity_index.reset();
 
     if (blueprint_finalized) {
-
         std::cout << "========= Final Blueprint =========\n";
         std::cout << engine.to_json() << "\n";
-
     } else {
-
         std::cout << "========= Editing Resumed =========\n";
-
     }
 }
 
@@ -193,14 +157,11 @@ void GridRenderer::handle_select_click(const Point& p) {
     double best_entity_dist = SELECT_EPS_CM;
 
     for (std::size_t i = 0; i < entities.size(); ++i) {
-
         double d = distance_point_to_point(p, entities[i].position);
 
         if (d < best_entity_dist) {
-
             best_entity_dist = d;
             selected_entity_index = i;
-        
         }
     }
 
@@ -211,14 +172,11 @@ void GridRenderer::handle_select_click(const Point& p) {
     double best_wall_dist = SELECT_EPS_CM;
 
     for (std::size_t i = 0; i < walls.size(); ++i) {
-
         double d = distance_point_to_segment(p, walls[i].a, walls[i].b);
 
         if (d < best_wall_dist) {
-
             best_wall_dist = d;
             selected_wall_index = i;
-
         }
     }
 
@@ -277,13 +235,10 @@ void GridRenderer::handle_events() {
         }
 
         if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-            
             window_size = {resized->size.x, resized->size.y};
-
             float win_w = static_cast<float>(window_size.x);
             float win_h = static_cast<float>(window_size.y);
             float scale = std::min(win_w, win_h);
-            
             grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.0f, (win_h - scale) / win_h / 2.0f}, {scale / win_w, scale / win_h}});
 
         }
@@ -333,15 +288,13 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
-            - error walls not connected (might not be a good idea)
-            - drag entities
-            - duplicate highlighted entities
+            - validate() function to verify no zero length walls, openings dont exceed wall bounds, openings dont overlap, walls have material IDs
+            - selection model cleanup (future-proofing), struct Selection { enum class Type {None, ...}} ? not sure what is meant by this
+            - refactor JSON to a cleaner version for calculation ready files
             */
 
             if (key->code == sf::Keyboard::Key::F) {
-
                 finalize_blueprint();
-
             }
 
             if (key->code == sf::Keyboard::Key::Space) {
@@ -360,13 +313,9 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::Z && key->system) {
 
                 if (key->shift) {
-
                     undo_stack.redo();
-
                 } else {
-
                     undo_stack.undo();
-
                 }
             }
 
@@ -406,10 +355,9 @@ void GridRenderer::handle_events() {
             }
 
             if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
-                
+        
                 // Priority 1: openings
                 if (selected_opening_index.has_value()) {
-
                     undo_stack.execute(std::make_unique<RemoveOpeningCommand>(engine, *selected_opening_wall_index, *selected_opening_index));
                     selected_opening_index.reset();
                     selected_opening_wall_index.reset();
@@ -419,7 +367,6 @@ void GridRenderer::handle_events() {
 
                 // Priority 2: point entities
                 if (selected_entity_index.has_value()) {
-
                     undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, *selected_entity_index));
                     selected_entity_index.reset();
                     selected_wall_index.reset();
@@ -428,7 +375,6 @@ void GridRenderer::handle_events() {
 
                 // Priority 3: walls         
                 else if (selected_wall_index.has_value()) {
-
                     undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, *selected_wall_index));
                     selected_wall_index.reset();
                     return;
@@ -438,47 +384,33 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::Escape) {
 
                 if (drawing) {
-
                     drawing = false; // cancel drawing
                     preview_point = start_point;
-
                 }
             }
 
             if (key->code == sf::Keyboard::Key::W) {
-
                 current_tool = Tool::DrawWall;
-
             }
 
             if (key->code == sf::Keyboard::Key::S) {
-
                 current_tool = Tool::PlaceSource;
-
             }
 
             if (key->code == sf::Keyboard::Key::D) {
-
                 current_tool = Tool::PlaceDose;
-
             }
 
             if (key->code == sf::Keyboard::Key::O) {
-
                 current_tool = Tool::PlaceOpen;
-
             }
 
             if (key->code == sf::Keyboard::Key::L) {
-
                 current_tool = Tool::PlaceDoor;
-
             }
 
             if (key->code == sf::Keyboard::Key::M) {
-
                 current_tool = Tool::PlaceWindow;
-
             }
 
         }
@@ -497,23 +429,18 @@ void GridRenderer::handle_events() {
                 if (interaction_mode == InteractionMode::Draw && (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen)) {
 
                     if (placing_opening) { 
-                        
                         double len = distance_cm(start_point, preview_point);
                         if (len > 1.0) {
-
                             const Wall& w = engine.get_walls()[opening_wall_index];
                             Point mid{(start_point.x_cm + preview_point.x_cm) * 0.5, (start_point.y_cm + preview_point.y_cm) * 0.5};
-
                             WallOpening o;
                             o.center_t = project_t_onto_wall(mid, w);
                             o.length_cm = len;
                             o.type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
-
                             auto& openings = engine.get_walls_mutable()[opening_wall_index].openings;
                             std::size_t opening_index = openings.size();
                             undo_stack.execute(std::make_unique<AddOpeningCommand>(engine, opening_wall_index, opening_index, o));
                         }
-
                         placing_opening = false;
                         return;
                     } 
@@ -522,61 +449,48 @@ void GridRenderer::handle_events() {
                     std::optional<size_t> hit_wall;
 
                     for (size_t i = 0; i < engine.get_walls().size(); ++i) {
-
                         const auto& w = engine.get_walls()[i];
                         double d = distance_point_to_segment(p, w.a, w.b);
                         if (d < best_dist) {
                             best_dist = d;
                             hit_wall = i;
                         }
-
                     }
 
                     if (!hit_wall.has_value()) { return; } // didn't click on wall
 
                     opening_wall_index = *hit_wall;
                     opening_type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
-
                     const Wall& w = engine.get_walls()[opening_wall_index];
-                    
                     double t = project_t_onto_wall(p, w);
                     start_point = lerp_point(w.a, w.b, t);
                     preview_point = start_point;
-
                     placing_opening = true;
                     drawing = false;
                     return;
                 }
 
                 if (interaction_mode == InteractionMode::Select) {
-
                     handle_select_click(p);
                     return;
-
                 }
 
                 if (current_tool == Tool::PlaceSource) {
-
                     PointEntity e;
                     e.position = p;
                     e.type = PointType::Source;
                     e.label = "";
-
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
-
                 }
 
                 if (current_tool == Tool::PlaceDose) {
-
                     PointEntity e;
                     e.position = p;
                     e.type = PointType::Dose;
                     e.label = "";
-
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
-
                 }
 
                 if (placing_opening) {
@@ -584,26 +498,19 @@ void GridRenderer::handle_events() {
                 }
 
                 if (!drawing) {
-
                     start_point = p;
                     preview_point = p;
                     drawing = true;
-                
                 } else {
-                    
                     std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
-
                     Wall wall;
                     wall.a = start_point;
                     wall.b = p;
                     wall.thickness_cm = 20.0;
                     wall.material_id = 1;
                     wall.length_cm = std::hypot(wall.a.x_cm - wall.b.x_cm, wall.a.y_cm - wall.b.y_cm);
-
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
-                    
                     drawing = false;
-                
                 }
             }
         }
@@ -626,88 +533,60 @@ void GridRenderer::render() {
     for (double x = min_x; x <= max_x; x += grid_spacing_cm) {
 
         sf::Vertex line[2];
-        
         line[0].position = sf::Vector2f{static_cast<float>(x), static_cast<float>(min_y)};
         line[1].position = sf::Vector2f{static_cast<float>(x), static_cast<float>(max_y)};
-
         line[0].color = Cosmetics::GRID_COLOR;
         line[1].color = Cosmetics::GRID_COLOR;
-
         window.draw(line, 2, sf::PrimitiveType::Lines);
-
     }
 
     for (double y = min_y; y <= max_y; y += grid_spacing_cm) {
 
         sf::Vertex line[2];
-        
         line[0].position = sf::Vector2f{static_cast<float>(min_x), static_cast<float>(y)};
         line[1].position = sf::Vector2f{static_cast<float>(max_x), static_cast<float>(y)};
-
         line[0].color = Cosmetics::GRID_COLOR;
         line[1].color = Cosmetics::GRID_COLOR;
-
         window.draw(line, 2, sf::PrimitiveType::Lines);
-
     }
 
     if (drawing) {
-
         sf::Vertex preview[2];
-
         preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
         preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-        
         preview[0].color = Cosmetics::WALL_NORMAL;
-        preview[1].color = Cosmetics::WALL_NORMAL;
-        
+        preview[1].color = Cosmetics::WALL_NORMAL;        
         window.draw(preview, 2, sf::PrimitiveType::Lines);
-
         double len_cm = distance_cm(start_point, preview_point);
-
         sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) / 2.0), static_cast<float>((start_point.y_cm + preview_point.y_cm) / 2.0)};
-
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(1) << len_cm << " cm";
-
         length_text.setString(ss.str());
         length_text.setPosition(mid);
-
         window.draw(length_text);
-
     }
 
     // draw walls
     const auto& walls = engine.get_walls();
     for (std::size_t i = 0; i < walls.size(); ++i) {
-
         const auto& w = walls[i];
         sf::Vertex wall[2];
-
         wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
         wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
-
         if (selected_wall_index && *selected_wall_index == i) {
-
             wall[0].color = sf::Color::Green;
             wall[1].color = sf::Color::Green;
-
         } else {
-
             wall[0].color = sf::Color::Black;
             wall[1].color = sf::Color::Black;
-
         }
 
         window.draw(wall, 2, sf::PrimitiveType::Lines);
         
         if (placing_opening && i == opening_wall_index) {
-
             sf::Vertex preview[2];
-            
             preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
             preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-            
             sf::Color c;
             switch (opening_type) {
                 case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
@@ -715,7 +594,6 @@ void GridRenderer::render() {
                 case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
             }
             auto rect = make_thick_segment({static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)}, {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
-            
             window.draw(rect);
 
             // draw text
