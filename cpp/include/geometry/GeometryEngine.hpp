@@ -45,6 +45,7 @@ class GeometryEngine {
         void add_source(Point p);
         void add_dose(Point p);
         const std::vector<PointEntity>& get_entities() const;
+        std::vector<PointEntity>& get_entities_mutable() { return entities; }
 
         std::string to_json() const;
         bool load_from_json(const std::string& json_str);

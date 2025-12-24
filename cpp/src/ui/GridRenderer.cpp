@@ -5,6 +5,7 @@
 #include "ui/AddEntityCommand.hpp"
 #include "ui/AddOpeningCommand.hpp"
 #include "ui/RemoveOpeningCommand.hpp"
+#include "ui/ShiftGeometryCommand.hpp"
 #include "ui/Cosmetics.hpp"
 #include <algorithm>
 #include <iostream>
@@ -19,6 +20,7 @@ namespace {
     constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 25cm of it
     constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
     constexpr float PICK_RADIUS_PX = 10.0f;
+    constexpr double SHIFT_MOVE_MULTIPLIER = 10.0; // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
 
     double distance_point_to_segment(Point p, Point a, Point b) {
 
@@ -366,6 +368,41 @@ void GridRenderer::handle_events() {
                     undo_stack.undo();
 
                 }
+            }
+
+            if (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::Right || key->code == sf::Keyboard::Key::Up || key->code == sf::Keyboard::Key::Down) {
+                // only allow shifting in select mode
+                if (interaction_mode != InteractionMode::Select) {
+                    continue;
+                }
+
+                double step = engine.get_cm_per_cell();
+                if (key->shift) {
+                    step *= SHIFT_MOVE_MULTIPLIER;
+                }
+
+                double dx = 0.0; 
+                double dy = 0.0;
+
+                switch (key->code) {
+                    case sf::Keyboard::Key::Left: dx = -step; break;
+                    case sf::Keyboard::Key::Right: dx = step; break;
+                    case sf::Keyboard::Key::Up: dy = -step; break;
+                    case sf::Keyboard::Key::Down: dy = step; break;
+                    default: break;
+                }
+
+                // clear all selections and cancel interactions
+                selected_wall_index.reset();
+                selected_entity_index.reset();
+                selected_opening_index.reset();
+                selected_opening_wall_index.reset();
+                drawing = false;
+                placing_opening = false;
+
+                undo_stack.execute(std::make_unique<ShiftGeometryCommand>(engine, dx, dy));
+
+                continue;
             }
 
             if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
