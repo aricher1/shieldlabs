@@ -250,6 +250,7 @@ void GridRenderer::handle_select_click(const Point& p) {
         if (hit_opening.has_value()) {
             selected_opening_wall_index = *selected_wall_index;
             selected_opening_index = *hit_opening;
+            selected_wall_index.reset();
         }
     }
 

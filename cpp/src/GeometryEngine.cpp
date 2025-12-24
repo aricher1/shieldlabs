@@ -144,35 +144,46 @@ std::string GeometryEngine::to_json() const {
     j["walls"] = json::array();
     
     for (const auto& w : walls) {
-        j["walls"].push_back({
-            {"a", {{"x", w.a.x_cm}, {"y", w.a.y_cm}}},
-            {"b", {{"x",w.b.x_cm}, {"y", w.b.y_cm}}},
-            {"thickness_cm", w.thickness_cm},
-            {"material_id", w.material_id}
-        });
+        
+        json jw;
+        jw["a"] = {{"x", w.a.x_cm}, {"y", w.a.y_cm}};
+        jw["b"] = {{"x", w.b.x_cm}, {"y", w.b.y_cm}};
+        jw["thickness_cm"] = w.thickness_cm;
+        jw["material_id"] = w.material_id;
+        jw["length_cm"] = w.length_cm;
+        
+        // openings
+        jw["openings"] = json::array();
+        for (const auto& o : w.openings) {
+            json jo;
+            switch (o.type) {
+                case OpeningType::Door: jo["type"] = "door"; break;
+                case OpeningType::Window: jo["type"] = "window"; break;
+                case OpeningType::Open: jo["type"] = "open"; break; 
+            }
+
+            jo["center_t"] = o.center_t;
+            jo["length_cm"] = o.length_cm;
+            jw["openings"].push_back(jo);
+        }
+
+        j["walls"].push_back(jw);
     }
 
     j["sources"] = json::array();
     j["dose_points"] = json::array();
 
     for (const auto& e : entities) {
-
         json entry = {{"x", e.position.x_cm}, {"y", e.position.y_cm}};
 
         if (!e.label.empty()) {
-
             entry["label"] = e.label;
-
         }
 
         if (e.type == PointType::Source) {
-
             j["sources"].push_back(entry);
-
         } else {
-
             j["dose_points"].push_back(entry);
-
         }
     }
 
@@ -213,35 +224,40 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
             add_wall(a, b, thickness, material_id);
 
+            if (jw.contains("openings")) {
+                Wall& w = walls.back();
+                for (const auto& jo : jw["openings"]) {
+                    WallOpening o;
+                    const std::string type = jo["type"];
+                    if (type == "door") { o.type = OpeningType::Door; }
+                    else if (type == "window") { o.type = OpeningType::Window; }
+                    else { o.type = OpeningType::Open; }
+
+                    o.center_t = jo["center_t"];
+                    o.length_cm = jo["length_cm"];
+                    w.openings.push_back(o);
+                }
+            }
         }
     }
 
     if (j.contains("sources")) {
-
         for (const auto& s : j["sources"]) {
-            
             entities.push_back({{s["x"], s["y"]}, PointType::Source, s.value("label", "")});
-        
         }
     }
 
     if (j.contains("dose_points")) {
-
         for (const auto& d : j["dose_points"]) {
-
             entities.push_back({{d["x"], d["y"]}, PointType::Dose, d.value("label", "")});
-
         }
     }
 
     return true;
-
 }
 
 
 void GeometryEngine::clear() {
-
     walls.clear();
     points.clear();
-
 }
