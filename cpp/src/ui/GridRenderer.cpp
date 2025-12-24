@@ -127,8 +127,20 @@ Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
 
 
 void GridRenderer::finalize_blueprint() {
+    // error handling
+    if (!blueprint_finalized) {
+        auto errors = engine.validate();
+        if (!errors.empty()) {
+            std::cerr << "VALIDATION ERRORS:\n";
+            for (const auto& e : errors) {
+                std::cerr << e.message << "\n";
+            }
+            return;
+        }
+        std::cerr << "Validation passed.\n";
+    }
 
-    // Toggle finalized state
+    // toggle finalized state
     blueprint_finalized = !blueprint_finalized;
 
     // cancel any current edits

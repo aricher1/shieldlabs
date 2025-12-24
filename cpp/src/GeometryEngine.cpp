@@ -257,6 +257,79 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 }
 
 
+std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
+    std::vector<ValidationError> errors; // create vector to store all errors
+
+    // check walls
+    for (std::size_t i = 0; i < walls.size(); ++i) {
+        const auto& w = walls[i];
+
+        if (w.length_cm <= SNAP_EPS_CM) {
+            errors.push_back({"Wall " + std::to_string(i) + " has a zero or near-zero length."});
+        }
+
+        if (w.thickness_cm <= 0.0) { // not possible to have negative thickness
+            errors.push_back({"Wall " + std::to_string(i) + " has non-positive thickness."});
+        }
+
+        if (w.material_id < 0) {
+            errors.push_back({"Wall " + std::to_string(i) + " has invalid material_id."});
+        }
+
+        // check openings on wall
+        for (std::size_t j = 0; j < w.openings.size(); ++j) {
+            const auto& o = w.openings[j];
+
+            if (o.length_cm <= 0.0) { // not possible to have negative length
+                errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " has non-positive length."});
+            }
+
+            if (o.center_t < 0.0 || o.center_t > 1.0) {
+                errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " has center_t outside [0,1]."});
+            }
+
+            if (w.length_cm > 0.0) {
+                double half_t = (o.length_cm * 0.5) / w.length_cm;
+                if (o.center_t - half_t < 0.0 || o.center_t + half_t > 1.0) {
+                    errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " extends beyond wall bounds."});
+                }
+            }
+        }
+
+        // check for overlap on openings
+        for (std::size_t a = 0; a < w.openings.size(); ++a) {
+            const auto& oa = w.openings[a];
+            double half_t_a = (oa.length_cm * 0.5) / w.length_cm;
+            double a_start = oa.center_t - half_t_a;
+            double a_end = oa.center_t + half_t_a;
+
+            for (std::size_t b = a + 1; b < w.openings.size(); ++b) {
+                const auto& ob = w.openings[b];
+                double half_t_b = (ob.length_cm * 0.5) / w.length_cm;
+                double b_start = ob.center_t - half_t_b;
+                double b_end = ob.center_t + half_t_b;
+
+                // check for overlap
+                if (std::max(a_start, b_start) < std::min(a_end, b_end)) {
+                    errors.push_back({"Openings " + std::to_string(a) + " and " + std::to_string(b) + " overlap on wall " + std::to_string(i) + "."});
+                }
+            }
+        }
+    }
+
+    // entities
+    for (std::size_t i = 0; i < entities.size(); ++i) {
+        const auto& e = entities[i];
+
+        if (!std::isfinite(e.position.x_cm) || !std::isfinite(e.position.y_cm)) {
+            errors.push_back({"Entity " + std::to_string(i) + " has invalid coordinates."});
+        }
+    }
+
+    return errors;
+}
+
+
 void GeometryEngine::clear() {
     walls.clear();
     points.clear();

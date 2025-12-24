@@ -49,6 +49,13 @@ class GeometryEngine {
 
         std::string to_json() const;
         bool load_from_json(const std::string& json_str);
-        void clear();
 
+        // error handling for validate() func
+        struct ValidationError {
+            std::string message;
+        };
+        std::vector<ValidationError> validate() const;
+        
+        void clear();
+        
 };
