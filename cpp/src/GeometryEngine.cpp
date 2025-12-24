@@ -259,10 +259,21 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
 std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
     std::vector<ValidationError> errors; // create vector to store all errors
+    const double half = (grid_cells * cm_per_cell) * 0.5;
 
     // check walls
     for (std::size_t i = 0; i < walls.size(); ++i) {
         const auto& w = walls[i];
+
+        // check wall enpoints are inside grid
+        auto check_point_in_bounds = [&](const Point& p, const std::string& label) {
+            if (p.x_cm < -half || p.x_cm > half || p.y_cm < -half || p.y_cm > half) {
+                errors.push_back({label + " is outside grid bounds."});
+            }
+        };
+
+        check_point_in_bounds(w.a, "Wall " + std::to_string(i) + " endpoint A.");
+        check_point_in_bounds(w.b, "Wall " + std::to_string(i) + " endpoint B.");
 
         if (w.length_cm <= SNAP_EPS_CM) {
             errors.push_back({"Wall " + std::to_string(i) + " has a zero or near-zero length."});
@@ -320,6 +331,11 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
     // entities
     for (std::size_t i = 0; i < entities.size(); ++i) {
         const auto& e = entities[i];
+
+        // check if entities are in bounds
+        if (e.position.x_cm < -half || e.position.x_cm > half || e.position.y_cm < -half || e.position.y_cm > half) {
+            errors.push_back({"Entity " + std::to_string(i) + " is outside grid bounds."});
+        }
 
         if (!std::isfinite(e.position.x_cm) || !std::isfinite(e.position.y_cm)) {
             errors.push_back({"Entity " + std::to_string(i) + " has invalid coordinates."});
