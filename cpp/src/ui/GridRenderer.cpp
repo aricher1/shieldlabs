@@ -299,6 +299,7 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
+            - material selection logic
             - refactor JSON to a cleaner version for calculation ready files
             */
 
