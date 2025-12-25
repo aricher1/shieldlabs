@@ -299,7 +299,6 @@ void GridRenderer::handle_events() {
 
             /* 
             To Do
-            - selection model cleanup (future-proofing), struct Selection { enum class Type {None, ...}} ? not sure what is meant by this
             - refactor JSON to a cleaner version for calculation ready files
             */
 
