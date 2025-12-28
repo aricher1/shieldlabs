@@ -20,7 +20,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 add_executable(xrct_ui
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
-    src/GeometryEngine.cpp
+    src/geometry/GeometryEngine.cpp
     src/materials/MaterialRegistry.cpp
 )
 
