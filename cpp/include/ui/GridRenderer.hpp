@@ -26,18 +26,21 @@ struct Selection {
     enum class Type {
         None,
         Wall,
+        WallLayer,
         Opening,
         Entity
     };
 
     Type type = Type::None;
     std::size_t wall_index = 0;
+    std::size_t layer_index = 0;
     std::size_t opening_index = 0;
     std::size_t entity_index = 0;
 
     void clear() {
         type = Type::None;
         wall_index = 0;
+        layer_index = 0;
         opening_index = 0;
         entity_index = 0;
     }

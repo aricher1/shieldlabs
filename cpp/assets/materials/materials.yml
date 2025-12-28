@@ -1,0 +1,12 @@
+materials:
+  - id: 1
+    key: concrete
+    name: Concrete
+
+  - id: 2
+    key: lead
+    name: Lead
+
+  - id: 3
+    key: steel
+    name: Steel

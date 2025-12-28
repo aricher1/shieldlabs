@@ -6,6 +6,9 @@
 #include "ui/AddOpeningCommand.hpp"
 #include "ui/RemoveOpeningCommand.hpp"
 #include "ui/ShiftGeometryCommand.hpp"
+#include "ui/AddWallLayerCommand.hpp"
+#include "ui/RemoveWallLayerCommand.hpp"
+#include "ui/EditWallLayerCommand.hpp"
 #include "ui/Cosmetics.hpp"
 #include <algorithm>
 #include <iostream>
@@ -294,6 +297,8 @@ void GridRenderer::handle_events() {
             - O = draw opening
             - L = draw door
             - M = draw window
+            - H = enter layer mode on wall
+            - [ ] navigate through layers
             */
 
 
@@ -322,6 +327,44 @@ void GridRenderer::handle_events() {
                     undo_stack.redo();
                 } else {
                     undo_stack.undo();
+                }
+            }
+
+            if (key->code == sf::Keyboard::Key::H) {
+
+                if (interaction_mode != InteractionMode::Select) { return; }
+                // enter layer mode
+                if (selection.type == Selection::Type::Wall) {
+                    const auto& layers = engine.get_walls()[selection.wall_index].layers;
+
+                    if (!layers.empty()) {
+                        selection.type = Selection::Type::WallLayer;
+                        selection.layer_index = 0;
+                    }
+                    return;
+                }
+
+                // exit layer mode
+                if (selection.type == Selection::Type::WallLayer) {
+                    selection.type = Selection::Type::Wall;
+                    selection.layer_index = 0;
+                    return;
+                }
+            }
+
+            if (selection.type == Selection::Type::WallLayer) {
+                const auto& layers = engine.get_walls()[selection.wall_index].layers;
+
+                if (layers.empty()) { return; }
+
+                if (key->code == sf::Keyboard::Key::LBracket) {
+                    selection.layer_index = (selection.layer_index + layers.size() - 1) % layers.size();
+                    return;
+                }
+
+                if (key->code == sf::Keyboard::Key::RBracket) {
+                    selection.layer_index = (selection.layer_index + 1) % layers.size();
+                    return;
                 }
             }
 

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
+find_package(yaml-cpp REQUIRED)
 
 FetchContent_Declare(
     nlohmann_json
@@ -20,6 +21,7 @@ add_executable(xrct_ui
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
     src/GeometryEngine.cpp
+    src/materials/MaterialRegistry.cpp
 )
 
 target_include_directories(xrct_ui PRIVATE
@@ -32,4 +34,5 @@ target_link_libraries(xrct_ui PUBLIC
     SFML::Window
     SFML::System
     nlohmann_json::nlohmann_json
+    yaml-cpp::yaml-cpp
 )
