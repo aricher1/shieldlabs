@@ -286,7 +286,7 @@ void GridRenderer::handle_events() {
         if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
             
             /* 
-            ======== Controls ========
+            ======= Controls =======
             - Cmd + Z = undo
             - Cmd + Shift + Z = redo
             - Click near wall -> turns green -> delete or backspace = remove
