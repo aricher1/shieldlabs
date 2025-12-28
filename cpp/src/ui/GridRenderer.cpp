@@ -1,4 +1,5 @@
 #include "ui/GridRenderer.hpp"
+#include "materials/MaterialRegistry.hpp"
 #include "ui/AddWallCommand.hpp"
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
@@ -17,6 +18,7 @@
 #include <cmath>
 
 
+extern MaterialRegistry material_registry;
 
 namespace {
 
@@ -298,7 +300,12 @@ void GridRenderer::handle_events() {
             - L = draw door
             - M = draw window
             - H = enter layer mode on wall
-            - [ ] navigate through layers
+            - ] = navigate through layers
+            - [ = decrease thickness 1cm
+            - N = increase 1cm
+            - A = add a new layer
+            - , = previous layer
+            - . = next layer
             */
 
 
@@ -319,6 +326,8 @@ void GridRenderer::handle_events() {
                 selection.clear();
                 drawing = false;
                 placing_opening = false;
+                layer_ui.panel_open = false;
+                layer_ui.active_field = LayerField::None;
             }
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
@@ -333,6 +342,7 @@ void GridRenderer::handle_events() {
             if (key->code == sf::Keyboard::Key::H) {
 
                 if (interaction_mode != InteractionMode::Select) { return; }
+
                 // enter layer mode
                 if (selection.type == Selection::Type::Wall) {
                     const auto& layers = engine.get_walls()[selection.wall_index].layers;
@@ -340,6 +350,8 @@ void GridRenderer::handle_events() {
                     if (!layers.empty()) {
                         selection.type = Selection::Type::WallLayer;
                         selection.layer_index = 0;
+                        layer_ui.panel_open = true;
+                        layer_ui.active_field = LayerField::None;
                     }
                     return;
                 }
@@ -348,22 +360,72 @@ void GridRenderer::handle_events() {
                 if (selection.type == Selection::Type::WallLayer) {
                     selection.type = Selection::Type::Wall;
                     selection.layer_index = 0;
+                    layer_ui.panel_open = false;
+                    layer_ui.active_field = LayerField::None;
                     return;
                 }
             }
 
-            if (selection.type == Selection::Type::WallLayer) {
-                const auto& layers = engine.get_walls()[selection.wall_index].layers;
+            if (selection.type == Selection::Type::WallLayer && interaction_mode == InteractionMode::Select) {
+                auto& wall = engine.get_walls_mutable()[selection.wall_index];
+                if (wall.layers.empty()) { return; }
+                auto& layer = wall.layers[selection.layer_index];
 
-                if (layers.empty()) { return; }
-
-                if (key->code == sf::Keyboard::Key::LBracket) {
-                    selection.layer_index = (selection.layer_index + layers.size() - 1) % layers.size();
+                // previous layer ,
+                if (key->code == sf::Keyboard::Key::Comma) {
+                    selection.layer_index = (selection.layer_index + wall.layers.size() - 1) % wall.layers.size();
                     return;
                 }
 
+                // next layer .
+                if (key->code == sf::Keyboard::Key::Period) {
+                    selection.layer_index = (selection.layer_index + 1) % wall.layers.size();
+                    return;
+                }
+
+                // cycle material forward ]
                 if (key->code == sf::Keyboard::Key::RBracket) {
-                    selection.layer_index = (selection.layer_index + 1) % layers.size();
+                    layer.material_id = material_registry.next_id(layer.material_id);
+                    return;
+                }
+
+                // thickness decrease [
+                if (key->code == sf::Keyboard::Key::LBracket) {
+                    layer.thickness_cm -= 1.0;
+                    if (layer.thickness_cm < 0.1) {
+                        layer.thickness_cm = 0.1;
+                    }
+                    return;
+                }
+
+                // thickness increase N
+                if (key->code == sf::Keyboard::Key::N) {
+                    layer.thickness_cm += 1.0;
+                    return;
+                }
+
+                // add a new layer A
+                if (key->code == sf::Keyboard::Key::A) {
+                    auto& layers = wall.layers;
+                    const auto& base = layers[selection.layer_index];
+
+                    WallLayer new_layer;
+                    new_layer.material_id = base.material_id;
+                    new_layer.thickness_cm = 20.0; // default thickness
+                    layers.insert(layers.begin() + selection.layer_index + 1, new_layer);
+                    selection.layer_index += 1;
+                    return;
+                }
+
+                // remove current layer X
+                if (key->code == sf::Keyboard::Key::X) {
+                    auto& layers = wall.layers;
+                    if (layers.size() <= 1) { return; }
+
+                    layers.erase(layers.begin() + selection.layer_index);
+                    if (selection.layer_index >= layers.size()) {
+                        selection.layer_index = layers.size() - 1;
+                    }
                     return;
                 }
             }
@@ -763,6 +825,62 @@ void GridRenderer::render() {
         window.draw(marker);
     } 
 
+    // temporary panel view
     window.setView(window.getDefaultView());
+    if (interaction_mode == InteractionMode::Select && layer_ui.panel_open && selection.type == Selection::Type::WallLayer) {
+        const auto& w = engine.get_walls()[selection.wall_index];
+        const auto& layers = w.layers;
+
+        sf::RectangleShape panel;
+        panel.setSize({260.f, 140.f});
+        panel.setFillColor(sf::Color(245,245,245));
+        panel.setOutlineThickness(1.f);
+        panel.setOutlineColor(sf::Color::Black);
+        panel.setPosition({window.getSize().x - 270.f, 10.f});
+        window.draw(panel);
+
+        float x = window.getSize().x - 260.f;
+        float y = 20.f;
+
+        length_text.setFillColor(sf::Color::Black);
+
+        length_text.setString("Wall Layers");
+        length_text.setPosition({x, y});
+        window.draw(length_text);
+        y += 18.f;
+
+        {
+            std::ostringstream ss;
+            ss << "Layer: " << (selection.layer_index + 1)
+               << " / " << layers.size();
+            length_text.setString(ss.str());
+            length_text.setPosition({x, y});
+            window.draw(length_text);
+            y += 16.f;
+        }
+
+        {
+            const auto& layer = layers[selection.layer_index];
+            const auto* mat = material_registry.get(layer.material_id);
+
+            std::ostringstream ss;
+            ss << "Material: " << (mat ? mat->name : "Unknown");
+            length_text.setString(ss.str());
+            length_text.setPosition({x, y});
+            window.draw(length_text);
+            y += 16.f;
+        }
+
+        {
+            const auto& layer = layers[selection.layer_index];
+            std::ostringstream ss;
+            ss << "Thickness: "
+               << std::fixed << std::setprecision(1)
+               << layer.thickness_cm << " cm";
+            length_text.setString(ss.str());
+            length_text.setPosition({x, y});
+            window.draw(length_text);
+        }
+    }
     window.display();
 }

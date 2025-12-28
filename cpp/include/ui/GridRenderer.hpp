@@ -48,6 +48,19 @@ struct Selection {
 };
 
 
+enum class LayerField {
+    None,
+    Material,
+    Thickness
+};
+
+
+struct LayerUIState {
+    bool panel_open = false;
+    LayerField active_field = LayerField::None;
+};
+
+
 class GridRenderer {
 
     private:
@@ -58,6 +71,8 @@ class GridRenderer {
 
         InteractionMode interaction_mode = InteractionMode::Draw;
         Tool current_tool = Tool::DrawWall;
+
+        LayerUIState layer_ui;
 
         sf::View grid_view;
         sf::Vector2u window_size;

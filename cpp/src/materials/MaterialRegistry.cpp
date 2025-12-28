@@ -35,7 +35,8 @@ bool MaterialRegistry::load_from_file(const std::string& path) {
             return false;
         }
 
-        materials[m.id] = m;
+        materials.emplace(m.id, m);
+        material_order.push_back(m.id);
     }
 
     return true;
@@ -46,4 +47,24 @@ const MaterialDef* MaterialRegistry::get(int id) const {
     auto it = materials.find(id);
     if (it == materials.end()) { return nullptr; }
     return &it->second;
+}
+
+
+const std::vector<int>& MaterialRegistry::ordered_ids() const {
+    return material_order;
+}
+
+
+int MaterialRegistry::next_id(int current_id) const {
+    if (material_order.empty()) {
+        return current_id;
+    }
+
+    auto it = std::find(material_order.begin(), material_order.end(), current_id);
+
+    if (it == material_order.end() || ++it == material_order.end()) {
+        return material_order.front();
+    }
+
+    return *it;
 }
