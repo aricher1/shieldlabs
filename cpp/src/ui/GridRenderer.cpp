@@ -331,11 +331,36 @@ void GridRenderer::handle_events() {
             }
 
             if (key->code == sf::Keyboard::Key::Z && key->system) {
+                const bool was_wall_layer = (selection.type == Selection::Type::WallLayer);
+                std::size_t old_layer_count = 0;
+                if (was_wall_layer) {
+                    old_layer_count = engine.get_walls()[selection.wall_index].layers.size();
+                }
 
                 if (key->shift) {
                     undo_stack.redo();
                 } else {
                     undo_stack.undo();
+                }
+
+                // fix selection state after undo/redo
+                if (selection.type == Selection::Type::WallLayer) {
+                    auto & layers = engine.get_walls()[selection.wall_index].layers;
+                    if (layers.empty()) {
+                        selection.type = Selection::Type::Wall;
+                        selection.layer_index = 0;
+                    } else if (selection.layer_index >= layers.size()) {
+                        selection.layer_index = layers.size() - 1;
+                    }
+
+                    if (layers.size() > old_layer_count) {
+                        selection.layer_index = layers.size() - 1;
+                        return;
+                    }
+
+                    if (selection.layer_index >= layers.size()) {
+                        selection.layer_index = layers.size() - 1;
+                    }
                 }
             }
 
@@ -385,22 +410,34 @@ void GridRenderer::handle_events() {
 
                 // cycle material forward ]
                 if (key->code == sf::Keyboard::Key::RBracket) {
-                    layer.material_id = material_registry.next_id(layer.material_id);
+                    WallLayer before = layer;
+                    WallLayer after = before;
+                    after.material_id = material_registry.next_id(before.material_id);
+
+                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
                     return;
                 }
 
                 // thickness decrease [
                 if (key->code == sf::Keyboard::Key::LBracket) {
-                    layer.thickness_cm -= 1.0;
-                    if (layer.thickness_cm < 0.1) {
-                        layer.thickness_cm = 0.1;
+                    WallLayer before = layer;
+                    WallLayer after = before;
+                    after.thickness_cm = before.thickness_cm - 0.1;
+                    if (after.thickness_cm < 0.1) {
+                        after.thickness_cm = 0.1;
                     }
+
+                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
                     return;
                 }
 
                 // thickness increase N
                 if (key->code == sf::Keyboard::Key::N) {
-                    layer.thickness_cm += 1.0;
+                    WallLayer before = layer;
+                    WallLayer after = before;
+                    after.thickness_cm = before.thickness_cm + 0.1;
+
+                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
                     return;
                 }
 
@@ -411,8 +448,9 @@ void GridRenderer::handle_events() {
 
                     WallLayer new_layer;
                     new_layer.material_id = base.material_id;
-                    new_layer.thickness_cm = 20.0; // default thickness
-                    layers.insert(layers.begin() + selection.layer_index + 1, new_layer);
+                    new_layer.thickness_cm = 10.0; // default thickness
+                    
+                    undo_stack.execute(std::make_unique<AddWallLayerCommand>(engine, selection.wall_index, selection.layer_index, new_layer));
                     selection.layer_index += 1;
                     return;
                 }
@@ -422,9 +460,9 @@ void GridRenderer::handle_events() {
                     auto& layers = wall.layers;
                     if (layers.size() <= 1) { return; }
 
-                    layers.erase(layers.begin() + selection.layer_index);
-                    if (selection.layer_index >= layers.size()) {
-                        selection.layer_index = layers.size() - 1;
+                    undo_stack.execute(std::make_unique<RemoveWallLayerCommand>(engine, selection.wall_index, selection.layer_index));
+                    if (selection.layer_index >= wall.layers.size() - 1) {
+                        selection.layer_index = wall.layers.size() - 2;
                     }
                     return;
                 }
@@ -611,7 +649,7 @@ void GridRenderer::handle_events() {
                     Wall wall;
                     wall.a = start_point;
                     wall.b = p;
-                    wall.layers.push_back({1, 20.0});
+                    wall.layers.push_back({1, 10.0});
                     wall.length_cm = std::hypot(wall.a.x_cm - wall.b.x_cm, wall.a.y_cm - wall.b.y_cm);
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
                     drawing = false;
