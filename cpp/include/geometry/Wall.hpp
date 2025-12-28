@@ -19,12 +19,16 @@ struct WallOpening {
 };
 
 
+struct WallLayer {
+    int material_id;
+    double thickness_cm;
+};
+
+
 struct Wall {
     Point a;
     Point b;
-    double thickness_cm;
-    int material_id;
+    std::vector<WallLayer> layers;
     double length_cm;
-
     std::vector<WallOpening> openings;
 };

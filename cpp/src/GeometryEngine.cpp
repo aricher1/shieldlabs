@@ -49,7 +49,13 @@ void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int materia
         return; 
     }
 
-    walls.push_back({a, b, thickness_cm, material_id, length_cm});
+    // walls.push_back({a, b, thickness_cm, material_id, length_cm});
+    Wall w;
+    w.a = a;
+    w.b = b;
+    w.length_cm = length_cm;
+    w.layers.push_back({material_id, thickness_cm});
+    walls.push_back(w);
 }
 
 
@@ -106,7 +112,7 @@ std::string GeometryEngine::to_json() const {
 
     json j;
 
-    j["version"] = 1;
+    j["version"] = 2;
     j["units"] = "cm";
 
     j["grid"] = {
@@ -121,8 +127,10 @@ std::string GeometryEngine::to_json() const {
         json jw;
         jw["a"] = {{"x", w.a.x_cm}, {"y", w.a.y_cm}};
         jw["b"] = {{"x", w.b.x_cm}, {"y", w.b.y_cm}};
-        jw["thickness_cm"] = w.thickness_cm;
-        jw["material_id"] = w.material_id;
+        jw["layers"] = json::array();
+        for (const auto& layer : w.layers) {
+            jw["layers"].push_back({{"material_id", layer.material_id}, {"thickness_cm", layer.thickness_cm}});
+        }
         jw["length_cm"] = w.length_cm;
         
         // openings
@@ -177,7 +185,9 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
     }
 
-    if (!j.contains("version") || j["version"] != 1) { return false; }
+    if (!j.contains("version")) { return false; }
+    int version = j["version"];
+    if (version != 1 && version != 2) { return false; }
     if (!j.contains("grid")) { return false; }
 
     grid_cells  = j["grid"]["cells"];
@@ -192,23 +202,37 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
             Point a{jw["a"]["x"], jw["a"]["y"]};
             Point b{jw["b"]["x"], jw["b"]["y"]};
 
-            double thickness = jw["thickness_cm"];
-            int material_id  = jw["material_id"];
+            Wall w;
+            w.a = add_point(a);
+            w.b = add_point(b);
+            w.length_cm = std::hypot(w.a.x_cm - w.b.x_cm, w.a.y_cm - w.b.y_cm);
 
-            add_wall(a, b, thickness, material_id);
+            if (version == 1) {
+                w.layers.push_back({jw["material_id"], jw["thickness_cm"]});
+            }
+
+            if (version == 2 && jw.contains("layers")) {
+                for (const auto& jl : jw["layers"]) {
+                    w.layers.push_back({jl["material_id"], jl["thickness_cm"]});
+                }
+            }
+            walls.push_back(w);
 
             if (jw.contains("openings")) {
-                Wall& w = walls.back();
+                Wall& wref = walls.back();
                 for (const auto& jo : jw["openings"]) {
                     WallOpening o;
                     const std::string type = jo["type"];
-                    if (type == "door") { o.type = OpeningType::Door; }
-                    else if (type == "window") { o.type = OpeningType::Window; }
-                    else { o.type = OpeningType::Open; }
-
+                    if (type == "door") {
+                        o.type = OpeningType::Door;
+                    } else if (type == "window") {
+                        o.type = OpeningType::Window;
+                    } else {
+                        o.type = OpeningType::Open;
+                    }
                     o.center_t = jo["center_t"];
                     o.length_cm = jo["length_cm"];
-                    w.openings.push_back(o);
+                    wref.openings.push_back(o);
                 }
             }
         }
@@ -252,12 +276,18 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
             errors.push_back({"Wall " + std::to_string(i) + " has a zero or near-zero length."});
         }
 
-        if (w.thickness_cm <= 0.0) { // not possible to have negative thickness
-            errors.push_back({"Wall " + std::to_string(i) + " has non-positive thickness."});
+        if (w.layers.empty()) {
+            errors.push_back({"Wall " + std::to_string(i) + " has no material layers."});
         }
 
-        if (w.material_id < 0) {
-            errors.push_back({"Wall " + std::to_string(i) + " has invalid material_id."});
+        for (const auto& layer : w.layers) {
+            if (layer.thickness_cm <= 0.0) {
+                errors.push_back({"Wall " + std::to_string(i) + " has non-positive layer thickness."});
+            }
+
+            if (layer.material_id < 0) {
+                errors.push_back({"Wall " + std::to_string(i) + " has invalid layer material_id."});
+            }
         }
 
         // check openings on wall

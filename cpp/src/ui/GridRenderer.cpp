@@ -506,8 +506,7 @@ void GridRenderer::handle_events() {
                     Wall wall;
                     wall.a = start_point;
                     wall.b = p;
-                    wall.thickness_cm = 20.0;
-                    wall.material_id = 1;
+                    wall.layers.push_back({1, 20.0});
                     wall.length_cm = std::hypot(wall.a.x_cm - wall.b.x_cm, wall.a.y_cm - wall.b.y_cm);
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
                     drawing = false;
