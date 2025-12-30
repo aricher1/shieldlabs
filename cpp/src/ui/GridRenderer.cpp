@@ -623,6 +623,11 @@ void GridRenderer::handle_events() {
                     e.position = p;
                     e.type = PointType::Source;
                     e.label = "";
+                    e.source = SourceData{
+                        .num_patients = 1.0f,
+                        .activity_per_patient_MBq = 0.0f,
+                        .uptake_time_hours = 0.0f
+                    };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
                 }
@@ -632,6 +637,11 @@ void GridRenderer::handle_events() {
                     e.position = p;
                     e.type = PointType::Dose;
                     e.label = "";
+                    e.dose = DoseData{
+                        .occupancy = 1.0f,
+                        .occupancy_type = "",
+                        .dose_limit_uSv = 0.0f
+                    };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
                 }

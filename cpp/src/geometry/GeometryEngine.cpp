@@ -95,13 +95,35 @@ const std::vector<Wall>& GeometryEngine::get_walls() const { return walls; }
 
 void GeometryEngine::add_source(Point p) {
     p = snap_to_grid(p);
-    entities.push_back({p, PointType::Source, ""});
+
+    PointEntity e;
+    e.position = p;
+    e.type = PointType::Source;
+    e.label = "";
+    e.source = SourceData{
+        .num_patients = 1.0f,
+        .activity_per_patient_MBq = 0.0f,
+        .uptake_time_hours = 0.0f
+    };
+
+    entities.push_back(e);
 }
 
 
 void GeometryEngine::add_dose(Point p) {
     p = snap_to_grid(p);
-    entities.push_back({p, PointType::Dose, ""});
+
+    PointEntity e;
+    e.position = p;
+    e.type = PointType::Dose;
+    e.label = "";
+    e.dose = DoseData{
+        .occupancy = 1.0f,
+        .occupancy_type = "",
+        .dose_limit_uSv = 0.0f
+    };
+
+    entities.push_back(e);
 }
 
 
@@ -155,15 +177,31 @@ std::string GeometryEngine::to_json() const {
     j["dose_points"] = json::array();
 
     for (const auto& e : entities) {
-        json entry = {{"x", e.position.x_cm}, {"y", e.position.y_cm}};
+        json entry;
+        entry["x"] = e.position.x_cm;
+        entry["y"] = e.position.y_cm;
 
         if (!e.label.empty()) {
             entry["label"] = e.label;
         }
 
-        if (e.type == PointType::Source) {
+        // source points
+        if (e.type == PointType::Source && e.source.has_value()) {
+            const auto& s = e.source.value();
+            entry["num_patients"] = s.num_patients;
+            entry["activity_per_patient_MBq"] = s.activity_per_patient_MBq;
+            entry["uptake_time_hours"] = s.uptake_time_hours;
+
             j["sources"].push_back(entry);
-        } else {
+        }
+
+        // dose points
+        if (e.type == PointType::Dose && e.dose.has_value()) {
+            const auto& d = e.dose.value();
+            entry["occupancy"] = d.occupancy;
+            entry["occupancy_type"] = d.occupancy_type;
+            entry["dose_limit_uSv"] = d.dose_limit_uSv;
+
             j["dose_points"].push_back(entry);
         }
     }
@@ -176,13 +214,9 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
     json j;
     try {
-
         j = json::parse(json_str);
-
     } catch (...) {
-
         return false;
-
     }
 
     if (!j.contains("version")) { return false; }
@@ -238,15 +272,37 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
         }
     }
 
+    // source points
     if (j.contains("sources")) {
         for (const auto& s : j["sources"]) {
-            entities.push_back({{s["x"], s["y"]}, PointType::Source, s.value("label", "")});
+            PointEntity e;
+            e.position = {s["x"], s["y"]};
+            e.type = PointType::Source;
+            e.label = s.value("label", "");
+            e.source = SourceData{
+                .num_patients = s.value("num_patients", 1.0f),
+                .activity_per_patient_MBq = s.value("activity_per_patient_MBq", 0.0f),
+                .uptake_time_hours = s.value("uptake_time_hours", 0.0f)
+            };
+        
+            entities.push_back(e);
         }
     }
 
+    // dose points
     if (j.contains("dose_points")) {
         for (const auto& d : j["dose_points"]) {
-            entities.push_back({{d["x"], d["y"]}, PointType::Dose, d.value("label", "")});
+            PointEntity e;
+            e.position = {d["x"], d["y"]};
+            e.type = PointType::Dose;
+            e.label = d.value("label", "");
+            e.dose = DoseData{
+                .occupancy = d.value("occupancy", 1.0f),
+                .occupancy_type = d.value("occupancy_type", ""),
+                .dose_limit_uSv = d.value("dose_limit_uSv", 0.0f)
+            };
+
+            entities.push_back(e);
         }
     }
 

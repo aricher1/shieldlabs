@@ -1,0 +1,26 @@
+isotopes:
+  - id: 1
+    key: f18
+    name: Flourine-18
+
+    gamma_constant_uSv_m2_per_MBq_h: 1.398e-04
+    half_life_hours: 1.83
+
+    materials:
+      lead:
+        hvl1_mm: 5.03
+        hvl2_mm: 4.46
+        tvl1_mm: 15.2
+        tvl2_mm: 13.8
+
+      steel:
+        hvl1_mm: 25.8
+        hvl2_mm: 17.1
+        tvl1_mm: 52.8
+        tvl2_mm: 45.2
+
+      concrete:
+        hvl1_mm: 101.1
+        hvl2_mm: 56.0
+        tvl1_mm: 221.8
+        tvl2_mm: 144.3
