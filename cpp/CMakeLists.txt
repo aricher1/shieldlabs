@@ -23,6 +23,12 @@ add_executable(xrct_ui
     src/ui/GridRenderer.cpp
     src/geometry/GeometryEngine.cpp
     src/materials/MaterialRegistry.cpp
+    src/calc/HitClassification.cpp
+    src/calc/RayHitProcessing.cpp
+    src/calc/RayIntersection.cpp
+    src/calc/RayTraversal.cpp
+    src/calc/SceneCompiler.cpp
+    src/isotopes/IsotopeRegistry.cpp
 )
 
 add_custom_command(TARGET xrct_ui POST_BUILD

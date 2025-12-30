@@ -655,7 +655,7 @@ void GridRenderer::handle_events() {
                     preview_point = p;
                     drawing = true;
                 } else {
-                    std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
+                    // std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
                     Wall wall;
                     wall.a = start_point;
                     wall.b = p;
