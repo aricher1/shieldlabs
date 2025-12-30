@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
+set(SFML_STATIC_LIBRARIES ON)
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 find_package(yaml-cpp REQUIRED)
 
@@ -24,6 +25,12 @@ add_executable(xrct_ui
     src/materials/MaterialRegistry.cpp
 )
 
+add_custom_command(TARGET xrct_ui POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:xrct_ui>/assets
+)
+
 target_include_directories(xrct_ui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/external
@@ -34,5 +41,5 @@ target_link_libraries(xrct_ui PUBLIC
     SFML::Window
     SFML::System
     nlohmann_json::nlohmann_json
-    yaml-cpp::yaml-cpp
+    yaml-cpp
 )

@@ -105,7 +105,7 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     float win_h = static_cast<float>(window_size.y);
     float scale = std::min(win_w, win_h);
     grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.f, (win_h - scale) / win_h / 2.f}, {scale / win_w, scale / win_h}});
-    if (!font.openFromFile("assets/fonts/Inter-Regular.otf")) {
+    if (!font.openFromFile("assets/fonts/Inter-Regular.ttf")) {
         std::cerr << "Failed to load font\n" << std::endl;
     }
     length_text.setFont(font);
