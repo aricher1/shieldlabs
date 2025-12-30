@@ -865,60 +865,65 @@ void GridRenderer::render() {
 
     // temporary panel view
     window.setView(window.getDefaultView());
+
     if (interaction_mode == InteractionMode::Select && layer_ui.panel_open && selection.type == Selection::Type::WallLayer) {
         const auto& w = engine.get_walls()[selection.wall_index];
         const auto& layers = w.layers;
+        const auto& layer = layers[selection.layer_index];
+        const auto* mat = material_registry.get(layer.material_id);
 
-        sf::RectangleShape panel;
-        panel.setSize({260.f, 140.f});
-        panel.setFillColor(sf::Color(245,245,245));
+        // panel
+        sf::Vector2f panel_size{220.f, 110.f};
+
+        sf::RectangleShape panel(panel_size);
+        panel.setFillColor(sf::Color(245, 245, 245));
         panel.setOutlineThickness(1.f);
         panel.setOutlineColor(sf::Color::Black);
-        panel.setPosition({window.getSize().x - 270.f, 10.f});
+
+        // origin at top-center
+        panel.setOrigin(sf::Vector2f(panel_size.x / 2.f, 0.f));
+        panel.setPosition(sf::Vector2f(static_cast<float>(window.getSize().x) / 2.f, 12.0f));
         window.draw(panel);
 
-        float x = window.getSize().x - 260.f;
-        float y = 20.f;
-
+        // text
+        float padding = 12.f;
+        float x = panel.getPosition().x - panel_size.x / 2.f + padding;
+        float y = panel.getPosition().y + padding;
         length_text.setFillColor(sf::Color::Black);
 
+        // title
         length_text.setString("Wall Layers");
-        length_text.setPosition({x, y});
+        length_text.setPosition(sf::Vector2f(x, y));
         window.draw(length_text);
         y += 18.f;
 
-        {
-            std::ostringstream ss;
-            ss << "Layer: " << (selection.layer_index + 1)
-               << " / " << layers.size();
-            length_text.setString(ss.str());
-            length_text.setPosition({x, y});
-            window.draw(length_text);
-            y += 16.f;
-        }
+        std::ostringstream ss;
 
-        {
-            const auto& layer = layers[selection.layer_index];
-            const auto* mat = material_registry.get(layer.material_id);
+        // layer index
+        ss.str("");
+        ss.clear();
+        ss << "Layer: " << (selection.layer_index + 1) << " / " << layers.size();
+        length_text.setString(ss.str());
+        length_text.setPosition(sf::Vector2f(x, y));
+        window.draw(length_text);
+        y += 20.f;
 
-            std::ostringstream ss;
-            ss << "Material: " << (mat ? mat->name : "Unknown");
-            length_text.setString(ss.str());
-            length_text.setPosition({x, y});
-            window.draw(length_text);
-            y += 16.f;
-        }
+        // material
+        ss.str("");
+        ss.clear();
+        ss << "Material: " << (mat ? mat->name : "Unknown");
+        length_text.setString(ss.str());
+        length_text.setPosition(sf::Vector2f(x, y));
+        window.draw(length_text);
+        y += 20.f;
 
-        {
-            const auto& layer = layers[selection.layer_index];
-            std::ostringstream ss;
-            ss << "Thickness: "
-               << std::fixed << std::setprecision(1)
-               << layer.thickness_cm << " cm";
-            length_text.setString(ss.str());
-            length_text.setPosition({x, y});
-            window.draw(length_text);
-        }
+        // thickness
+        ss.str("");
+        ss.clear();
+        ss << "Thickness: " << std::fixed << std::setprecision(1) << layer.thickness_cm << " cm";
+        length_text.setString(ss.str());
+        length_text.setPosition(sf::Vector2f(x, y));
+        window.draw(length_text);
     }
     window.display();
 }

@@ -1,5 +1,8 @@
 #include "geometry/GeometryEngine.hpp"
 #include <SFML/Graphics.hpp>
+#include <nlohmann/json.hpp>
+#include "calc/SceneCompiler.hpp"
+#include "calc/HitClassification.hpp"
 #include "materials/MaterialRegistry.hpp"
 #include "ui/GridRenderer.hpp"
 #include <iostream>
