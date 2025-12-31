@@ -130,7 +130,7 @@ void GeometryEngine::add_dose(Point p) {
 const std::vector<PointEntity>& GeometryEngine::get_entities() const { return entities; }
 
 
-std::string GeometryEngine::to_json() const {
+nlohmann::json GeometryEngine::to_json() const {
 
     json j;
 
@@ -206,7 +206,7 @@ std::string GeometryEngine::to_json() const {
         }
     }
 
-    return j.dump(2);
+    return j;
 }
 
 

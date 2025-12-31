@@ -11,6 +11,9 @@
 #include "ui/RemoveWallLayerCommand.hpp"
 #include "ui/EditWallLayerCommand.hpp"
 #include "ui/Cosmetics.hpp"
+#include "calc/SceneCompiler.hpp"
+#include "calc/CompilerOutput.hpp"
+#include "output/PrintCompilerOutput.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -155,7 +158,24 @@ void GridRenderer::finalize_blueprint() {
 
     if (blueprint_finalized) {
         std::cout << "========= Final Blueprint =========\n";
-        std::cout << engine.to_json() << "\n";
+        
+        // get canonical JSON
+        // std::cout << engine.to_json() << "\n";
+        nlohmann::json j = engine.to_json();
+        std::cout << j.dump(2) << "\n";
+
+        // compile JSON -> CalcScene
+        calc::CalcScene scene = calc::SceneCompiler::compile(j);
+        std::cout << "Compiled scene counts:\n";
+        std::cout << "  sources:     " << scene.sources.size() << "\n";
+        std::cout << "  dose_points: " << scene.dose_points.size() << "\n";
+        std::cout << "  walls:       " << scene.walls.size() << "\n";
+
+        // build compiler output
+        calc::CompilerOutput compiler_output = calc::build_compiler_output(scene);
+
+        // print output
+        output::print(compiler_output);
     } else {
         std::cout << "========= Editing Resumed =========\n";
     }

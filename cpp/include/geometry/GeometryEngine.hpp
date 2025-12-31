@@ -1,8 +1,8 @@
 #pragma once
-
 #include "Point.hpp"
 #include "Wall.hpp"
 #include "PointEntity.hpp"
+#include <nlohmann/json.hpp>
 #include <vector>
 #include <string>
 
@@ -47,7 +47,7 @@ class GeometryEngine {
         const std::vector<PointEntity>& get_entities() const;
         std::vector<PointEntity>& get_entities_mutable() { return entities; }
 
-        std::string to_json() const;
+        nlohmann::json to_json() const;
         bool load_from_json(const std::string& json_str);
 
         // error handling for validate() func

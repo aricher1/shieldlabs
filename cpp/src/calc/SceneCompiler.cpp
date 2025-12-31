@@ -1,5 +1,6 @@
 #include "calc/SceneCompiler.hpp"
 #include <cmath>
+#include <algorithm>
 
 
 
@@ -34,8 +35,8 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
                     const double half_t = length_cm / (2.0 * wall.length_cm);
 
                     CalcOpening opening;
-                    opening.t0 = center_t - half_t;
-                    opening.t1 = center_t + half_t;
+                    opening.t0 = std::clamp(center_t - half_t, 0.0, 1.0);
+                    opening.t1 = std::clamp(center_t + half_t, 0.0, 1.0);
 
                     const std::string type = jo["type"].get<std::string>();
                     if (type == "door") {

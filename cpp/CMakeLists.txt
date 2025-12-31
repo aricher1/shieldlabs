@@ -28,7 +28,11 @@ add_executable(xrct_ui
     src/calc/RayIntersection.cpp
     src/calc/RayTraversal.cpp
     src/calc/SceneCompiler.cpp
+    src/calc/TransportRay.cpp
+    src/calc/CompilerOutput.cpp
+    src/output/PrintCompilerOutput.cpp
     src/isotopes/IsotopeRegistry.cpp
+
 )
 
 add_custom_command(TARGET xrct_ui POST_BUILD
