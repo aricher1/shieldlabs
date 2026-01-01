@@ -93,8 +93,7 @@ SingleRayDoseResult evaluate_single_ray(
             transmission = std::pow(0.5, thickness_mm / sd.hvl1_mm);
         } else {
             const double remaining_mm = thickness_mm - sd.hvl1_mm;
-            transmission =
-                0.5 * std::pow(0.5, remaining_mm / sd.hvl2_mm);
+            transmission = 0.5 * std::pow(0.5, remaining_mm / sd.hvl2_mm);
         }
 
         transmission_total *= transmission;

@@ -640,7 +640,7 @@ void GridRenderer::handle_events() {
                         // TEMPORARY VALUES FOR TESTING -> DEFAULT IS (1, 0, 0, true)
                         .num_patients = 21.0f,
                         .activity_per_patient_MBq = 4000.0f,
-                        .uptake_time_hours = 0.33f,
+                        .uptake_time_hours = 0.5f,
                         .apply_patient_attenuation = true,
                         .apply_radioactive_decay = true
                     };

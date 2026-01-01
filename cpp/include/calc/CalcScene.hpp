@@ -45,6 +45,8 @@ namespace calc {
 
     struct CalcDosePoint {
         CalcPoint position;
+        double occupancy;
+        double dose_limit_uSv;
     };
 
     struct CalcScene {

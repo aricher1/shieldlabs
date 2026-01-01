@@ -73,7 +73,12 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     // dose points
     if (j.contains("dose_points")) {
         for (const auto& jd : j["dose_points"]) {
-            scene.dose_points.push_back({{ jd["x"].get<double>(), jd["y"].get<double>() }});
+            CalcDosePoint dp;
+            dp.position = {jd["x"].get<double>(), jd["y"].get<double>()};
+            dp.occupancy = jd.value("occupancy", 1.0);
+            dp.dose_limit_uSv = jd.value("dose_limit_uSv", 0.0);
+
+            scene.dose_points.push_back(dp);
         }
     }
 

@@ -36,12 +36,24 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
                 material_registry,
                 activity_per_patient_MBq
             );
+        
+        IntegratedDoseResult integrated = 
+            integrate_single_ray(
+                dose,
+                src,
+                *isotope
+            );
 
+        const double occupancy = scene.dose_points[0].occupancy;
+        integrated.occupancy = occupancy;
+        integrated.effective_dose_uSv = integrated.integrated_dose_uSv * occupancy;
+            
         CompilerRayOutput entry;
         entry.ray = ray;
         entry.dose = dose;
+        entry.integrated = integrated;
         entry.isotope_key = isotope->key;
-
+        
         out.rays.push_back(entry);
     }
 
