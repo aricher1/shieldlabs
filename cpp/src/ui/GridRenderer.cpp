@@ -160,13 +160,13 @@ void GridRenderer::finalize_blueprint() {
         std::cout << "========= Final Blueprint =========\n";
         
         // get canonical JSON
-        // std::cout << engine.to_json() << "\n";
         nlohmann::json j = engine.to_json();
         std::cout << j.dump(2) << "\n";
 
         // compile JSON -> CalcScene
         calc::CalcScene scene = calc::SceneCompiler::compile(j);
-        std::cout << "Compiled scene counts:\n";
+        std::cout << "\n=============================================================\n";
+        std::cout << "\nCompiled scene counts:\n";
         std::cout << "  sources:     " << scene.sources.size() << "\n";
         std::cout << "  dose_points: " << scene.dose_points.size() << "\n";
         std::cout << "  walls:       " << scene.walls.size() << "\n";
@@ -599,7 +599,7 @@ void GridRenderer::handle_events() {
                             WallOpening o;
                             o.center_t = project_t_onto_wall(mid, w);
                             o.length_cm = len;
-                            o.type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
+                            o.type = (current_tool == Tool::PlaceDoor) ? ::OpeningType::Door : (current_tool == Tool::PlaceWindow) ? ::OpeningType::Window : ::OpeningType::Open;
                             auto& openings = engine.get_walls_mutable()[opening_wall_index].openings;
                             std::size_t opening_index = openings.size();
                             undo_stack.execute(std::make_unique<AddOpeningCommand>(engine, opening_wall_index, opening_index, o));
@@ -623,7 +623,7 @@ void GridRenderer::handle_events() {
                     if (!hit_wall.has_value()) { return; } // didn't click on wall
 
                     opening_wall_index = *hit_wall;
-                    opening_type = (current_tool == Tool::PlaceDoor) ? OpeningType::Door : (current_tool == Tool::PlaceWindow) ? OpeningType::Window : OpeningType::Open;
+                    opening_type = (current_tool == Tool::PlaceDoor) ? ::OpeningType::Door : (current_tool == Tool::PlaceWindow) ? ::OpeningType::Window : ::OpeningType::Open;
                     const Wall& w = engine.get_walls()[opening_wall_index];
                     double t = project_t_onto_wall(p, w);
                     start_point = lerp_point(w.a, w.b, t);
@@ -644,9 +644,11 @@ void GridRenderer::handle_events() {
                     e.type = PointType::Source;
                     e.label = "";
                     e.source = SourceData{
-                        .num_patients = 1.0f,
-                        .activity_per_patient_MBq = 0.0f,
-                        .uptake_time_hours = 0.0f
+                        // TEMPORARY VALUES FOR TESTING -> DEFAULT IS (1, 0, 0, true)
+                        .num_patients = 21.0f,
+                        .activity_per_patient_MBq = 4000.0f,
+                        .uptake_time_hours = 0.33f,
+                        .apply_patient_attenuation = true
                     };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
@@ -761,9 +763,9 @@ void GridRenderer::render() {
             preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
             sf::Color c;
             switch (opening_type) {
-                case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
-                case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
-                case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
+                case ::OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
+                case ::OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
+                case ::OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
             }
             auto rect = make_thick_segment({static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)}, {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
             window.draw(rect);
@@ -781,9 +783,9 @@ void GridRenderer::render() {
 
             // color matches opening type on top of wall
             switch (opening_type) {
-                case OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
-                case OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
-                case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
+                case ::OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
+                case ::OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
+                case ::OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
             }
 
             length_text.setPosition(mid);
@@ -809,9 +811,9 @@ void GridRenderer::render() {
                 c = Cosmetics::WALL_SELECTED;
             } else {
                 switch (o.type) {
-                    case OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
-                    case OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
-                    case OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
+                    case ::OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
+                    case ::OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
+                    case ::OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
                 }
             }
 
@@ -840,9 +842,9 @@ void GridRenderer::render() {
             length_text.setString(ss.str());
 
             switch (o.type) {
-                case OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
-                case OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
-                case OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
+                case ::OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
+                case ::OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
+                case ::OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
             }
 
             if (selection.type == Selection::Type::Opening && selection.wall_index == i && selection.opening_index == (&o - &w.openings[0])) {

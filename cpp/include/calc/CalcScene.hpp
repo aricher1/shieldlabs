@@ -36,6 +36,10 @@ namespace calc {
 
     struct CalcSource {
         CalcPoint position;
+        double num_patients;
+        double activity_per_patient_MBq;
+        double uptake_time_hours;
+        bool apply_patient_attenuation;
     };
 
     struct CalcDosePoint {

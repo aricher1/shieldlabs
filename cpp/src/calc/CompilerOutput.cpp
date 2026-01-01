@@ -1,21 +1,52 @@
 #include "calc/CalcScene.hpp"
 #include "calc/CompilerOutput.hpp"
 #include "calc/TransportRay.hpp"
+#include "calc/EvaluateSingleRay.hpp"
+#include "isotopes/IsotopeRegistry.hpp"
+#include "materials/MaterialRegistry.hpp"
+#include <stdexcept>
 
-
+extern IsotopeRegistry isotope_registry;
+extern MaterialRegistry material_registry;
 
 namespace calc {
 
 CompilerOutput build_compiler_output(const CalcScene& scene) {
     CompilerOutput out;
 
-    // for now: 1 source -> 1 dose point
-    // later: loops over all of them
     if (!scene.sources.empty() && !scene.dose_points.empty()) {
-        out.rays.push_back(build_transport_ray(scene, 0, 0));
+
+        TransportRay ray =
+            build_transport_ray(scene, 0, 0);
+
+        const IsotopeDef* isotope =
+            isotope_registry.get_by_key("f18");
+        if (!isotope) {
+            throw std::runtime_error("Isotope not found");
+        }
+
+        const auto& src = scene.sources[0];
+        double activity_per_patient_MBq = src.activity_per_patient_MBq;
+
+        SingleRayDoseResult dose =
+            evaluate_single_ray(
+                ray,
+                src,
+                *isotope,
+                material_registry,
+                activity_per_patient_MBq
+            );
+
+        CompilerRayOutput entry;
+        entry.ray = ray;
+        entry.dose = dose;
+        entry.isotope_key = isotope->key;
+
+        out.rays.push_back(entry);
     }
 
     return out;
 }
 
-} // end namespace calc
+
+} // namespace calc

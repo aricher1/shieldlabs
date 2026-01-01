@@ -58,7 +58,14 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     // sources
     if (j.contains("sources")) {
         for (const auto& js : j["sources"]) {
-            scene.sources.push_back({{ js["x"].get<double>(), js["y"].get<double>() }});
+            CalcSource src;
+            src.position = {js["x"].get<double>(), js["y"].get<double>()};
+            src.num_patients = js["num_patients"].get<double>();
+            src.activity_per_patient_MBq = js["activity_per_patient_MBq"].get<double>();
+            src.uptake_time_hours = js["uptake_time_hours"].get<double>();
+            src.apply_patient_attenuation = js.value("apply_patient_attenuation", false);
+
+            scene.sources.push_back(src);
         }
     }
 

@@ -191,6 +191,7 @@ nlohmann::json GeometryEngine::to_json() const {
             entry["num_patients"] = s.num_patients;
             entry["activity_per_patient_MBq"] = s.activity_per_patient_MBq;
             entry["uptake_time_hours"] = s.uptake_time_hours;
+            entry["apply_patient_attenuation"] = s.apply_patient_attenuation;
 
             j["sources"].push_back(entry);
         }

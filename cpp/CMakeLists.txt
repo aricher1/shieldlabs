@@ -19,10 +19,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json)
 
 add_executable(xrct_ui
+    # ----- UI ----- 
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
+    # ----- Geometry -----
     src/geometry/GeometryEngine.cpp
+    # ----- Materials -----
     src/materials/MaterialRegistry.cpp
+    # ----- Calc -----
     src/calc/HitClassification.cpp
     src/calc/RayHitProcessing.cpp
     src/calc/RayIntersection.cpp
@@ -30,9 +34,11 @@ add_executable(xrct_ui
     src/calc/SceneCompiler.cpp
     src/calc/TransportRay.cpp
     src/calc/CompilerOutput.cpp
+    src/calc/EvaluateSingleRay.cpp
+    # ----- Output -----
     src/output/PrintCompilerOutput.cpp
+    # ----- Isotopes -----
     src/isotopes/IsotopeRegistry.cpp
-
 )
 
 add_custom_command(TARGET xrct_ui POST_BUILD

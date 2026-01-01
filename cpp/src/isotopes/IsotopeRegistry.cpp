@@ -28,6 +28,7 @@ bool IsotopeRegistry::load_from_file(const std::string& path) {
         iso.name = node["name"].as<std::string>();
         iso.gamma_constant_uSv_m2_per_MBq_h = node["gamma_constant_uSv_m2_per_MBq_h"].as<double>();
         iso.half_life_hours = node["half_life_hours"].as<double>();
+        iso.patient_attenuation = node["patient_attenuation"] ? node["patient_attenuation"].as<double>() : 0.0;
 
         if (!node["materials"]) {
             std::cerr << "Isotope missing materials block.\n";

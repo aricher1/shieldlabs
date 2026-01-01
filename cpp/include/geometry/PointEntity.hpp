@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Point.hpp"
 #include <string>
 #include <optional>
@@ -11,9 +10,10 @@ enum class PointType {
 
 // ---------------- Source-specific data ---------------- //
 struct SourceData {
-    float num_patients;                  // number of patients
+    float num_patients;                  // number of patients per day
     float activity_per_patient_MBq;      // MBq per patient
     float uptake_time_hours;             // hours
+    bool apply_patient_attenuation;      // user-defined -> yes/no
 };
 
 // ---------------- Dose-specific data ---------------- //
