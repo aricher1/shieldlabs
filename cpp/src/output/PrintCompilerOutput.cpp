@@ -33,7 +33,7 @@ void print(const calc::CompilerOutput& out) {
         std::cout << "  Isotope: " << entry.isotope_key << "\n";
         std::cout << "  Wall Transmission: " << dose.transmission_total << "\n";
         std::cout << "  Patient Transmission: " << dose.patient_transmission << "\n";
-        std::cout << "  Dose (uSv/h): " << dose.dose_uSv_per_h << "\n";
+        std::cout << "  Intitial Dose Rate (uSv/h): " << dose.dose_uSv_per_h << "\n";
     }
 
     std::cout << "=============================================================\n";

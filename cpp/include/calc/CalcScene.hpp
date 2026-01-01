@@ -40,6 +40,7 @@ namespace calc {
         double activity_per_patient_MBq;
         double uptake_time_hours;
         bool apply_patient_attenuation;
+        bool apply_radioactive_decay;
     };
 
     struct CalcDosePoint {

@@ -328,13 +328,6 @@ void GridRenderer::handle_events() {
             - . = next layer
             */
 
-
-            /* 
-            To Do
-            - material selection logic
-            - refactor JSON to a cleaner version for calculation ready files
-            */
-
             if (key->code == sf::Keyboard::Key::F) {
                 finalize_blueprint();
             }
@@ -648,7 +641,8 @@ void GridRenderer::handle_events() {
                         .num_patients = 21.0f,
                         .activity_per_patient_MBq = 4000.0f,
                         .uptake_time_hours = 0.33f,
-                        .apply_patient_attenuation = true
+                        .apply_patient_attenuation = true,
+                        .apply_radioactive_decay = true
                     };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;

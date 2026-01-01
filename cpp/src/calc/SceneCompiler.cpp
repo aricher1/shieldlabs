@@ -64,6 +64,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
             src.activity_per_patient_MBq = js["activity_per_patient_MBq"].get<double>();
             src.uptake_time_hours = js["uptake_time_hours"].get<double>();
             src.apply_patient_attenuation = js.value("apply_patient_attenuation", false);
+            src.apply_radioactive_decay = js.value("apply_radioactive_decay", false);
 
             scene.sources.push_back(src);
         }

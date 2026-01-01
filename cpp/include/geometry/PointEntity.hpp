@@ -10,10 +10,11 @@ enum class PointType {
 
 // ---------------- Source-specific data ---------------- //
 struct SourceData {
-    float num_patients;                  // number of patients per day
+    float num_patients;                  // number of patients per week
     float activity_per_patient_MBq;      // MBq per patient
     float uptake_time_hours;             // hours
     bool apply_patient_attenuation;      // user-defined -> yes/no
+    bool apply_radioactive_decay;        // user-defined -> yes/no
 };
 
 // ---------------- Dose-specific data ---------------- //
@@ -28,7 +29,6 @@ struct PointEntity {
     Point position;                      // cm, snapped
     PointType type;                      // Source or Dose
     std::string label;                   // optional label
-
     std::optional<SourceData> source;    // valid iff type == Source
     std::optional<DoseData> dose;        // valid iff type == Dose
 };
