@@ -25,16 +25,16 @@ void print(const calc::CompilerOutput& out) {
         // Instantaneous dose calculation
         std::cout << "  ========== Dose Calculation ==========\n";
         std::cout << "  Isotope: " << entry.isotope_key << "\n";
-        std::cout << "  Wall Transmission: " << dose.transmission_total << "\n";
+        std::cout << "  Wall Transmission (material attenuation): " << dose.transmission_total << "\n";
         std::cout << "  Patient Transmission: " << dose.patient_transmission << "\n";
-        std::cout << "  Intitial Dose Rate (uSv/h): " << dose.dose_uSv_per_h << "\n";
+        std::cout << "  Intitial Dose Rate, t = 0 (uSv/h): " << dose.dose_uSv_per_h << "\n";
         
         // Radioactive decay
         std::cout << "  ========== Time Integration ==========\n";
         std::cout << "  Integration time t (hours): " << entry.integrated.integration_time_h << "\n";
         std::cout << "  Decay factor: " << entry.integrated.decay_factor << "\n";
         std::cout << "  Integrated dose (uSv): " << entry.integrated.integrated_dose_uSv << "\n";
-        std::cout << "  Average rate (uSv/h): " << entry.integrated.average_rate_uSv_h << "\n";
+        std::cout << "  Average dose rate including decay (uSv/h): " << entry.integrated.average_rate_uSv_h << "\n";
 
         // Occupancy
         std::cout << "  ========== Occupancy ==========\n";

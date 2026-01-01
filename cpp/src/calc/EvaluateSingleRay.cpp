@@ -72,30 +72,33 @@ SingleRayDoseResult evaluate_single_ray(
 
         auto it = isotope.materials.find(mat->key);
         if (it == isotope.materials.end()) {
-            throw std::runtime_error(
-                "No shielding data for material '" + mat->key +
-                "' for isotope '" + isotope.key + "'"
-            );
+            throw std::runtime_error("No shielding data for material '" + mat->key + "' for isotope '" + isotope.key + "'");
         }
 
         const ShieldingData& sd = it->second;
 
-        // convert cm → mm
+        // convert cm to mm
         const double thickness_mm = seg.path_length_cm * 10.0;
         double transmission = 1.0;
 
         /*
-            HVL model:
-            - first HVL may differ (build-up region)
-            - equilibrium HVL applies thereafter
+        Three-region shielding model (ICRP-107 / NCRP):
+        - Scenario 1: t < HVL1
+        - Scenario 2: HVL1 ≤ t < TVL1
+        - Scenario 3: t ≥ TVL1
         */
-        if (thickness_mm <= sd.hvl1_mm) {
+        
+        if (thickness_mm < sd.hvl1_mm) {
             transmission = std::pow(0.5, thickness_mm / sd.hvl1_mm);
-        } else {
+        } else if (thickness_mm < sd.tvl1_mm) {
             const double remaining_mm = thickness_mm - sd.hvl1_mm;
             transmission = 0.5 * std::pow(0.5, remaining_mm / sd.hvl2_mm);
+        } else {
+            const double remaining_mm = thickness_mm - sd.tvl1_mm;
+            transmission = 0.5 * std::pow(0.1, remaining_mm / sd.tvl2_mm);
         }
 
+        // accumulate total transmission
         transmission_total *= transmission;
     }
 
