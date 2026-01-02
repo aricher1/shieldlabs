@@ -21,6 +21,7 @@ namespace calc {
         double average_rate_uSv_h = 0.0;
         double occupancy = 1.0;
         double effective_dose_uSv = 0.0;
+        double annual_dose_uSv = 0.0;
     };
 
     struct CompilerOutput {

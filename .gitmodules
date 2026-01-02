@@ -1,3 +1,6 @@
 [submodule "cpp/external/json"]
 	path = cpp/external/json
 	url = https://github.com/nlohmann/json.git
+[submodule "cpp/external/tabulate"]
+	path = cpp/external/tabulate
+	url = https://github.com/p-ranav/tabulate.git

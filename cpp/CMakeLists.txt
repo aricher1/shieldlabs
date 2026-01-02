@@ -52,6 +52,7 @@ add_custom_command(TARGET xrct_ui POST_BUILD
 target_include_directories(xrct_ui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/external
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/tabulate/include
 )
 
 target_link_libraries(xrct_ui PUBLIC

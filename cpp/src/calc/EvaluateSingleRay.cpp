@@ -7,18 +7,10 @@
 // Shielding attenuation is applied once per material using total path length along the ray (HVL/TVL models are non-linear).
 
 
-SingleRayDoseResult evaluate_single_ray(
-    const calc::TransportRay& ray,
-    const calc::CalcSource& source, 
-    const IsotopeDef& isotope,
-    const MaterialRegistry& material_registry,
-    double activity_per_patient_MBq
-) {
+SingleRayDoseResult evaluate_single_ray(const calc::TransportRay& ray, const calc::CalcSource& source, const IsotopeDef& isotope, const MaterialRegistry& material_registry, double activity_per_patient_MBq) {
     SingleRayDoseResult out{};
 
-    // -------------------------------------------------
-    // 1. Distance + inverse-square law
-    // -------------------------------------------------
+    // distance + inverse-square law
     out.distance_cm = ray.geometric_distance_cm;
 
     const double distance_m = out.distance_cm / 100.0;
@@ -26,17 +18,13 @@ SingleRayDoseResult evaluate_single_ray(
         throw std::runtime_error("Invalid source–dose distance");
     }
 
-    // Inverse-square falloff (point source assumption)
+    // inverse-square falloff (point source assumption)
     out.inverse_square = 1.0 / (distance_m * distance_m);
 
-    // -------------------------------------------------
-    // 2. Total source activity
-    // -------------------------------------------------
+    // total source activity
     out.activity_MBq = activity_per_patient_MBq * source.num_patients;
 
-    // -------------------------------------------------
-    // 3. Patient attenuation
-    // -------------------------------------------------
+    // patient attenuation
     double patient_transmission = 1.0;
 
     if (source.apply_patient_attenuation && isotope.patient_attenuation > 0.0) {
@@ -46,9 +34,7 @@ SingleRayDoseResult evaluate_single_ray(
 
     out.patient_transmission = patient_transmission;
 
-    // -------------------------------------------------
-    // 4. Shielding attenuation (per material, integrated)
-    // -------------------------------------------------
+    // shielding attenuation (per material, integrated)
     double transmission_total = 1.0;
 
     // accumulate total thickness per material
@@ -100,15 +86,8 @@ SingleRayDoseResult evaluate_single_ray(
 
     out.transmission_total = transmission_total;
 
-    // -------------------------------------------------
-    // 5. Final dose rate
-    // -------------------------------------------------
-    out.dose_uSv_per_h =
-        isotope.gamma_constant_uSv_m2_per_MBq_h *
-        out.activity_MBq *
-        out.inverse_square *
-        patient_transmission *
-        transmission_total;
+    // final dose rate
+    out.dose_uSv_per_h = isotope.gamma_constant_uSv_m2_per_MBq_h * out.activity_MBq * out.inverse_square * patient_transmission * transmission_total;
 
     return out;
 }

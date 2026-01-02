@@ -7,6 +7,8 @@
 #include "materials/MaterialRegistry.hpp"
 #include <stdexcept>
 
+constexpr double WEEKS_PER_YEAR = 52.0;
+
 extern IsotopeRegistry isotope_registry;
 extern MaterialRegistry material_registry;
 
@@ -22,7 +24,7 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
         throw std::runtime_error("Isotope not found");
     }
 
-    // ---------- Loop over dose points ----------- //
+    // loop over dose points
     for (size_t d = 0; d < scene.dose_points.size(); ++d) {
         DosePointTotal dose_total;
         dose_total.dose_index = static_cast<int>(d);
@@ -31,19 +33,11 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
         double total_integrated_dose = 0.0;
         double integration_time_h = 0.0;
 
-        // ----------- Loop over sources ----------- //
+        // loop over sources
         for (size_t s = 0; s < scene.sources.size(); ++s) {
-            CompilerRayOutput ray_out = evaluate_ray_pipeline(
-                scene,
-                static_cast<int>(s),
-                static_cast<int>(d),
-                *isotope
-            );
-
+            CompilerRayOutput ray_out = evaluate_ray_pipeline(scene, static_cast<int>(s), static_cast<int>(d), *isotope);
             out.rays.push_back(ray_out);
-
             total_integrated_dose += ray_out.integrated.integrated_dose_uSv;
-
             // all sources must share integration time
             integration_time_h = ray_out.integrated.integration_time_h;
         }
@@ -54,6 +48,8 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
         }
 
         dose_total.effective_dose_uSv = dose_total.integrated_dose_uSv * dose_total.occupancy;
+        // Annual dose assumes weekly repition of workload (52 weeks/year)
+        dose_total.annual_dose_uSv = dose_total.effective_dose_uSv * WEEKS_PER_YEAR;
 
         out.dose_totals.push_back(dose_total);
     }
@@ -61,4 +57,4 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
     return out;
 }
 
-} // namespace calc
+} // end namespace calc
