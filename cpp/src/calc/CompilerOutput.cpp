@@ -2,6 +2,7 @@
 #include "calc/CompilerOutput.hpp"
 #include "calc/TransportRay.hpp"
 #include "calc/EvaluateSingleRay.hpp"
+#include "calc/EvaluateRayPipeline.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
 #include "materials/MaterialRegistry.hpp"
 #include <stdexcept>
@@ -14,51 +15,50 @@ namespace calc {
 CompilerOutput build_compiler_output(const CalcScene& scene) {
     CompilerOutput out;
 
-    if (!scene.sources.empty() && !scene.dose_points.empty()) {
+    if (scene.sources.empty() || scene.dose_points.empty()) { return out; }
 
-        TransportRay ray =
-            build_transport_ray(scene, 0, 0);
+    const IsotopeDef* isotope = isotope_registry.get_by_key("f18");
+    if (!isotope) {
+        throw std::runtime_error("Isotope not found");
+    }
 
-        const IsotopeDef* isotope =
-            isotope_registry.get_by_key("f18");
-        if (!isotope) {
-            throw std::runtime_error("Isotope not found");
-        }
+    // ---------- Loop over dose points ----------- //
+    for (size_t d = 0; d < scene.dose_points.size(); ++d) {
+        DosePointTotal dose_total;
+        dose_total.dose_index = static_cast<int>(d);
+        dose_total.occupancy = scene.dose_points[d].occupancy;
 
-        const auto& src = scene.sources[0];
-        double activity_per_patient_MBq = src.activity_per_patient_MBq;
+        double total_integrated_dose = 0.0;
+        double integration_time_h = 0.0;
 
-        SingleRayDoseResult dose =
-            evaluate_single_ray(
-                ray,
-                src,
-                *isotope,
-                material_registry,
-                activity_per_patient_MBq
-            );
-        
-        IntegratedDoseResult integrated = 
-            integrate_single_ray(
-                dose,
-                src,
+        // ----------- Loop over sources ----------- //
+        for (size_t s = 0; s < scene.sources.size(); ++s) {
+            CompilerRayOutput ray_out = evaluate_ray_pipeline(
+                scene,
+                static_cast<int>(s),
+                static_cast<int>(d),
                 *isotope
             );
 
-        const double occupancy = scene.dose_points[0].occupancy;
-        integrated.occupancy = occupancy;
-        integrated.effective_dose_uSv = integrated.integrated_dose_uSv * occupancy;
-            
-        CompilerRayOutput entry;
-        entry.ray = ray;
-        entry.dose = dose;
-        entry.integrated = integrated;
-        entry.isotope_key = isotope->key;
-        
-        out.rays.push_back(entry);
-    }
+            out.rays.push_back(ray_out);
 
+            total_integrated_dose += ray_out.integrated.integrated_dose_uSv;
+
+            // all sources must share integration time
+            integration_time_h = ray_out.integrated.integration_time_h;
+        }
+
+        dose_total.integrated_dose_uSv = total_integrated_dose;
+        if (integration_time_h > 0.0) {
+            dose_total.average_rate_uSv_h = total_integrated_dose / integration_time_h;
+        }
+
+        dose_total.effective_dose_uSv = dose_total.integrated_dose_uSv * dose_total.occupancy;
+
+        out.dose_totals.push_back(dose_total);
+    }
+    
     return out;
 }
-
 
 } // namespace calc

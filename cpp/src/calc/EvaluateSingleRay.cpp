@@ -1,16 +1,11 @@
 #include "calc/EvaluateSingleRay.hpp"
 #include <cmath>
 #include <stdexcept>
+#include <unordered_map>
 
-/*
-    Evaluates dose contribution for a SINGLE transport ray:
-    - one source
-    - one dose point
-    - one straight-line path
+// IMPORTANT:
+// Shielding attenuation is applied once per material using total path length along the ray (HVL/TVL models are non-linear).
 
-    This function is intentionally explicit and step-by-step
-    so every physical factor can be inspected during debugging.
-*/
 
 SingleRayDoseResult evaluate_single_ray(
     const calc::TransportRay& ray,
@@ -37,17 +32,14 @@ SingleRayDoseResult evaluate_single_ray(
     // -------------------------------------------------
     // 2. Total source activity
     // -------------------------------------------------
-    out.activity_MBq =
-        activity_per_patient_MBq * source.num_patients;
+    out.activity_MBq = activity_per_patient_MBq * source.num_patients;
 
     // -------------------------------------------------
     // 3. Patient attenuation
     // -------------------------------------------------
     double patient_transmission = 1.0;
 
-    if (source.apply_patient_attenuation &&
-        isotope.patient_attenuation > 0.0) {
-
+    if (source.apply_patient_attenuation && isotope.patient_attenuation > 0.0) {
         // user-selected + isotope-defined
         patient_transmission = 1.0 - isotope.patient_attenuation;
     }
@@ -55,37 +47,42 @@ SingleRayDoseResult evaluate_single_ray(
     out.patient_transmission = patient_transmission;
 
     // -------------------------------------------------
-    // 4. Shielding attenuation
+    // 4. Shielding attenuation (per material, integrated)
     // -------------------------------------------------
     double transmission_total = 1.0;
 
+    // accumulate total thickness per material
+    std::unordered_map<int, double> material_thickness_cm;
     for (const auto& seg : ray.segments) {
-
-        // Air contributes no attenuation
-        if (seg.material_id < 0)
+        if (seg.material_id < 0) {
             continue;
+        }
 
-        const MaterialDef* mat = material_registry.get(seg.material_id);
+        material_thickness_cm[seg.material_id] += seg.path_length_cm;
+    }
+
+    // apply attenuation once per material
+    for (const auto& [material_id, thickness_cm] : material_thickness_cm) {
+        const MaterialDef* mat = material_registry.get(material_id);
         if (!mat) {
-            throw std::runtime_error("Unknown material ID in TransportRay");
+            throw std::runtime_error("Unknown material ID in TransportRay.\n");
         }
 
         auto it = isotope.materials.find(mat->key);
         if (it == isotope.materials.end()) {
-            throw std::runtime_error("No shielding data for material '" + mat->key + "' for isotope '" + isotope.key + "'");
+            throw std::runtime_error("No shielding data for material '" + mat->key + "' for isotope '" + isotope.key + ".'\n");
         }
 
         const ShieldingData& sd = it->second;
-
         // convert cm to mm
-        const double thickness_mm = seg.path_length_cm * 10.0;
+        const double thickness_mm = thickness_cm * 10.0;
         double transmission = 1.0;
-
+        
         /*
         Three-region shielding model (ICRP-107 / NCRP):
         - Scenario 1: t < HVL1
-        - Scenario 2: HVL1 ≤ t < TVL1
-        - Scenario 3: t ≥ TVL1
+        - Scenario 2: HVL1 <= t < TVL1
+        - Scenario 3: t >= TVL1
         */
         
         if (thickness_mm < sd.hvl1_mm) {
@@ -93,12 +90,11 @@ SingleRayDoseResult evaluate_single_ray(
         } else if (thickness_mm < sd.tvl1_mm) {
             const double remaining_mm = thickness_mm - sd.hvl1_mm;
             transmission = 0.5 * std::pow(0.5, remaining_mm / sd.hvl2_mm);
-        } else {
+        } else { // t >= TVL1
             const double remaining_mm = thickness_mm - sd.tvl1_mm;
-            transmission = 0.5 * std::pow(0.1, remaining_mm / sd.tvl2_mm);
+            transmission = 0.1 * std::pow(0.1, remaining_mm / sd.tvl2_mm);
         }
 
-        // accumulate total transmission
         transmission_total *= transmission;
     }
 

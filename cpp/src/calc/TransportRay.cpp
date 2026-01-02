@@ -77,5 +77,4 @@ TransportRay build_transport_ray(const CalcScene& scene, int source_index, int d
     return ray;
 }
 
-
 } // end namespace calc

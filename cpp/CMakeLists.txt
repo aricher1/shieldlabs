@@ -36,6 +36,7 @@ add_executable(xrct_ui
     src/calc/CompilerOutput.cpp
     src/calc/EvaluateSingleRay.cpp
     src/calc/IntegrateDose.cpp
+    src/calc/EvaluateRayPipeline.cpp
     # ----- Output -----
     src/output/PrintCompilerOutput.cpp
     # ----- Isotopes -----
