@@ -1,0 +1,68 @@
+#include "output/BuildDosePointReports.hpp"
+#include "materials/MaterialRegistry.hpp"
+
+
+extern MaterialRegistry material_registry;
+
+namespace output {
+
+    std::vector<DosePointReport> build_dose_point_reports(const calc::CompilerOutput& out) {
+        std::vector<DosePointReport> reports;
+        for (const auto& dose_total : out.dose_totals) {
+            DosePointReport report{};
+            report.dose_index = dose_total.dose_index;
+            report.total_effective_dose_uSv = 0.0;
+            report.total_annual_dose_uSv = 0.0;
+
+            for (const auto& entry : out.rays) {
+                if (entry.ray.dose_index != dose_total.dose_index) {
+                    continue;
+                }
+
+                SourceDoseRow row{};
+                row.source_index = entry.ray.source_index;
+                row.integration_time_h = entry.integrated.integration_time_h;
+                row.distance_cm = entry.ray.geometric_distance_cm;
+                row.occupancy = dose_total.occupancy;
+                row.wall_attenuation = entry.dose.transmission_total;
+
+                row.lead_cm = 0.0;
+                row.concrete_cm = 0.0;
+                row.steel_cm = 0.0;
+
+                for (const auto& seg : entry.ray.segments) {
+                    if (seg.material_id < 0) {
+                        continue;
+                    }
+
+                    const MaterialDef* mat = material_registry.get(seg.material_id);
+                    if (!mat) {
+                        continue;
+                    }
+
+                    if (mat->key == "lead") {
+                        row.lead_cm += seg.path_length_cm;
+                    } else if (mat->key == "concrete") {
+                        row.concrete_cm += seg.path_length_cm;
+                    } else if (mat->key == "steel") {
+                        row.steel_cm += seg.path_length_cm;
+                    }
+                }
+
+                row.effective_dose_uSv = entry.integrated.integrated_dose_uSv * dose_total.occupancy;
+                row.annual_dose_uSv = row.effective_dose_uSv * 52.0; // weeks per year
+                report.total_effective_dose_uSv += row.effective_dose_uSv;
+                report.total_annual_dose_uSv += row.annual_dose_uSv;
+
+                report.rows.push_back(row);
+            }
+
+            reports.push_back(report);
+        }
+
+        return reports;
+    }
+
+
+
+} // end namespace output
