@@ -25,9 +25,10 @@ int main() {
     }
 
     // load window
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Default);
-    GeometryEngine engine(100, 10.0);
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Resize | sf::Style::Close);
+    GeometryEngine engine(200, 5.0);
     GridRenderer renderer(window, engine);
+    renderer.load_background_image("../assets/floorplans/floorplan.png");
 
     while (window.isOpen()) {
         renderer.handle_events();

@@ -8,13 +8,19 @@ using json = nlohmann::json;
 constexpr double SNAP_EPS_CM = 1e-3;
 
 
-GeometryEngine::GeometryEngine(int cells, double cm) : grid_cells(cells), cm_per_cell(cm) {}
+GeometryEngine::GeometryEngine(int cells, double cm) : grid_cells(cells), cm_per_cell(cm) {
+    world_bounds.width_cm = grid_cells * cm_per_cell;
+    world_bounds.height_cm = grid_cells * cm_per_cell;
+}
 
 
 Point GeometryEngine::snap_to_grid(Point p) const {
     
-    return {std::round(p.x_cm / cm_per_cell) * cm_per_cell, std::round(p.y_cm / cm_per_cell) * cm_per_cell};
+    Point snapped{std::round(p.x_cm / cm_per_cell) * cm_per_cell, std::round(p.y_cm / cm_per_cell) * cm_per_cell};
+    snapped.x_cm = std::clamp(snapped.x_cm, 0.0, world_bounds.width_cm);
+    snapped.y_cm = std::clamp(snapped.y_cm, 0.0, world_bounds.height_cm);
 
+    return snapped;
 }
 
 
@@ -314,7 +320,6 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
 std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
     std::vector<ValidationError> errors; // create vector to store all errors
-    const double half = (grid_cells * cm_per_cell) * 0.5;
 
     // check walls
     for (std::size_t i = 0; i < walls.size(); ++i) {
@@ -322,7 +327,7 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
 
         // check wall enpoints are inside grid
         auto check_point_in_bounds = [&](const Point& p, const std::string& label) {
-            if (p.x_cm < -half || p.x_cm > half || p.y_cm < -half || p.y_cm > half) {
+            if (p.x_cm < 0.0 || p.x_cm > world_bounds.width_cm || p.y_cm < 0.0 || p.y_cm > world_bounds.height_cm) {
                 errors.push_back({label + " is outside grid bounds."});
             }
         };
@@ -394,7 +399,7 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
         const auto& e = entities[i];
 
         // check if entities are in bounds
-        if (e.position.x_cm < -half || e.position.x_cm > half || e.position.y_cm < -half || e.position.y_cm > half) {
+        if (e.position.x_cm < 0.0 || e.position.x_cm > world_bounds.width_cm || e.position.y_cm < 0.0 || e.position.y_cm > world_bounds.height_cm) {
             errors.push_back({"Entity " + std::to_string(i) + " is outside grid bounds."});
         }
 
@@ -410,4 +415,20 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
 void GeometryEngine::clear() {
     walls.clear();
     points.clear();
+}
+
+
+const WorldBounds& GeometryEngine::get_world_bounds() const { return world_bounds; }
+
+
+void GeometryEngine::set_world_bounds(const WorldBounds& bounds) {
+    world_bounds = bounds;
+}
+
+
+void GeometryEngine::set_world_bounds_from_image(int px_w, int px_h) {
+    world_bounds.width_cm = static_cast<double>(px_w);
+    world_bounds.height_cm = static_cast<double>(px_h);
+
+    cm_per_cell = world_bounds.width_cm / grid_cells;
 }

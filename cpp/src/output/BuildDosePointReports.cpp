@@ -63,6 +63,4 @@ namespace output {
         return reports;
     }
 
-
-
 } // end namespace output

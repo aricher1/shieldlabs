@@ -50,10 +50,7 @@ void print(const calc::CompilerOutput& out) {
             << "\n======================= DOSE POINT " << report.dose_index << " ========================\n\n";
         tabulate::Table table;
 
-        // ---- header ----
         table.add_row({"s","t(hrs)","d(cm)","T","Lead(cm)","Conc(cm)","Steel(cm)","B","d(uSv)","Ad(uSv/y)"});
-
-        // ---- per-source rows ----
         for (const auto& row : report.rows) {
             table.add_row({
                 std::to_string(row.source_index),
@@ -69,10 +66,7 @@ void print(const calc::CompilerOutput& out) {
             });
         }
 
-        // ---- totals row ----
         table.add_row({"Total","-","-","-","-","-","-","-",fmt(report.total_effective_dose_uSv, 6),fmt(report.total_annual_dose_uSv, 6)});
-
-        // ---- formatting ----
         table.format().font_align(tabulate::FontAlign::right);
 
         for (size_t c = 0; c < table[0].size(); ++c) {

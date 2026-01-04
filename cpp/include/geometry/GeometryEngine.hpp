@@ -2,6 +2,7 @@
 #include "Point.hpp"
 #include "Wall.hpp"
 #include "PointEntity.hpp"
+#include "WorldBounds.hpp"
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>
@@ -12,6 +13,7 @@
 class GeometryEngine {
 
     private:
+        WorldBounds world_bounds;
         int grid_cells;
         double cm_per_cell;
 
@@ -24,6 +26,10 @@ class GeometryEngine {
 
     public:
         explicit GeometryEngine(int grid_cells, double cm_per_cell);
+
+        const WorldBounds& get_world_bounds() const;
+        void set_world_bounds(const WorldBounds& bounds);
+        void set_world_bounds_from_image(int px_w, int px_h);
     
         int get_grid_cells() const { return grid_cells; }
         double get_cm_per_cell() const { return cm_per_cell; }
@@ -56,6 +62,5 @@ class GeometryEngine {
         };
         std::vector<ValidationError> validate() const;
         
-        void clear();
-        
+        void clear();        
 };

@@ -101,18 +101,30 @@ namespace {
 GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e), length_text(font) {
     
     window_size = window.getSize();
-    const float world_size = static_cast<float>(engine.get_grid_cells() * engine.get_cm_per_cell());
-    grid_view.setSize(sf::Vector2f{world_size, world_size});
-    grid_view.setCenter(sf::Vector2f{0.f, 0.f});
+    const auto& bounds = engine.get_world_bounds();
+    grid_view.setSize(sf::Vector2f{static_cast<float>(bounds.width_cm), static_cast<float>(bounds.height_cm)});
+    grid_view.setCenter(sf::Vector2f{static_cast<float>(bounds.width_cm * 0.5), static_cast<float>(bounds.height_cm * 0.5)});
     float win_w = static_cast<float>(window_size.x);
     float win_h = static_cast<float>(window_size.y);
-    float scale = std::min(win_w, win_h);
-    grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.f, (win_h - scale) / win_h / 2.f}, {scale / win_w, scale / win_h}});
+    float world_w = static_cast<float>(bounds.width_cm);
+    float world_h = static_cast<float>(bounds.height_cm);
+    float window_aspect = win_w / win_h;
+    float world_aspect = world_w / world_h;
+
+    sf::FloatRect viewport;
+    if (window_aspect > world_aspect) { // window is wider than world -> pillarbox
+        float width = world_aspect / window_aspect;
+        viewport = {{(1.f - width) / 2.f, 0.f}, {width, 1.f}};
+    } else { // window is taller than world → letterbox
+        float height = window_aspect / world_aspect;
+        viewport = {{0.f, (1.f - height) / 2.f}, {1.f, height}};
+    }
+    update_viewport();
     if (!font.openFromFile("assets/fonts/Inter-Regular.ttf")) {
         std::cerr << "Failed to load font\n" << std::endl;
     }
     length_text.setFont(font);
-    length_text.setCharacterSize(14);
+    length_text.setCharacterSize(18);
     length_text.setFillColor(sf::Color::Black);
 }
 
@@ -125,12 +137,61 @@ double GridRenderer::pixel_radius_to_world_cm(float px) const {
 }
 
 
+void GridRenderer::update_viewport() {
+    float win_w = static_cast<float>(window.getSize().x);
+    float win_h = static_cast<float>(window.getSize().y);
+
+    const auto& bounds = engine.get_world_bounds();
+    float world_w = static_cast<float>(bounds.width_cm);
+    float world_h = static_cast<float>(bounds.height_cm);
+    float window_aspect = win_w / win_h;
+    float world_aspect  = world_w / world_h;
+
+    sf::FloatRect viewport;
+    if (window_aspect > world_aspect) {
+        float width = world_aspect / window_aspect;
+        viewport = {{(1.f - width) * 0.5f, 0.f}, {width, 1.f}};
+    } else {
+        float height = window_aspect / world_aspect;
+        viewport = {{0.f, (1.f - height) * 0.5f}, {1.f, height}};
+    }
+
+    grid_view.setViewport(viewport);
+}
+
+
+/*
 Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
-    const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
+    const auto& bounds = engine.get_world_bounds();
+    
+    
+    //const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
+    
     const double nx = mouse.x / grid_view.getSize().x;
     const double ny = mouse.y / grid_view.getSize().y;
 
-    return {(nx - 0.5) * world_size_cm, (0.5 - ny) * world_size_cm};
+    return {nx * bounds.width_cm, (1.0 - ny) * bounds.height_cm};
+}
+*/
+
+
+bool GridRenderer::load_background_image(const std::string& path) {
+    if (!background_texture.loadFromFile(path)) {
+        std::cerr << "Failed to load background image: " << path << "\n";
+        return false;
+    }
+
+    const auto size_px = background_texture.getSize();
+    const auto& bounds = engine.get_world_bounds();
+    engine.set_world_bounds_from_image(size_px.x, size_px.y);
+    grid_view.setSize(sf::Vector2f{static_cast<float>(bounds.width_cm), static_cast<float>(bounds.height_cm)});
+    grid_view.setCenter(sf::Vector2f{static_cast<float>(bounds.width_cm * 0.5f), static_cast<float>(bounds.height_cm * 0.5f)});
+    update_viewport();
+    background_sprite = std::make_unique<sf::Sprite>(background_texture);
+    background_sprite->setPosition(sf::Vector2f{0.f, 0.f});
+    std::cout << "Background loaded: " << size_px.x << " x " << size_px.y << " px\n";
+
+    return true;
 }
 
 
@@ -275,8 +336,7 @@ void GridRenderer::handle_events() {
             float win_w = static_cast<float>(window_size.x);
             float win_h = static_cast<float>(window_size.y);
             float scale = std::min(win_w, win_h);
-            grid_view.setViewport(sf::FloatRect{{(win_w - scale) / win_w / 2.0f, (win_h - scale) / win_h / 2.0f}, {scale / win_w, scale / win_h}});
-
+            update_viewport();
         }
 
         if (const auto* move = event->getIf<sf::Event::MouseMoved>()) {
@@ -689,15 +749,21 @@ void GridRenderer::handle_events() {
 void GridRenderer::render() {
     window.clear(sf::Color::White);
     window.setView(grid_view);
+    float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
+    length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));
+
+    if (background_sprite) {
+        window.draw(*background_sprite);
+    }
 
     // draw grid
-    const double half = (engine.get_grid_cells() * engine.get_cm_per_cell()) / 2.0;
-    const double min_x = -half;
-    const double max_x = half;
-    const double min_y = -half;
-    const double max_y = half;
+    const auto& bounds = engine.get_world_bounds();
+    const double min_x = 0.0;
+    const double max_x = bounds.width_cm;
+    const double min_y = 0.0;
+    const double max_y = bounds.height_cm;
     const double grid_spacing_cm = engine.get_cm_per_cell();
-
+    
     for (double x = min_x; x <= max_x; x += grid_spacing_cm) {
 
         sf::Vertex line[2];
@@ -719,14 +785,17 @@ void GridRenderer::render() {
     }
 
     if (drawing) {
-        sf::Vertex preview[2];
-        preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
-        preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-        preview[0].color = Cosmetics::WALL_NORMAL;
-        preview[1].color = Cosmetics::WALL_NORMAL;        
-        window.draw(preview, 2, sf::PrimitiveType::Lines);
+        float wall_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::WALL_THICKNESS_PX));
+        auto preview_rect = make_thick_segment(
+                {static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)},
+                {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)},
+                wall_thickness_cm,
+                Cosmetics::WALL_NORMAL
+        );
+        window.draw(preview_rect);
         double len_cm = distance_cm(start_point, preview_point);
-        sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) / 2.0), static_cast<float>((start_point.y_cm + preview_point.y_cm) / 2.0)};
+        sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)};
+        
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(1) << len_cm << " cm";
         length_text.setString(ss.str());
@@ -738,19 +807,16 @@ void GridRenderer::render() {
     const auto& walls = engine.get_walls();
     for (std::size_t i = 0; i < walls.size(); ++i) {
         const auto& w = walls[i];
-        sf::Vertex wall[2];
-        wall[0].position = sf::Vector2f{static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)};
-        wall[1].position = sf::Vector2f{static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)};
-        if (selection.type == Selection::Type::Wall && selection.wall_index == i) {
-            wall[0].color = sf::Color::Green;
-            wall[1].color = sf::Color::Green;
-        } else {
-            wall[0].color = sf::Color::Black;
-            wall[1].color = sf::Color::Black;
-        }
-
-        window.draw(wall, 2, sf::PrimitiveType::Lines);
-        
+        sf::Color wall_color = (selection.type == Selection::Type::Wall && selection.wall_index == i) ? Cosmetics::WALL_SELECTED : Cosmetics::WALL_NORMAL;
+        float wall_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::WALL_THICKNESS_PX));
+        auto wall_rect = make_thick_segment(
+                {static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)},
+                {static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)},
+                wall_thickness_cm,
+                wall_color
+        );
+        window.draw(wall_rect);
+    
         if (placing_opening && i == opening_wall_index) {
             sf::Vertex preview[2];
             preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
@@ -761,7 +827,13 @@ void GridRenderer::render() {
                 case ::OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
                 case ::OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
             }
-            auto rect = make_thick_segment({static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)}, {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
+            float opening_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
+            auto rect = make_thick_segment(
+                                        {static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)},
+                                        {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)},
+                                        opening_thickness_cm,
+                                        c
+                                    );
             window.draw(rect);
 
             // draw text
@@ -811,8 +883,13 @@ void GridRenderer::render() {
                 }
             }
 
-            auto rect = make_thick_segment({static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)}, {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)}, Cosmetics::OPENING_THICKNESS, c);
-
+            float opening_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
+            auto rect = make_thick_segment(
+                                        {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)},
+                                        {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)},
+                                        opening_thickness_cm,
+                                        c
+                                    );
             window.draw(rect);
 
             // place text
@@ -828,7 +905,8 @@ void GridRenderer::render() {
             if (std::abs(direction.x) > std::abs(direction.y)) {
                 normal = sf::Vector2f{direction.y, -direction.x};
             }
-            sf::Vector2f text_position = mid + normal * (Cosmetics::OPENING_THICKNESS * 1.0f);
+            float opening_offset_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
+            sf::Vector2f text_position = mid + normal * opening_offset_cm;
 
             // actual text
             std::ostringstream ss;
@@ -868,8 +946,9 @@ void GridRenderer::render() {
         const auto& e = entities[i];
 
         sf::CircleShape marker;
-        marker.setRadius(Cosmetics::POINT_RADIUS);
-        marker.setOrigin(sf::Vector2f{Cosmetics::POINT_RADIUS, Cosmetics::POINT_RADIUS});
+        float point_radius_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::POINT_RADIUS_PX));
+        marker.setRadius(point_radius_cm);
+        marker.setOrigin(sf::Vector2f{point_radius_cm, point_radius_cm});
         marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
 
         const bool selected = selection.type == Selection::Type::Entity && selection.entity_index == i;
@@ -881,7 +960,7 @@ void GridRenderer::render() {
         } else {
                 
             marker.setFillColor(sf::Color::Transparent);
-            marker.setOutlineThickness(Cosmetics::POINT_OUTLINE_THICKNESS);
+            marker.setOutlineThickness(static_cast<float>(pixel_radius_to_world_cm(Cosmetics::POINT_OUTLINE_THICKNESS_PX)));
             marker.setOutlineColor(selected ? Cosmetics::DOSE_SELECTED_COLOR : Cosmetics::DOSE_COLOR);
 
         }

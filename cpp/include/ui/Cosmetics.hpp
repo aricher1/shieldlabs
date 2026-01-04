@@ -9,8 +9,12 @@ namespace Cosmetics {
     inline const sf::Color GRID_COLOR = sf::Color(220, 220, 220);
 
     // thickness    
-    constexpr float WALL_THICKNESS = 6.0f;
-    constexpr float OPENING_THICKNESS = 6.0f;
+    constexpr float WALL_THICKNESS_PX = 4.0f;
+    constexpr float OPENING_THICKNESS_PX = 5.0f;
+
+    // point sizes
+    constexpr float POINT_RADIUS_PX = 4.0f;
+    constexpr float POINT_OUTLINE_THICKNESS_PX = 1.5f;
 
     // wall colours
     inline const sf::Color WALL_NORMAL = sf::Color::Black;

@@ -1,8 +1,10 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "geometry/GeometryEngine.hpp"
+#include "geometry/WorldBounds.hpp"
 #include "ui/UndoStack.hpp"
 #include <optional>
+#include <string>
 
 
 
@@ -78,10 +80,12 @@ class GridRenderer {
         sf::Vector2u window_size;
         sf::FloatRect grid_viewport;
         sf::Font font;
-        sf::Text length_text;    
+        sf::Text length_text;
+        
+        sf::Texture background_texture;
+        std::unique_ptr<sf::Sprite> background_sprite;
 
-        int grid_cells = 100;
-        double cm_per_cell = 1.0;
+        void update_viewport();
 
         bool drawing = false;
         bool blueprint_finalized = false;
@@ -92,7 +96,7 @@ class GridRenderer {
         size_t opening_wall_index = 0;
         double opening_center_t = 0.0;
         double preview_opening_length_cm = 0.0;
-        OpeningType opening_type;
+        ::OpeningType opening_type;
 
         double pixel_radius_to_world_cm(float px) const;
         Point screen_to_world(sf::Vector2f mouse) const;
@@ -100,6 +104,8 @@ class GridRenderer {
 
     public:
         GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
+
+        bool load_background_image(const std::string& path);
 
         void finalize_blueprint(); 
         void handle_select_click(const Point& p);
