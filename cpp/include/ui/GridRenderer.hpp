@@ -86,6 +86,11 @@ class GridRenderer {
         std::unique_ptr<sf::Sprite> background_sprite;
 
         void update_viewport();
+        float zoom = 1.0f;
+        bool dragging_view = false;
+        sf::Vector2f drag_start_mouse_world;
+        sf::Vector2f drag_start_view_center;
+        sf::View drag_view_snapshot;
 
         bool drawing = false;
         bool blueprint_finalized = false;

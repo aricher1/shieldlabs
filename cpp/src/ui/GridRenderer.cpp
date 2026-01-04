@@ -339,8 +339,34 @@ void GridRenderer::handle_events() {
             update_viewport();
         }
 
+        if (const auto* wheel = event->getIf<sf::Event::MouseWheelScrolled>()) {
+            if (wheel->wheel != sf::Mouse::Wheel::Vertical) {
+                continue;
+            }
+
+            const float zoom_factor = (wheel->delta > 0) ? 0.9f : 1.1f;
+            zoom *= zoom_factor;
+            zoom = std::clamp(zoom, 0.1f, 5.0f);
+            sf::Vector2i mouse_px = sf::Mouse::getPosition(window);
+            sf::Vector2f before = window.mapPixelToCoords(mouse_px, grid_view);
+            grid_view.zoom(zoom_factor);
+            sf::Vector2f after = window.mapPixelToCoords(mouse_px, grid_view);
+            grid_view.move(before - after);
+            
+            continue;
+        }
+
         if (const auto* move = event->getIf<sf::Event::MouseMoved>()) {
             
+            if (dragging_view) {
+                sf::Vector2i mouse_px{move->position.x, move->position.y};
+                sf::Vector2f current_mouse_world = window.mapPixelToCoords(mouse_px, drag_view_snapshot);
+                sf::Vector2f delta = drag_start_mouse_world - current_mouse_world;
+                grid_view.setCenter(drag_start_view_center + delta);
+    
+                return;
+            }
+
             sf::Vector2i mouse_px {move->position.x, move->position.y};
             sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
             Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
@@ -634,6 +660,18 @@ void GridRenderer::handle_events() {
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             
             if (mouse->button == sf::Mouse::Button::Left) {
+                
+                // left click dragging logic
+                if (!drawing && interaction_mode == InteractionMode::Select) {
+                    dragging_view = true;
+                    // freeze view at drag start
+                    drag_view_snapshot = grid_view;
+                    sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
+                    drag_start_mouse_world = window.mapPixelToCoords(mouse_px, drag_view_snapshot);
+                    drag_start_view_center = grid_view.getCenter();
+
+                    return;
+                }
 
                 // stop editing once finalized                
                 if (blueprint_finalized) { return; }
@@ -731,7 +769,6 @@ void GridRenderer::handle_events() {
                     preview_point = p;
                     drawing = true;
                 } else {
-                    // std::cout << "A: " << start_point.x_cm << ", " << start_point.y_cm << "  B: " << p.x_cm << ", " << p.y_cm << "\n";
                     Wall wall;
                     wall.a = start_point;
                     wall.b = p;
@@ -740,6 +777,13 @@ void GridRenderer::handle_events() {
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
                     drawing = false;
                 }
+            }
+        }
+
+        if (const auto* mouse = event->getIf<sf::Event::MouseButtonReleased>()) {
+            if (mouse->button == sf::Mouse::Button::Left) {
+                dragging_view = false;
+                continue;
             }
         }
     }
