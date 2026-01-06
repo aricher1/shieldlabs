@@ -10,10 +10,13 @@
 #include "ui/AddWallLayerCommand.hpp"
 #include "ui/RemoveWallLayerCommand.hpp"
 #include "ui/EditWallLayerCommand.hpp"
+#include "ui/UiLog.hpp"
 #include "ui/Cosmetics.hpp"
 #include "calc/SceneCompiler.hpp"
 #include "calc/CompilerOutput.hpp"
 #include "output/PrintCompilerOutput.hpp"
+#include "output/PrintCompilerOutputUI.hpp"
+#include <imgui.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -29,6 +32,8 @@ namespace {
     constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
     constexpr float PICK_RADIUS_PX = 10.0f;
     constexpr double SHIFT_MOVE_MULTIPLIER = 10.0; // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
+    constexpr float TOOLBAR_HEIGHT_PX = 40.f;
+    constexpr float SIDE_PANEL_WIDTH_PX = 300.f;
 
     double distance_point_to_segment(Point p, Point a, Point b) {
         const double dx = b.x_cm - a.x_cm;
@@ -136,43 +141,23 @@ double GridRenderer::pixel_radius_to_world_cm(float px) const {
     return std::abs(p1.x - p0.x);
 }
 
-
 void GridRenderer::update_viewport() {
-    float win_w = static_cast<float>(window.getSize().x);
-    float win_h = static_cast<float>(window.getSize().y);
+    const float win_w = static_cast<float>(window.getSize().x);
+    const float win_h = static_cast<float>(window.getSize().y);
 
-    const auto& bounds = engine.get_world_bounds();
-    float world_w = static_cast<float>(bounds.width_cm);
-    float world_h = static_cast<float>(bounds.height_cm);
-    float window_aspect = win_w / win_h;
-    float world_aspect  = world_w / world_h;
+    if (win_w <= 0.f || win_h <= 0.f) { return; }
+
+    const float top_norm = TOOLBAR_HEIGHT_PX / win_h;
+    const float side_norm = SIDE_PANEL_WIDTH_PX / win_w;
 
     sf::FloatRect viewport;
-    if (window_aspect > world_aspect) {
-        float width = world_aspect / window_aspect;
-        viewport = {{(1.f - width) * 0.5f, 0.f}, {width, 1.f}};
-    } else {
-        float height = window_aspect / world_aspect;
-        viewport = {{0.f, (1.f - height) * 0.5f}, {1.f, height}};
-    }
+    viewport.position.x = side_norm;
+    viewport.position.y = top_norm;
+    viewport.size.x = 1.f - 2.f * side_norm;
+    viewport.size.y = 1.f - top_norm;
 
     grid_view.setViewport(viewport);
 }
-
-
-/*
-Point GridRenderer::screen_to_world(sf::Vector2f mouse) const {
-    const auto& bounds = engine.get_world_bounds();
-    
-    
-    //const double world_size_cm = engine.get_grid_cells() * engine.get_cm_per_cell();
-    
-    const double nx = mouse.x / grid_view.getSize().x;
-    const double ny = mouse.y / grid_view.getSize().y;
-
-    return {nx * bounds.width_cm, (1.0 - ny) * bounds.height_cm};
-}
-*/
 
 
 bool GridRenderer::load_background_image(const std::string& path) {
@@ -196,55 +181,55 @@ bool GridRenderer::load_background_image(const std::string& path) {
 
 
 void GridRenderer::finalize_blueprint() {
-    // error handling
+
     if (!blueprint_finalized) {
         auto errors = engine.validate();
         if (!errors.empty()) {
-            std::cerr << "VALIDATION ERRORS:\n";
+            ui_log.push("VALIDATION ERRORS:");
             for (const auto& e : errors) {
-                std::cerr << e.message << "\n";
+                ui_log.push("  - " + e.message);
             }
             return;
         }
-        std::cerr << "Validation passed.\n";
+        ui_log.push("Validation passed.");
     }
 
-    // toggle finalized state
     blueprint_finalized = !blueprint_finalized;
 
-    // cancel any current edits
     drawing = false;
     placing_opening = false;
     selection.clear();
 
     if (blueprint_finalized) {
-        std::cout << "========= Final Blueprint =========\n";
-        
-        // get canonical JSON
+
+        ui_log.clear();
+        ui_log.push("========= Final Blueprint =========");
+
+        // canonical JSON
         nlohmann::json j = engine.to_json();
-        std::cout << j.dump(2) << "\n";
+        // ui_log.push(j.dump(2));
 
-        // compile JSON -> CalcScene
+        // compile
         calc::CalcScene scene = calc::SceneCompiler::compile(j);
-        std::cout << "\n=============================================================\n";
-        std::cout << "\nCompiled scene counts:\n";
-        std::cout << "  sources:     " << scene.sources.size() << "\n";
-        std::cout << "  dose_points: " << scene.dose_points.size() << "\n";
-        std::cout << "  walls:       " << scene.walls.size() << "\n";
 
-        // build compiler output
+        ui_log.separator();
+        ui_log.push("Compiled scene counts:");
+        ui_log.push("  sources: " + std::to_string(scene.sources.size()));
+        ui_log.push("  dose_points: " + std::to_string(scene.dose_points.size()));
+        ui_log.push("  walls: " + std::to_string(scene.walls.size()));
+
         calc::CompilerOutput compiler_output = calc::build_compiler_output(scene);
+        ui_log.separator();
+        output::print_to_ui(compiler_output, ui_log);
 
-        // print output
-        output::print(compiler_output);
     } else {
-        std::cout << "========= Editing Resumed =========\n";
+        ui_log.clear();
+        ui_log.push("========= Editing Resumed =========");
     }
 }
 
 
 void GridRenderer::handle_select_click(const Point& p) {
-
     selection.clear();
 
     // entity selection
@@ -791,7 +776,6 @@ void GridRenderer::handle_events() {
 
 
 void GridRenderer::render() {
-    window.clear(sf::Color::White);
     window.setView(grid_view);
     float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
     length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));
@@ -1015,6 +999,24 @@ void GridRenderer::render() {
     // temporary panel view
     window.setView(window.getDefaultView());
 
+    ImGui::SetNextWindowPos(ImVec2(window.getSize().x - SIDE_PANEL_WIDTH_PX, TOOLBAR_HEIGHT_PX));
+    ImGui::SetNextWindowSize(ImVec2(SIDE_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
+    ImGui::Begin("Terminal", nullptr,
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse
+    );
+
+    ImGui::BeginChild("terminal_scroll");
+    for (const auto& line : ui_log.lines) {
+        ImGui::TextUnformatted(line.c_str());
+    }
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+        ImGui::SetScrollHereY(1.0f);
+    }
+    ImGui::EndChild();
+    ImGui::End();
+
     if (interaction_mode == InteractionMode::Select && layer_ui.panel_open && selection.type == Selection::Type::WallLayer) {
         const auto& w = engine.get_walls()[selection.wall_index];
         const auto& layers = w.layers;
@@ -1074,5 +1076,4 @@ void GridRenderer::render() {
         length_text.setPosition(sf::Vector2f(x, y));
         window.draw(length_text);
     }
-    window.display();
 }
