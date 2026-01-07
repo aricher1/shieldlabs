@@ -28,8 +28,8 @@ void print(const calc::CompilerOutput& out) {
         const auto& ray   = entry.ray;
         const auto& dose  = entry.dose;
         std::cout << "\nRay " << i << ":\n";
-        std::cout << "  Source index: " << ray.source_index << "\n";
-        std::cout << "  Dose index:   " << ray.dose_index << "\n";
+        std::cout << "  Source Point: " << entry.source_label << "\n";
+        std::cout << "  Dose Point: " << entry.dose_label << "\n";
         std::cout << "  Distance from Source to Dose: " << std::fixed << std::setprecision(4) << ray.geometric_distance_cm << " cm\n";
         double cumulative = 0.0;
         for (const auto& seg : ray.segments) {
@@ -46,14 +46,13 @@ void print(const calc::CompilerOutput& out) {
     }
 
     for (const auto& report : reports) {
-        std::cout
-            << "\n======================= DOSE POINT " << report.dose_index << " ========================\n\n";
+        std::cout << "\n======================= DOSE POINT " << report.dose_label << " ========================\n\n";
         tabulate::Table table;
 
         table.add_row({"s","t(hrs)","d(cm)","T","Lead(cm)","Conc(cm)","Steel(cm)","B","d(uSv)","Ad(uSv/y)"});
         for (const auto& row : report.rows) {
             table.add_row({
-                std::to_string(row.source_index),
+                row.source_label,
                 fmt(row.integration_time_h, 3),
                 fmt(row.distance_cm, 2),
                 fmt(row.occupancy, 2),

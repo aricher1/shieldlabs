@@ -28,6 +28,7 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
     for (size_t d = 0; d < scene.dose_points.size(); ++d) {
         DosePointTotal dose_total;
         dose_total.dose_index = static_cast<int>(d);
+        dose_total.dose_name = scene.dose_points[d].label;
         dose_total.occupancy = scene.dose_points[d].occupancy;
 
         double total_integrated_dose = 0.0;
@@ -36,6 +37,8 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
         // loop over sources
         for (size_t s = 0; s < scene.sources.size(); ++s) {
             CompilerRayOutput ray_out = evaluate_ray_pipeline(scene, static_cast<int>(s), static_cast<int>(d), *isotope);
+            ray_out.source_label = scene.sources[s].label;
+            ray_out.dose_label = scene.dose_points[d].label;
             out.rays.push_back(ray_out);
             total_integrated_dose += ray_out.integrated.integrated_dose_uSv;
             // all sources must share integration time

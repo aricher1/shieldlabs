@@ -11,6 +11,7 @@ namespace output {
         for (const auto& dose_total : out.dose_totals) {
             DosePointReport report{};
             report.dose_index = dose_total.dose_index;
+            report.dose_label = "";
             report.total_effective_dose_uSv = 0.0;
             report.total_annual_dose_uSv = 0.0;
 
@@ -21,6 +22,7 @@ namespace output {
 
                 SourceDoseRow row{};
                 row.source_index = entry.ray.source_index;
+                row.source_label = entry.source_label;
                 row.integration_time_h = entry.integrated.integration_time_h;
                 row.distance_cm = entry.ray.geometric_distance_cm;
                 row.occupancy = dose_total.occupancy;
@@ -53,6 +55,7 @@ namespace output {
                 row.annual_dose_uSv = row.effective_dose_uSv * 52.0; // weeks per year
                 report.total_effective_dose_uSv += row.effective_dose_uSv;
                 report.total_annual_dose_uSv += row.annual_dose_uSv;
+                report.dose_label = entry.dose_label;
 
                 report.rows.push_back(row);
             }

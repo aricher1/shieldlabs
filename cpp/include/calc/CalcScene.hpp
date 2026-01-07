@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 
 namespace calc {
@@ -36,6 +37,7 @@ namespace calc {
 
     struct CalcSource {
         CalcPoint position;
+        std::string label;
         double num_patients;
         double activity_per_patient_MBq;
         double uptake_time_hours;
@@ -45,6 +47,7 @@ namespace calc {
 
     struct CalcDosePoint {
         CalcPoint position;
+        std::string label;
         double occupancy;
         double dose_limit_uSv;
     };

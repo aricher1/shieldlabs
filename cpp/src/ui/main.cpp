@@ -1,9 +1,7 @@
 #include "geometry/GeometryEngine.hpp"
 #include <SFML/Graphics.hpp>
-
 #include <imgui.h>
 #include <imgui-SFML.h>
-
 #include <nlohmann/json.hpp>
 #include "calc/SceneCompiler.hpp"
 #include "calc/HitClassification.hpp"
@@ -44,37 +42,6 @@ int main() {
         renderer.handle_events();
         ImGui::SFML::Update(window, deltaClock.restart());
         window.clear(sf::Color::White);
-
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 40));
-
-        ImGui::Begin(
-            "TopToolbar",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoSavedSettings
-        );
-
-        // Example buttons (temporary)
-        if (ImGui::Button("Select")) {
-            // later: set mode
-        }
-        ImGui::SameLine();
-
-        if (ImGui::Button("Draw Wall")) {
-            // later: set tool
-        }   
-        ImGui::SameLine();
-
-        if (ImGui::Button("Finalize")) {
-            // later: call finalize_blueprint()
-        }
-
-        ImGui::End();
-
         renderer.render();
         ImGui::SFML::Render(window);
         window.display();

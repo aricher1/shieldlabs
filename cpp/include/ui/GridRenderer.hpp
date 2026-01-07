@@ -15,6 +15,7 @@ enum class InteractionMode {
 
 
 enum class Tool {
+    None,               // selection mode
     DrawWall,           // wall segment
     PlaceSource,        // source point
     PlaceDose,          // dose point
@@ -84,13 +85,12 @@ class GridRenderer {
         
         sf::Texture background_texture;
         std::unique_ptr<sf::Sprite> background_sprite;
+        std::optional<size_t> inspector_wall_index;
+        std::optional<size_t> inspector_source_index;
+        std::optional<size_t> inspector_dose_index;
 
         void update_viewport();
         float zoom = 1.0f;
-        bool dragging_view = false;
-        sf::Vector2f drag_start_mouse_world;
-        sf::Vector2f drag_start_view_center;
-        sf::View drag_view_snapshot;
 
         bool drawing = false;
         bool blueprint_finalized = false;
@@ -114,6 +114,11 @@ class GridRenderer {
 
         void finalize_blueprint(); 
         void handle_select_click(const Point& p);
+        void draw_toolbar();
+        void draw_left_panel();
+        void draw_wall_tab();
+        void draw_source_tab();
+        void draw_dose_tab();
         void handle_events();
         void render();
 };

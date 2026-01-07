@@ -1,10 +1,12 @@
 #pragma once
 #include <vector>
+#include <string>
 
 namespace output {
 
     struct SourceDoseRow {
         int source_index;
+        std::string source_label;
         double integration_time_h;
         double distance_cm;
         double occupancy;
@@ -18,7 +20,7 @@ namespace output {
 
     struct DosePointReport {
         int dose_index;
-
+        std::string dose_label;
         std::vector<SourceDoseRow> rows;
 
         double total_effective_dose_uSv;

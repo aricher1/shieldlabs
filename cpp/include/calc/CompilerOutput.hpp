@@ -13,10 +13,13 @@ namespace calc {
         SingleRayDoseResult dose;
         IntegratedDoseResult integrated;
         std::string isotope_key;
+        std::string source_label;
+        std::string dose_label;
     };
 
     struct DosePointTotal {
         int dose_index;
+        std::string dose_name;
         double integrated_dose_uSv = 0.0;
         double average_rate_uSv_h = 0.0;
         double occupancy = 1.0;

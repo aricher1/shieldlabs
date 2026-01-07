@@ -65,6 +65,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
             src.uptake_time_hours = js["uptake_time_hours"].get<double>();
             src.apply_patient_attenuation = js.value("apply_patient_attenuation", false);
             src.apply_radioactive_decay = js.value("apply_radioactive_decay", false);
+            src.label = js.value("label", "");
 
             scene.sources.push_back(src);
         }
@@ -77,6 +78,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
             dp.position = {jd["x"].get<double>(), jd["y"].get<double>()};
             dp.occupancy = jd.value("occupancy", 1.0);
             dp.dose_limit_uSv = jd.value("dose_limit_uSv", 0.0);
+            dp.label = jd.value("label", "");
 
             scene.dose_points.push_back(dp);
         }

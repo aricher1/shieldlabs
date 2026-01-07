@@ -25,23 +25,23 @@ void print_to_ui(const calc::CompilerOutput& out, UiLog& log) {
 
     for (const auto& report : reports) {
         log.separator();
-        log.push("DOSE POINT " + std::to_string(report.dose_index));
+        log.push("DOSE POINT: " + report.dose_label);
 
         for (const auto& row : report.rows) {
-            log.push("Source " + std::to_string(row.source_index));
+            log.push("Source Point: " + row.source_label);
             log.push("  Dist (cm): " + fmt(row.distance_cm, 2));
             log.push("  Integration (h): " + fmt(row.integration_time_h, 2));
             log.push("  Occ: " + fmt(row.occupancy, 2));
             log.push("  Lead (cm): " + fmt(row.lead_cm, 2));
             log.push("  Conc (cm): " + fmt(row.concrete_cm, 2));
             log.push("  Steel (cm): " + fmt(row.steel_cm, 2));
-            log.push("  Atten : " + fmt(row.wall_attenuation, 4));
-            log.push("  Dose (uSv): " + fmt(row.effective_dose_uSv, 6) + " uSv");
+            log.push("  Atten: " + fmt(row.wall_attenuation, 4));
+            log.push("  Dose (uSv): " + fmt(row.effective_dose_uSv, 6));
             log.push("  Annual dose (uSv/y): " + fmt(row.annual_dose_uSv, 6));
         }
 
         log.push("TOTAL DOSE");
-        log.push("  Effective (uSv): " + fmt(report.total_effective_dose_uSv, 6) + " uSv");
+        log.push("  Effective (uSv): " + fmt(report.total_effective_dose_uSv, 6));
         log.push("  Annual (uSv/y): " + fmt(report.total_annual_dose_uSv, 6));
     }
 }

@@ -17,6 +17,7 @@
 #include "output/PrintCompilerOutput.hpp"
 #include "output/PrintCompilerOutputUI.hpp"
 #include <imgui.h>
+#include <imgui-SFML.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -28,12 +29,13 @@ extern MaterialRegistry material_registry;
 
 namespace {
 
-    constexpr double SELECT_EPS_CM = 25.0; // select wall/point by clicking within 25cm of it
-    constexpr double SNAP_POINT_EPS_CM = 0.01;  // snap epsilon, checking if p equals an existing endpoint for selection logic
+    constexpr double SELECT_EPS_CM = 25.0;          // select wall/point by clicking within 25cm of it
+    constexpr double SNAP_POINT_EPS_CM = 0.01;      // snap epsilon, checking if p equals an existing endpoint for selection logic
     constexpr float PICK_RADIUS_PX = 10.0f;
-    constexpr double SHIFT_MOVE_MULTIPLIER = 10.0; // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
-    constexpr float TOOLBAR_HEIGHT_PX = 40.f;
-    constexpr float SIDE_PANEL_WIDTH_PX = 300.f;
+    constexpr double SHIFT_MOVE_MULTIPLIER = 10.0;  // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
+    constexpr float TOOLBAR_HEIGHT_PX = 40.f;       // toolbar
+    constexpr float RIGHT_PANEL_WIDTH_PX = 300.f;   // terminal
+    constexpr float LEFT_PANEL_WIDTH_PX = 300.f;    // user input
 
     double distance_point_to_segment(Point p, Point a, Point b) {
         const double dx = b.x_cm - a.x_cm;
@@ -100,6 +102,22 @@ namespace {
     }
 
 
+    static bool ToolbarButton(const char* label, bool active) {
+        if (active) {
+            ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        }
+
+        bool clicked = ImGui::Button(label);
+
+        if (active) {
+            ImGui::PopStyleColor(3);
+        }
+
+        return clicked;
+    }
+
 } // end of anonymous namespace
 
 
@@ -120,7 +138,7 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), 
     if (window_aspect > world_aspect) { // window is wider than world -> pillarbox
         float width = world_aspect / window_aspect;
         viewport = {{(1.f - width) / 2.f, 0.f}, {width, 1.f}};
-    } else { // window is taller than world → letterbox
+    } else { // window is taller than world -> letterbox
         float height = window_aspect / world_aspect;
         viewport = {{0.f, (1.f - height) / 2.f}, {1.f, height}};
     }
@@ -148,7 +166,7 @@ void GridRenderer::update_viewport() {
     if (win_w <= 0.f || win_h <= 0.f) { return; }
 
     const float top_norm = TOOLBAR_HEIGHT_PX / win_h;
-    const float side_norm = SIDE_PANEL_WIDTH_PX / win_w;
+    const float side_norm = RIGHT_PANEL_WIDTH_PX / win_w;
 
     sf::FloatRect viewport;
     viewport.position.x = side_norm;
@@ -221,6 +239,8 @@ void GridRenderer::finalize_blueprint() {
         calc::CompilerOutput compiler_output = calc::build_compiler_output(scene);
         ui_log.separator();
         output::print_to_ui(compiler_output, ui_log);
+        // uncomment for terminal debugging
+        // output::print(compiler_output);
 
     } else {
         ui_log.clear();
@@ -244,6 +264,12 @@ void GridRenderer::handle_select_click(const Point& p) {
                 best_entity_dist = d;
                 selection.type = Selection::Type::Entity;
                 selection.entity_index = i;
+
+                if (entities[i].type == PointType::Source) {
+                    inspector_source_index = i;
+                } else if (entities[i].type == PointType::Dose) {
+                    inspector_dose_index = i;
+                }
             }
         }
 
@@ -293,6 +319,7 @@ void GridRenderer::handle_select_click(const Point& p) {
                 best_wall_dist = d;
                 selection.type = Selection::Type::Wall;
                 selection.wall_index = i;
+                inspector_wall_index = i;
             }
         }
     }
@@ -309,25 +336,413 @@ double GridRenderer::distance_cm(Point a, Point b) const {
 }
 
 
+void GridRenderer::draw_toolbar() {
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(window.getSize().x, TOOLBAR_HEIGHT_PX));
+
+    ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+
+    if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
+        interaction_mode = InteractionMode::Select;
+        current_tool = Tool::None;
+        selection.clear();
+        drawing = false;
+        placing_opening = false;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("DRAW", interaction_mode == InteractionMode::Draw)) {
+        interaction_mode = InteractionMode::Draw;
+        selection.clear();
+        drawing = false;
+        placing_opening = false;
+    }
+    ImGui::SameLine();
+
+    ImGui::Separator();
+    ImGui::SameLine();
+
+    if (ToolbarButton("Wall", current_tool == Tool::DrawWall)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::DrawWall;
+        drawing = false;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Source", current_tool == Tool::PlaceSource)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::PlaceSource;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Dose", current_tool == Tool::PlaceDose)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::PlaceDose;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Opening", current_tool == Tool::PlaceOpen)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::PlaceOpen;
+        placing_opening = false;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Window", current_tool == Tool::PlaceWindow)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::PlaceWindow;
+        placing_opening = false;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Door", current_tool == Tool::PlaceDoor)) {
+        interaction_mode = InteractionMode::Draw;
+        current_tool = Tool::PlaceDoor;
+        placing_opening = false;
+    }
+    ImGui::SameLine();
+
+    ImGui::Separator();
+    ImGui::SameLine();
+
+    if (ToolbarButton("Undo", false)) {
+        undo_stack.undo();
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Redo", false)) {
+        undo_stack.redo();
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Remove", false)) {
+        switch (selection.type) {
+
+            case Selection::Type::Wall:
+                undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, selection.wall_index));
+                selection.clear();
+                break;
+
+        case Selection::Type::Opening:
+                undo_stack.execute(
+                    std::make_unique<RemoveOpeningCommand>(engine, selection.wall_index, selection.opening_index));
+                selection.clear();
+                break;
+
+        case Selection::Type::Entity:
+                undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, selection.entity_index));
+                selection.clear();
+                break;
+
+            default:
+                break;
+        }
+    }
+    ImGui::SameLine();
+
+    ImGui::Separator();
+    ImGui::SameLine();
+
+    if (ToolbarButton("Finalize", false)) {
+        finalize_blueprint();
+    }
+
+    ImGui::End();
+}
+
+
+void GridRenderer::draw_left_panel() {
+    ImGui::SetNextWindowPos(ImVec2(0.f, TOOLBAR_HEIGHT_PX));
+    ImGui::SetNextWindowSize(
+        ImVec2(LEFT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX)
+    );
+
+    ImGui::Begin(
+        "LeftPanel",
+        nullptr,
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse
+    );
+
+    if (ImGui::BeginTabBar("LeftPanelTabs")) {
+
+        draw_wall_tab();
+        draw_source_tab();
+        draw_dose_tab();
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}
+
+
+void GridRenderer::draw_wall_tab() {
+    if (!ImGui::BeginTabItem("Wall"))
+        return;
+
+    auto& walls = engine.get_walls_mutable();
+
+    if (walls.empty()) {
+        ImGui::TextDisabled("No walls created yet.");
+        ImGui::EndTabItem();
+        return;
+    }
+
+    if (selection.type == Selection::Type::Wall || selection.type == Selection::Type::WallLayer) {
+        inspector_wall_index = selection.wall_index;
+    }
+
+    // Default inspector target
+    if (!inspector_wall_index.has_value())
+        inspector_wall_index = 0;
+
+    // Wall selector
+    std::vector<std::string> wall_labels;
+    for (size_t i = 0; i < walls.size(); ++i)
+        wall_labels.push_back("Wall " + std::to_string(i + 1));
+
+    static int wall_idx = 0;
+    wall_idx = static_cast<int>(*inspector_wall_index);
+
+    if (ImGui::Combo(
+            "Wall",
+            &wall_idx,
+            [](void* data, int idx, const char** out) {
+                auto& labels = *static_cast<std::vector<std::string>*>(data);
+                *out = labels[idx].c_str();
+                return true;
+            },
+            &wall_labels,
+            wall_labels.size()))
+    {
+        inspector_wall_index = wall_idx;
+        selection.clear();
+        selection.type = Selection::Type::Wall;
+        selection.wall_index = wall_idx;
+    }
+
+    auto& wall = walls[*inspector_wall_index];
+
+    ImGui::Separator();
+    ImGui::Text("Length: %.1f cm", wall.length_cm);
+
+    // ===== Layer Tabs =====
+    if (ImGui::BeginTabBar("WallLayers")) {
+
+        for (size_t i = 0; i < wall.layers.size(); ++i) {
+            std::string label = "Layer " + std::to_string(i + 1);
+
+            if (ImGui::BeginTabItem(label.c_str())) {
+                auto& layer = wall.layers[i];
+
+                // Material
+                int mat_id = layer.material_id;
+                if (ImGui::InputInt("Material ID", &mat_id)) {
+                    layer.material_id = mat_id;
+                }
+
+                // Thickness
+                ImGui::InputDouble("Thickness (cm)", &layer.thickness_cm);
+
+                // Remove layer
+                if (wall.layers.size() > 1) {
+                    if (ImGui::Button("Remove Layer")) {
+                        undo_stack.execute(
+                            std::make_unique<RemoveWallLayerCommand>(
+                                engine, *inspector_wall_index, i));
+                        ImGui::EndTabItem();
+                        break;
+                    }
+                }
+
+                ImGui::EndTabItem();
+            }
+        }
+
+        // Add layer button
+        if (ImGui::TabItemButton("+")) {
+            WallLayer new_layer;
+            new_layer.material_id = wall.layers.back().material_id;
+            new_layer.thickness_cm = 10.0;
+
+            undo_stack.execute(
+                std::make_unique<AddWallLayerCommand>(
+                    engine, *inspector_wall_index,
+                    wall.layers.size() - 1,
+                    new_layer));
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::EndTabItem();
+}
+
+
+void GridRenderer::draw_source_tab() {
+    if (!ImGui::BeginTabItem("Source"))
+        return;
+
+    auto& entities = engine.get_entities_mutable();
+
+    std::vector<size_t> sources;
+    for (size_t i = 0; i < entities.size(); ++i)
+        if (entities[i].type == PointType::Source)
+            sources.push_back(i);
+
+    if (sources.empty()) {
+        ImGui::TextDisabled("No source points created yet.");
+        ImGui::EndTabItem();
+        return;
+    }
+
+    if (selection.type == Selection::Type::Entity) {
+        const auto& e = engine.get_entities()[selection.entity_index];
+        if (e.type == PointType::Source) {
+            inspector_source_index = selection.entity_index;
+        }
+    }
+
+    if (!inspector_source_index.has_value())
+        inspector_source_index = sources[0];
+
+    // Source selector
+    std::vector<std::string> labels;
+    for (size_t i = 0; i < sources.size(); ++i)
+        labels.push_back("Source " + std::to_string(i + 1));
+
+    static int src_idx = 0;
+    src_idx = std::find(sources.begin(), sources.end(), *inspector_source_index) - sources.begin();
+
+    if (ImGui::Combo(
+            "Source",
+            &src_idx,
+            [](void* data, int idx, const char** out) {
+                auto& labels = *static_cast<std::vector<std::string>*>(data);
+                *out = labels[idx].c_str();
+                return true;
+            },
+            &labels,
+            labels.size()))
+    {
+        inspector_source_index = sources[src_idx];
+        selection.clear();
+        selection.type = Selection::Type::Entity;
+        selection.entity_index = inspector_source_index.value();
+    }
+
+    auto& e = entities[*inspector_source_index];
+    auto& s = *e.source;
+
+    ImGui::Separator();
+    char name_buf[64];
+    std::snprintf(name_buf, sizeof(name_buf), "%s", e.label.c_str());
+    if (ImGui::InputText("Name", name_buf, sizeof(name_buf))) {
+        e.label = name_buf;
+    }
+
+    ImGui::InputFloat("Patients / week", &s.num_patients);
+    ImGui::InputFloat("Activity / patient (MBq)", &s.activity_per_patient_MBq);
+    ImGui::InputFloat("Uptake (hours)", &s.uptake_time_hours);
+    ImGui::Checkbox("Patient attenuation", &s.apply_patient_attenuation);
+    ImGui::Checkbox("Radioactive decay", &s.apply_radioactive_decay);
+
+    ImGui::EndTabItem();
+}
+
+
+void GridRenderer::draw_dose_tab() {
+    if (!ImGui::BeginTabItem("Dose"))
+        return;
+
+    auto& entities = engine.get_entities_mutable();
+
+    std::vector<size_t> doses;
+    for (size_t i = 0; i < entities.size(); ++i)
+        if (entities[i].type == PointType::Dose)
+            doses.push_back(i);
+
+    if (doses.empty()) {
+        ImGui::TextDisabled("No dose points created yet.");
+        ImGui::EndTabItem();
+        return;
+    }
+
+    if (selection.type == Selection::Type::Entity) {
+        const auto& e  = engine.get_entities()[selection.entity_index];
+        if (e.type == PointType::Dose) {
+            inspector_dose_index = selection.entity_index;
+        }
+    }
+
+    if (!inspector_dose_index.has_value())
+        inspector_dose_index = doses[0];
+
+    std::vector<std::string> labels;
+    for (size_t i = 0; i < doses.size(); ++i)
+        labels.push_back("Dose " + std::to_string(i + 1));
+
+    static int dose_idx = 0;
+    dose_idx = std::find(doses.begin(), doses.end(), *inspector_dose_index) - doses.begin();
+
+    if (ImGui::Combo(
+            "Dose",
+            &dose_idx,
+            [](void* data, int idx, const char** out) {
+                auto& labels = *static_cast<std::vector<std::string>*>(data);
+                *out = labels[idx].c_str();
+                return true;
+            },
+            &labels,
+            labels.size()))
+    {
+        inspector_dose_index = doses[dose_idx];
+        selection.clear();
+        selection.type = Selection::Type::Entity;
+        selection.entity_index = inspector_dose_index.value();
+    }
+
+    auto& e = entities[*inspector_dose_index];
+    auto& d = *e.dose;
+
+    ImGui::Separator();
+    char name_buf[64];
+    std::snprintf(name_buf, sizeof(name_buf), "%s", e.label.c_str());
+    if (ImGui::InputText("Name", name_buf, sizeof(name_buf))) {
+        e.label = name_buf;
+    }
+
+    ImGui::InputFloat("Occupancy", &d.occupancy);
+    ImGui::InputFloat("Dose limit (uSv)", &d.dose_limit_uSv);
+
+    ImGui::EndTabItem();
+}
+
+
 void GridRenderer::handle_events() {
     while (const auto event = window.pollEvent()) {
+
+        ImGui::SFML::ProcessEvent(window, *event);
+        const ImGuiIO& io = ImGui::GetIO();
         
+        // close
         if (event->is<sf::Event::Closed>()) {
             window.close();
         }
 
+        // resize
         if (const auto* resized = event->getIf<sf::Event::Resized>()) {
             window_size = {resized->size.x, resized->size.y};
-            float win_w = static_cast<float>(window_size.x);
-            float win_h = static_cast<float>(window_size.y);
-            float scale = std::min(win_w, win_h);
             update_viewport();
         }
 
+        // zoom
         if (const auto* wheel = event->getIf<sf::Event::MouseWheelScrolled>()) {
-            if (wheel->wheel != sf::Mouse::Wheel::Vertical) {
-                continue;
-            }
+
+            if (io.WantCaptureMouse) { continue; }
+            if (wheel->wheel != sf::Mouse::Wheel::Vertical) { continue; }
 
             const float zoom_factor = (wheel->delta > 0) ? 0.9f : 1.1f;
             zoom *= zoom_factor;
@@ -340,17 +755,11 @@ void GridRenderer::handle_events() {
             
             continue;
         }
-
+        
+        // mouse move
         if (const auto* move = event->getIf<sf::Event::MouseMoved>()) {
             
-            if (dragging_view) {
-                sf::Vector2i mouse_px{move->position.x, move->position.y};
-                sf::Vector2f current_mouse_world = window.mapPixelToCoords(mouse_px, drag_view_snapshot);
-                sf::Vector2f delta = drag_start_mouse_world - current_mouse_world;
-                grid_view.setCenter(drag_start_view_center + delta);
-    
-                return;
-            }
+            if (io.WantCaptureMouse) { continue; }
 
             sf::Vector2i mouse_px {move->position.x, move->position.y};
             sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
@@ -365,193 +774,36 @@ void GridRenderer::handle_events() {
 
             }
 
-            if (!drawing) {
-                continue;
-            }
-
-            
+            if (!drawing) { continue; }
             preview_point = p;
-
         }
 
         if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+
+            if (io.WantCaptureKeyboard) {
+                if (
+                    key->code != sf::Keyboard::Key::Left &&
+                    key->code != sf::Keyboard::Key::Right &&
+                    key->code != sf::Keyboard::Key::Up &&
+                    key->code != sf::Keyboard::Key::Down &&
+                    key->code != sf::Keyboard::Key::Escape &&
+                    key->code != sf::Keyboard::Key::LShift
+                ) {
+                    continue;
+                }
+            }
             
-            /* 
-            ======= Controls =======
-            - Cmd + Z = undo
-            - Cmd + Shift + Z = redo
-            - Click near wall -> turns green -> delete or backspace = remove
-            - Esc = cancel drawing
-            - W = draw wall
-            - S = place source point
-            - D = place dose point
-            - Space = switch between draw and select mode
-            - F = finalize blueprint
-            - O = draw opening
-            - L = draw door
-            - M = draw window
-            - H = enter layer mode on wall
-            - ] = navigate through layers
-            - [ = decrease thickness 1cm
-            - N = increase 1cm
-            - A = add a new layer
-            - , = previous layer
-            - . = next layer
-            */
+            // escape key = cancel drawing wall
+            if (key->code == sf::Keyboard::Key::Escape) {
 
-            if (key->code == sf::Keyboard::Key::F) {
-                finalize_blueprint();
-            }
-
-            if (key->code == sf::Keyboard::Key::Space) {
-                
-                interaction_mode = (interaction_mode == InteractionMode::Draw) ? InteractionMode::Select : InteractionMode::Draw;
-                // cancel all active interactions
-                selection.clear();
-                drawing = false;
-                placing_opening = false;
-                layer_ui.panel_open = false;
-                layer_ui.active_field = LayerField::None;
-            }
-
-            if (key->code == sf::Keyboard::Key::Z && key->system) {
-                const bool was_wall_layer = (selection.type == Selection::Type::WallLayer);
-                std::size_t old_layer_count = 0;
-                if (was_wall_layer) {
-                    old_layer_count = engine.get_walls()[selection.wall_index].layers.size();
-                }
-
-                if (key->shift) {
-                    undo_stack.redo();
-                } else {
-                    undo_stack.undo();
-                }
-
-                // fix selection state after undo/redo
-                if (selection.type == Selection::Type::WallLayer) {
-                    auto & layers = engine.get_walls()[selection.wall_index].layers;
-                    if (layers.empty()) {
-                        selection.type = Selection::Type::Wall;
-                        selection.layer_index = 0;
-                    } else if (selection.layer_index >= layers.size()) {
-                        selection.layer_index = layers.size() - 1;
-                    }
-
-                    if (layers.size() > old_layer_count) {
-                        selection.layer_index = layers.size() - 1;
-                        return;
-                    }
-
-                    if (selection.layer_index >= layers.size()) {
-                        selection.layer_index = layers.size() - 1;
-                    }
+                if (drawing) {
+                    drawing = false; // cancel drawing
+                    preview_point = start_point;
                 }
             }
-
-            if (key->code == sf::Keyboard::Key::H) {
-
-                if (interaction_mode != InteractionMode::Select) { return; }
-
-                // enter layer mode
-                if (selection.type == Selection::Type::Wall) {
-                    const auto& layers = engine.get_walls()[selection.wall_index].layers;
-
-                    if (!layers.empty()) {
-                        selection.type = Selection::Type::WallLayer;
-                        selection.layer_index = 0;
-                        layer_ui.panel_open = true;
-                        layer_ui.active_field = LayerField::None;
-                    }
-                    return;
-                }
-
-                // exit layer mode
-                if (selection.type == Selection::Type::WallLayer) {
-                    selection.type = Selection::Type::Wall;
-                    selection.layer_index = 0;
-                    layer_ui.panel_open = false;
-                    layer_ui.active_field = LayerField::None;
-                    return;
-                }
-            }
-
-            if (selection.type == Selection::Type::WallLayer && interaction_mode == InteractionMode::Select) {
-                auto& wall = engine.get_walls_mutable()[selection.wall_index];
-                if (wall.layers.empty()) { return; }
-                auto& layer = wall.layers[selection.layer_index];
-
-                // previous layer ,
-                if (key->code == sf::Keyboard::Key::Comma) {
-                    selection.layer_index = (selection.layer_index + wall.layers.size() - 1) % wall.layers.size();
-                    return;
-                }
-
-                // next layer .
-                if (key->code == sf::Keyboard::Key::Period) {
-                    selection.layer_index = (selection.layer_index + 1) % wall.layers.size();
-                    return;
-                }
-
-                // cycle material forward ]
-                if (key->code == sf::Keyboard::Key::RBracket) {
-                    WallLayer before = layer;
-                    WallLayer after = before;
-                    after.material_id = material_registry.next_id(before.material_id);
-
-                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
-                    return;
-                }
-
-                // thickness decrease [
-                if (key->code == sf::Keyboard::Key::LBracket) {
-                    WallLayer before = layer;
-                    WallLayer after = before;
-                    after.thickness_cm = before.thickness_cm - 0.1;
-                    if (after.thickness_cm < 0.1) {
-                        after.thickness_cm = 0.1;
-                    }
-
-                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
-                    return;
-                }
-
-                // thickness increase N
-                if (key->code == sf::Keyboard::Key::N) {
-                    WallLayer before = layer;
-                    WallLayer after = before;
-                    after.thickness_cm = before.thickness_cm + 0.1;
-
-                    undo_stack.execute(std::make_unique<EditWallLayerCommand>(engine, selection.wall_index, selection.layer_index, before, after));
-                    return;
-                }
-
-                // add a new layer A
-                if (key->code == sf::Keyboard::Key::A) {
-                    auto& layers = wall.layers;
-                    const auto& base = layers[selection.layer_index];
-
-                    WallLayer new_layer;
-                    new_layer.material_id = base.material_id;
-                    new_layer.thickness_cm = 10.0; // default thickness
-                    
-                    undo_stack.execute(std::make_unique<AddWallLayerCommand>(engine, selection.wall_index, selection.layer_index, new_layer));
-                    selection.layer_index += 1;
-                    return;
-                }
-
-                // remove current layer X
-                if (key->code == sf::Keyboard::Key::X) {
-                    auto& layers = wall.layers;
-                    if (layers.size() <= 1) { return; }
-
-                    undo_stack.execute(std::make_unique<RemoveWallLayerCommand>(engine, selection.wall_index, selection.layer_index));
-                    if (selection.layer_index >= wall.layers.size() - 1) {
-                        selection.layer_index = wall.layers.size() - 2;
-                    }
-                    return;
-                }
-            }
-
+            
+            // arrow keys to move around in select mode
+            // when pressing left shift, move step size is bigger
             if (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::Right || key->code == sf::Keyboard::Key::Up || key->code == sf::Keyboard::Key::Down) {
                 // only allow shifting in select mode
                 if (interaction_mode != InteractionMode::Select) {
@@ -583,80 +835,13 @@ void GridRenderer::handle_events() {
 
                 continue;
             }
-
-            if (key->code == sf::Keyboard::Key::Delete || key->code == sf::Keyboard::Key::Backspace) {
-                
-                switch (selection.type) {
-                    
-                    case Selection::Type::Opening:
-                        undo_stack.execute(std::make_unique<RemoveOpeningCommand>(engine, selection.wall_index, selection.opening_index));
-                        selection.clear();
-                        return;
-                    
-                    case Selection::Type::Entity:
-                        undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, selection.entity_index));
-                        selection.clear();
-                        return;
-
-                    case Selection::Type::Wall:
-                        undo_stack.execute(std::make_unique<DeleteWallCommand>(engine, selection.wall_index));
-                        selection.clear();
-                        return;
-                    
-                    default:
-                        break;
-                }
-            }
-
-            if (key->code == sf::Keyboard::Key::Escape) {
-
-                if (drawing) {
-                    drawing = false; // cancel drawing
-                    preview_point = start_point;
-                }
-            }
-
-            if (key->code == sf::Keyboard::Key::W) {
-                current_tool = Tool::DrawWall;
-            }
-
-            if (key->code == sf::Keyboard::Key::S) {
-                current_tool = Tool::PlaceSource;
-            }
-
-            if (key->code == sf::Keyboard::Key::D) {
-                current_tool = Tool::PlaceDose;
-            }
-
-            if (key->code == sf::Keyboard::Key::O) {
-                current_tool = Tool::PlaceOpen;
-            }
-
-            if (key->code == sf::Keyboard::Key::L) {
-                current_tool = Tool::PlaceDoor;
-            }
-
-            if (key->code == sf::Keyboard::Key::M) {
-                current_tool = Tool::PlaceWindow;
-            }
-
         }
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
-            
-            if (mouse->button == sf::Mouse::Button::Left) {
-                
-                // left click dragging logic
-                if (!drawing && interaction_mode == InteractionMode::Select) {
-                    dragging_view = true;
-                    // freeze view at drag start
-                    drag_view_snapshot = grid_view;
-                    sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
-                    drag_start_mouse_world = window.mapPixelToCoords(mouse_px, drag_view_snapshot);
-                    drag_start_view_center = grid_view.getCenter();
 
-                    return;
-                }
+            if (io.WantCaptureMouse) { continue; }
+
+            if (mouse->button == sf::Mouse::Button::Left) {
 
                 // stop editing once finalized                
                 if (blueprint_finalized) { return; }
@@ -720,12 +905,11 @@ void GridRenderer::handle_events() {
                     e.type = PointType::Source;
                     e.label = "";
                     e.source = SourceData{
-                        // TEMPORARY VALUES FOR TESTING -> DEFAULT IS (1, 0, 0, true)
-                        .num_patients = 21.0f,
-                        .activity_per_patient_MBq = 4000.0f,
-                        .uptake_time_hours = 0.5f,
-                        .apply_patient_attenuation = true,
-                        .apply_radioactive_decay = true
+                        .num_patients = 1.0f,                   // number of patients per week
+                        .activity_per_patient_MBq = 0.0f,       // activity per patient
+                        .uptake_time_hours = 0.0f,              // uptake time (hours)
+                        .apply_patient_attenuation = true,      // (bool) apply radiation decay 
+                        .apply_radioactive_decay = true         // (bool) apply radioactive decay
                     };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
@@ -737,9 +921,9 @@ void GridRenderer::handle_events() {
                     e.type = PointType::Dose;
                     e.label = "";
                     e.dose = DoseData{
-                        .occupancy = 1.0f,
-                        .occupancy_type = "",
-                        .dose_limit_uSv = 0.0f
+                        .occupancy = 0.0f,                      // occupancy [0, 1] at dose point
+                        .occupancy_type = "",                   // label (office, waiting room, staircase)
+                        .dose_limit_uSv = 0.0f                  // dose limit at dose point
                     };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
                     return;
@@ -762,13 +946,6 @@ void GridRenderer::handle_events() {
                     undo_stack.execute(std::make_unique<AddWallCommand>(engine, wall));
                     drawing = false;
                 }
-            }
-        }
-
-        if (const auto* mouse = event->getIf<sf::Event::MouseButtonReleased>()) {
-            if (mouse->button == sf::Mouse::Button::Left) {
-                dragging_view = false;
-                continue;
             }
         }
     }
@@ -959,7 +1136,6 @@ void GridRenderer::render() {
 
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
-
         length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
         length_text.setString(ss.str());
         length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
@@ -970,27 +1146,20 @@ void GridRenderer::render() {
     // draw source + dose points
     const auto& entities = engine.get_entities();
     for (std::size_t i = 0; i < entities.size(); ++i) {
-
         const auto& e = entities[i];
-
         sf::CircleShape marker;
         float point_radius_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::POINT_RADIUS_PX));
         marker.setRadius(point_radius_cm);
         marker.setOrigin(sf::Vector2f{point_radius_cm, point_radius_cm});
         marker.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm), static_cast<float>(e.position.y_cm)});
-
         const bool selected = selection.type == Selection::Type::Entity && selection.entity_index == i;
 
         if (e.type == PointType::Source) {
-
             marker.setFillColor(selected ? Cosmetics::SOURCE_SELECTED_COLOR : Cosmetics::SOURCE_COLOR);
-
         } else {
-                
             marker.setFillColor(sf::Color::Transparent);
             marker.setOutlineThickness(static_cast<float>(pixel_radius_to_world_cm(Cosmetics::POINT_OUTLINE_THICKNESS_PX)));
             marker.setOutlineColor(selected ? Cosmetics::DOSE_SELECTED_COLOR : Cosmetics::DOSE_COLOR);
-
         }
 
         window.draw(marker);
@@ -998,15 +1167,12 @@ void GridRenderer::render() {
 
     // temporary panel view
     window.setView(window.getDefaultView());
+    draw_toolbar();
+    draw_left_panel();
 
-    ImGui::SetNextWindowPos(ImVec2(window.getSize().x - SIDE_PANEL_WIDTH_PX, TOOLBAR_HEIGHT_PX));
-    ImGui::SetNextWindowSize(ImVec2(SIDE_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
-    ImGui::Begin("Terminal", nullptr,
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse
-    );
-
+    ImGui::SetNextWindowPos(ImVec2(window.getSize().x - RIGHT_PANEL_WIDTH_PX, TOOLBAR_HEIGHT_PX));
+    ImGui::SetNextWindowSize(ImVec2(RIGHT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
+    ImGui::Begin("Terminal", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
     ImGui::BeginChild("terminal_scroll");
     for (const auto& line : ui_log.lines) {
         ImGui::TextUnformatted(line.c_str());
@@ -1017,63 +1183,4 @@ void GridRenderer::render() {
     ImGui::EndChild();
     ImGui::End();
 
-    if (interaction_mode == InteractionMode::Select && layer_ui.panel_open && selection.type == Selection::Type::WallLayer) {
-        const auto& w = engine.get_walls()[selection.wall_index];
-        const auto& layers = w.layers;
-        const auto& layer = layers[selection.layer_index];
-        const auto* mat = material_registry.get(layer.material_id);
-
-        // panel
-        sf::Vector2f panel_size{220.f, 110.f};
-
-        sf::RectangleShape panel(panel_size);
-        panel.setFillColor(sf::Color(245, 245, 245));
-        panel.setOutlineThickness(1.f);
-        panel.setOutlineColor(sf::Color::Black);
-
-        // origin at top-center
-        panel.setOrigin(sf::Vector2f(panel_size.x / 2.f, 0.f));
-        panel.setPosition(sf::Vector2f(static_cast<float>(window.getSize().x) / 2.f, 12.0f));
-        window.draw(panel);
-
-        // text
-        float padding = 12.f;
-        float x = panel.getPosition().x - panel_size.x / 2.f + padding;
-        float y = panel.getPosition().y + padding;
-        length_text.setFillColor(sf::Color::Black);
-
-        // title
-        length_text.setString("Wall Layers");
-        length_text.setPosition(sf::Vector2f(x, y));
-        window.draw(length_text);
-        y += 18.f;
-
-        std::ostringstream ss;
-
-        // layer index
-        ss.str("");
-        ss.clear();
-        ss << "Layer: " << (selection.layer_index + 1) << " / " << layers.size();
-        length_text.setString(ss.str());
-        length_text.setPosition(sf::Vector2f(x, y));
-        window.draw(length_text);
-        y += 20.f;
-
-        // material
-        ss.str("");
-        ss.clear();
-        ss << "Material: " << (mat ? mat->name : "Unknown");
-        length_text.setString(ss.str());
-        length_text.setPosition(sf::Vector2f(x, y));
-        window.draw(length_text);
-        y += 20.f;
-
-        // thickness
-        ss.str("");
-        ss.clear();
-        ss << "Thickness: " << std::fixed << std::setprecision(1) << layer.thickness_cm << " cm";
-        length_text.setString(ss.str());
-        length_text.setPosition(sf::Vector2f(x, y));
-        window.draw(length_text);
-    }
 }
