@@ -22,7 +22,7 @@ class RemoveEntityCommand : public Command {
 
         void undo() override { // override derived
 
-            engine.add_entitiy_direct(saved);
+            engine.add_entity_direct(saved);
 
         }
 

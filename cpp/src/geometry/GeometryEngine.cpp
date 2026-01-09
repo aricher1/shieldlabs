@@ -55,7 +55,6 @@ void GeometryEngine::add_wall(Point a, Point b, double thickness_cm, int materia
         return; 
     }
 
-    // walls.push_back({a, b, thickness_cm, material_id, length_cm});
     Wall w;
     w.a = a;
     w.b = b;
@@ -91,7 +90,7 @@ void GeometryEngine::remove_entity_at(std::size_t index) {
 }
 
 
-void GeometryEngine::add_entitiy_direct(const PointEntity& e) {
+void GeometryEngine::add_entity_direct(const PointEntity& e) {
     entities.push_back(e);
 }
 
@@ -432,3 +431,10 @@ void GeometryEngine::set_world_bounds_from_image(int px_w, int px_h) {
 
     cm_per_cell = world_bounds.width_cm / grid_cells;
 }
+
+
+/*
+void GeometryEngine::apply_scale(double measured_units, double real_cm) {
+   // need to implement
+}
+*/

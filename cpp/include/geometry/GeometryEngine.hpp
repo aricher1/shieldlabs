@@ -30,6 +30,8 @@ class GeometryEngine {
         const WorldBounds& get_world_bounds() const;
         void set_world_bounds(const WorldBounds& bounds);
         void set_world_bounds_from_image(int px_w, int px_h);
+
+        // void apply_scale(double measured_cm, double real_cm);
     
         int get_grid_cells() const { return grid_cells; }
         double get_cm_per_cell() const { return cm_per_cell; }
@@ -45,7 +47,7 @@ class GeometryEngine {
         void remove_last_wall();
         void remove_wall_at(std::size_t index);
         void remove_entity_at(std::size_t index);
-        void add_entitiy_direct(const PointEntity& e);
+        void add_entity_direct(const PointEntity& e);
         const std::vector<Wall>& get_walls() const;
 
         void add_source(Point p);

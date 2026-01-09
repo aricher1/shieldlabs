@@ -287,7 +287,8 @@ void GridRenderer::handle_select_click(const Point& p) {
             for (std::size_t oi = 0; oi < w.openings.size(); ++oi) {
                 const auto& o = w.openings[oi];
 
-                double half_t = (o.length_cm * 0.5) / w.length_cm;
+                double wall_len_cm = distance_cm(w.a, w.b);
+                double half_t = (o.length_cm * 0.5) / wall_len_cm;
                 double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
                 double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
 
@@ -332,7 +333,93 @@ double GridRenderer::distance_cm(Point a, Point b) const {
     const double dy = b.y_cm - a.y_cm;
 
     return std::sqrt(dx * dx + dy * dy);
+}
 
+
+void GridRenderer::draw_project_picker() {
+    ImGui::SetNextWindowSize(ImVec2(420, 220), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(
+        ImVec2(window.getSize().x * 0.5f, window.getSize().y * 0.5f),
+        ImGuiCond_Always,
+        ImVec2(0.5f, 0.5f)
+    );
+
+    ImGui::Begin(
+        "Project Picker",
+        nullptr,
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoMove
+    );
+
+    ImGui::Text("XRCT Shielding");
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::Button("New Project", ImVec2(180, 40))) {
+        app_state.mode = AppMode::NewProjectSetup;
+        scale_has_p1 = false;
+        scale_has_p2 = false;
+        update_viewport();
+    }
+
+    ImGui::Spacing();
+    ImGui::BeginDisabled();
+    ImGui::Button("Open Project", ImVec2(180, 40));
+    ImGui::EndDisabled();
+    ImGui::End();
+}
+
+
+void GridRenderer::draw_new_project_setup() {
+    ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
+    ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX - 20, 220));
+
+    ImGui::Begin("Project Setup Mode", nullptr,
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse
+    );
+
+    ImGui::Text("Scale Calibration");
+    ImGui::Separator();
+
+    ImGui::TextWrapped(
+        "Click two points on the grid that represent a known real-world distance."
+    );
+
+    ImGui::Spacing();
+
+    ImGui::Text("Real-world distance (cm)");
+    ImGui::SetNextItemWidth(-1);
+    ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
+
+
+    if (scale_has_p1 && scale_has_p2) {
+        double pixel_dist = distance_cm(scale_p1, scale_p2);
+        ImGui::TextWrapped("Measured distance on plan: %.2f grid units", pixel_dist);
+        ImGui::TextWrapped(
+            "Grid units are arbitrary until calibrated. "
+            "They will be converted to centimeters using the real-world distance you enter. "
+            "Press 'Apply Scale' to calibrate and proceed to editing. "
+            "If you would like to re-calibrate the scale once entering editing mode, press the 'Edit Scale' button to return to this page. "
+        );
+        if (ImGui::Button("Apply Scale")) {
+            // engine.apply_scale(pixel_dist, scale_real_distance_cm);
+            update_viewport();
+            app_state.mode = AppMode::Editing;
+        }
+    } else {
+        ImGui::TextDisabled("Select two points on the grid.");
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Reset Points")) {
+        scale_has_p1 = false;
+        scale_has_p2 = false;
+    }
+
+    ImGui::End();
 }
 
 
@@ -445,6 +532,13 @@ void GridRenderer::draw_toolbar() {
 
     if (ToolbarButton("Finalize", false)) {
         finalize_blueprint();
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Edit Scale", false)) {
+        app_state.mode = AppMode::NewProjectSetup;
+        scale_has_p1 = false;
+        scale_has_p2 = false;
     }
 
     ImGui::End();
@@ -725,6 +819,11 @@ void GridRenderer::handle_events() {
     while (const auto event = window.pollEvent()) {
 
         ImGui::SFML::ProcessEvent(window, *event);
+
+        if (app_state.mode == AppMode::ProjectPicker) {
+            continue;
+        }
+
         const ImGuiIO& io = ImGui::GetIO();
         
         // close
@@ -838,8 +937,24 @@ void GridRenderer::handle_events() {
         }
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
-
             if (io.WantCaptureMouse) { continue; }
+
+            if (app_state.mode == AppMode::NewProjectSetup) {
+                if (mouse->button == sf::Mouse::Button::Left) {
+                    sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
+                    sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
+                    Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
+
+                    if (!scale_has_p1) {
+                        scale_p1 = p;
+                        scale_has_p1 = true;
+                    } else if (!scale_has_p2) {
+                        scale_p2 = p;
+                        scale_has_p2 = true;
+                    }
+                }
+                return;
+            }
 
             if (mouse->button == sf::Mouse::Button::Left) {
 
@@ -952,7 +1067,90 @@ void GridRenderer::handle_events() {
 }
 
 
-void GridRenderer::render() {
+void GridRenderer::render_grid_only() {
+    window.setView(grid_view);
+
+    float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
+    length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));
+
+    if (background_sprite) {
+        window.draw(*background_sprite);
+    }
+
+    const auto& bounds = engine.get_world_bounds();
+    const double min_x = 0.0;
+    const double max_x = bounds.width_cm;
+    const double min_y = 0.0;
+    const double max_y = bounds.height_cm;
+    const double grid_spacing_cm = engine.get_cm_per_cell();
+
+    for (double x = min_x; x <= max_x; x += grid_spacing_cm) {
+        sf::Vertex line[2] = {
+            {{(float)x, (float)min_y}, Cosmetics::GRID_COLOR},
+            {{(float)x, (float)max_y}, Cosmetics::GRID_COLOR}
+        };
+        window.draw(line, 2, sf::PrimitiveType::Lines);
+    }
+
+    for (double y = min_y; y <= max_y; y += grid_spacing_cm) {
+        sf::Vertex line[2] = {
+            {{(float)min_x, (float)y}, Cosmetics::GRID_COLOR},
+            {{(float)max_x, (float)y}, Cosmetics::GRID_COLOR}
+        };
+        window.draw(line, 2, sf::PrimitiveType::Lines);
+    }
+
+    if (app_state.mode == AppMode::NewProjectSetup) {
+        
+        float r = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::POINT_RADIUS_PX));
+        if (scale_has_p1) {
+            sf::CircleShape p1;
+            p1.setRadius(r);
+            p1.setOrigin(sf::Vector2f{r, r});
+            p1.setPosition(sf::Vector2f{static_cast<float>(scale_p1.x_cm), static_cast<float>(scale_p1.y_cm)});
+            p1.setFillColor(sf::Color::Red);
+            window.draw(p1);
+        }
+        if (scale_has_p2) {
+            sf::CircleShape p2;
+            p2.setRadius(r);
+            p2.setOrigin(sf::Vector2f{r, r});
+            p2.setPosition(sf::Vector2f{static_cast<float>(scale_p2.x_cm), static_cast<float>(scale_p2.y_cm)});
+            p2.setFillColor(sf::Color::Red);
+            window.draw(p2);
+
+            sf::Vertex line[2];
+            line[0].position = sf::Vector2f{static_cast<float>(scale_p1.x_cm), static_cast<float>(scale_p1.y_cm)};
+            line[1].position = sf::Vector2f{static_cast<float>(scale_p2.x_cm), static_cast<float>(scale_p2.y_cm)};
+            line[0].color = line[1].color = sf::Color::Red;
+            window.draw(line, 2, sf::PrimitiveType::Lines);
+        }
+    }
+}
+
+
+void GridRenderer::render() {    
+    // 1. project picker mode
+    if (app_state.mode == AppMode::ProjectPicker) {
+        window.setView(window.getDefaultView());
+        window.clear(sf::Color::White);
+        draw_project_picker();
+        ImGui::SFML::Render(window);
+        window.display();
+        return;
+    }
+    
+    // 2. new project setup
+    if (app_state.mode == AppMode::NewProjectSetup) {
+        render_grid_only();    
+        draw_new_project_setup();
+        ImGui::SFML::Render(window);
+        window.display();
+        return;
+    }
+
+    // 3. Editor
+
     window.setView(grid_view);
     float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
     length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));

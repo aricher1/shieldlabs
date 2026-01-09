@@ -15,7 +15,7 @@ class AddEntityCommand : public Command {
 
         void execute() override { // override derived
 
-            engine.add_entitiy_direct(entity);
+            engine.add_entity_direct(entity);
 
         }
 

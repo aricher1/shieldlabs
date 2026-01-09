@@ -73,10 +73,8 @@ class GridRenderer {
         AppState& app_state;
         UndoStack undo_stack;
         Selection selection;
-
         InteractionMode interaction_mode = InteractionMode::Draw;
         Tool current_tool = Tool::DrawWall;
-
         LayerUIState layer_ui;
 
         sf::View grid_view;
@@ -84,13 +82,20 @@ class GridRenderer {
         sf::FloatRect grid_viewport;
         sf::Font font;
         sf::Text length_text;
-        
         sf::Texture background_texture;
+        
         std::unique_ptr<sf::Sprite> background_sprite;
         std::optional<size_t> inspector_wall_index;
         std::optional<size_t> inspector_source_index;
         std::optional<size_t> inspector_dose_index;
 
+        bool scale_calibration_active = false;
+        bool scale_has_p1 = false;
+        bool scale_has_p2 = false;
+        Point scale_p1;
+        Point scale_p2;
+        double scale_real_distance_cm = 100.0;
+        
         void update_viewport();
         float zoom = 1.0f;
 
@@ -116,11 +121,14 @@ class GridRenderer {
 
         void finalize_blueprint(); 
         void handle_select_click(const Point& p);
+        void draw_project_picker();
+        void draw_new_project_setup();
         void draw_toolbar();
         void draw_left_panel();
         void draw_wall_tab();
         void draw_source_tab();
         void draw_dose_tab();
         void handle_events();
+        void render_grid_only();                        // used in scaling state of app
         void render();
 };
