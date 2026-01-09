@@ -121,7 +121,7 @@ namespace {
 } // end of anonymous namespace
 
 
-GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e) : window(w), engine(e), length_text(font) {
+GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e, AppState& state) : window(w), engine(e), app_state(state),length_text(font) {
     
     window_size = window.getSize();
     const auto& bounds = engine.get_world_bounds();
@@ -203,7 +203,7 @@ void GridRenderer::finalize_blueprint() {
     if (!blueprint_finalized) {
         auto errors = engine.validate();
         if (!errors.empty()) {
-            ui_log.push("VALIDATION ERRORS:");
+            ui_log.push("VALIDATION ERRORS: ");
             for (const auto& e : errors) {
                 ui_log.push("  - " + e.message);
             }

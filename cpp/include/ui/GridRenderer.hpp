@@ -3,6 +3,7 @@
 #include "geometry/GeometryEngine.hpp"
 #include "geometry/WorldBounds.hpp"
 #include "ui/UndoStack.hpp"
+#include "app/AppState.hpp"
 #include <optional>
 #include <string>
 
@@ -69,6 +70,7 @@ class GridRenderer {
     private:
         sf::RenderWindow& window;
         GeometryEngine& engine;
+        AppState& app_state;
         UndoStack undo_stack;
         Selection selection;
 
@@ -108,7 +110,7 @@ class GridRenderer {
         double distance_cm(Point a, Point b) const; // distance between 2 points for a wall segment
 
     public:
-        GridRenderer(sf::RenderWindow& window, GeometryEngine& engine);
+        GridRenderer(sf::RenderWindow& window, GeometryEngine& engine, AppState& app_state);
 
         bool load_background_image(const std::string& path);
 

@@ -8,6 +8,7 @@
 #include "materials/MaterialRegistry.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
 #include "ui/GridRenderer.hpp"
+#include "app/AppState.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -28,6 +29,7 @@ int main() {
     }
 
     sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Resize | sf::Style::Close);
+    AppState app_state;
 
     if (!ImGui::SFML::Init(window)) {
         return 1;
@@ -35,7 +37,7 @@ int main() {
     
     sf::Clock deltaClock;
     GeometryEngine engine(200, 5.0);
-    GridRenderer renderer(window, engine);
+    GridRenderer renderer(window, engine, app_state);
     renderer.load_background_image("../assets/floorplans/floorplan.png");
 
     while (window.isOpen()) {
