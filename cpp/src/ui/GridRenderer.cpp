@@ -287,8 +287,7 @@ void GridRenderer::handle_select_click(const Point& p) {
             for (std::size_t oi = 0; oi < w.openings.size(); ++oi) {
                 const auto& o = w.openings[oi];
 
-                double wall_len_cm = distance_cm(w.a, w.b);
-                double half_t = (o.length_cm * 0.5) / wall_len_cm;
+                double half_t = (o.length_cm * 0.5) / w.length_cm;
                 double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
                 double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
 
