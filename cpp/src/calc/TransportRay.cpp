@@ -2,15 +2,13 @@
 #include "calc/CalcScene.hpp"
 #include "calc/RayTraversal.hpp"
 #include "calc/RayHitProcessing.hpp"
-#include "calc/HitClassification.hpp"
 #include <cmath>
 #include <algorithm>
-
 
 namespace calc {
 
 TransportRay build_transport_ray(const CalcScene& scene, int source_index, int dose_index) {
-    const auto& src = scene.sources[source_index].position;
+    const auto& src  = scene.sources[source_index].position;
     const auto& dose = scene.dose_points[dose_index].position;
 
     const double dx = dose.x_cm - src.x_cm;
@@ -27,48 +25,46 @@ TransportRay build_transport_ray(const CalcScene& scene, int source_index, int d
 
     double prev_dist = 0.0;
 
-    // normalize ray direction
+    // ray direction
     const double inv_len = 1.0 / std::max(total_distance_cm, 1e-9);
-    const double ray_dx = dx * inv_len;
-    const double ray_dy = dy * inv_len;
+    const double rdx = dx * inv_len;
+    const double rdy = dy * inv_len;
 
-    for (const auto& hit : hits) {
-        // air before hit
-        const double air_len = hit.distance_cm - prev_dist;
+    for (std::size_t i = 0; i + 1 < hits.size(); i += 2) {
+        const auto& entry = hits[i];
+        const auto& exit  = hits[i + 1];
+
+        // air before wall
+        const double air_len = entry.distance_cm - prev_dist;
         if (air_len > 0.0) {
-            ray.segments.push_back({-1, air_len}); // -1 for air
+            ray.segments.push_back({-1, air_len});
         }
 
-        double wall_transport_len = 0.0;
+        const CalcWall& wall = scene.walls[entry.wall_index];
 
-        // solid wall
-        if (hit.kind == HitKind::SolidWall) {
-            const CalcWall& wall = scene.walls[hit.wall_index];
+        const double wx = wall.b.x_cm - wall.a.x_cm;
+        const double wy = wall.b.y_cm - wall.a.y_cm;
+        const double wlen = std::hypot(wx, wy);
 
-            const double wx = wall.b.x_cm - wall.a.x_cm;
-            const double wy = wall.b.y_cm - wall.a.y_cm;
-            const double wlen = std::hypot(wx, wy);
+        if (wlen > 0.0) {
+            const double nx = -wy / wlen;
+            const double ny =  wx / wlen;
 
-            if (wlen > 0.0) {
-                // wall normal perpendicular
-                const double nx = -wy / wlen;
-                const double ny = wx / wlen;
-            
-                // cosine of incidence angle
-                double cos_incidence = std::fabs(ray_dx * nx + ray_dy * ny);
-                cos_incidence = std::max(cos_incidence, 1e-6);
+            double cos_incidence = std::fabs(rdx * nx + rdy * ny);
+            cos_incidence = std::max(cos_incidence, 1e-6);
 
-                for (const auto& layer : wall.layers) {
-                    const double seg_len = layer.thickness_cm / cos_incidence;
-                    ray.segments.push_back({layer.material_id, seg_len});
-                    wall_transport_len += seg_len;
-                }
+            for (const auto& layer : wall.layers) {
+                ray.segments.push_back({
+                    layer.material_id,
+                    layer.thickness_cm / cos_incidence
+                });
             }
         }
 
-        prev_dist = hit.distance_cm + wall_transport_len;
+        prev_dist = exit.distance_cm;
     }
 
+    // tail air
     const double tail = total_distance_cm - prev_dist;
     if (tail > 0.0) {
         ray.segments.push_back({-1, tail});
@@ -77,4 +73,4 @@ TransportRay build_transport_ray(const CalcScene& scene, int source_index, int d
     return ray;
 }
 
-} // end namespace calc
+} // namespace calc

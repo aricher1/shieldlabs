@@ -132,6 +132,13 @@ void GeometryEngine::add_dose(Point p) {
 }
 
 
+void GeometryEngine::set_distance_scale(double scale) {
+    if (scale > 0.0) {
+        distance_scale = scale;
+    }
+}
+
+
 const std::vector<PointEntity>& GeometryEngine::get_entities() const { return entities; }
 
 
@@ -147,6 +154,7 @@ nlohmann::json GeometryEngine::to_json() const {
         {"cm_per_cell", cm_per_cell}
     };
 
+    j["distance_scale"] = distance_scale;
     j["walls"] = json::array();
     
     for (const auto& w : walls) {
@@ -158,7 +166,7 @@ nlohmann::json GeometryEngine::to_json() const {
         for (const auto& layer : w.layers) {
             jw["layers"].push_back({{"material_id", layer.material_id}, {"thickness_cm", layer.thickness_cm}});
         }
-        jw["length_cm"] = w.length_cm;
+        jw["length_cm"] = w.length_cm * distance_scale;
         
         // openings
         jw["openings"] = json::array();
@@ -171,7 +179,7 @@ nlohmann::json GeometryEngine::to_json() const {
             }
 
             jo["center_t"] = o.center_t;
-            jo["length_cm"] = o.length_cm;
+            jo["length_cm"] = o.length_cm * distance_scale;
             jw["openings"].push_back(jo);
         }
 
@@ -233,6 +241,7 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
 
     grid_cells  = j["grid"]["cells"];
     cm_per_cell = j["grid"]["cm_per_cell"];
+    distance_scale = j["distance_scale"];
     clear();
     entities.clear();
 
@@ -431,10 +440,3 @@ void GeometryEngine::set_world_bounds_from_image(int px_w, int px_h) {
 
     cm_per_cell = world_bounds.width_cm / grid_cells;
 }
-
-
-/*
-void GeometryEngine::apply_scale(double measured_units, double real_cm) {
-   // need to implement
-}
-*/

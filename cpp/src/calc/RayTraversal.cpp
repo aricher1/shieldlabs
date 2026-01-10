@@ -20,22 +20,36 @@ namespace calc {
             const auto& wall = scene.walls[i];
 
             RayHit hit;
-            bool intersects = intersect_ray_with_segment(
-                sx, sy,
-                dx, dy,
-                wall.a.x_cm, wall.a.y_cm,
-                wall.b.x_cm, wall.b.y_cm,
-                hit
-            );
-            if (!intersects) { continue; }
+            if (!intersect_ray_with_segment(
+                    sx, sy,
+                    dx, dy,
+                    wall.a.x_cm, wall.a.y_cm,
+                    wall.b.x_cm, wall.b.y_cm,
+                    hit)) { 
+                continue; 
+            }
 
-            RayHitRecord record;
-            record.wall_index = static_cast<int>(i);
-            record.t_ray = hit.t_ray;
-            record.distance_cm = ray_distance(sx, sy, dx, dy, hit.t_ray);
-            record.kind = classify_wall_hit(wall, hit.t_wall);
+            const double mid_dist = ray_distance(sx, sy, dx, dy, hit.t_ray);
+            double total_thickness = 0.0;
+            for (const auto& layer : wall.layers) {
+                total_thickness += layer.thickness_cm;
+            }
 
-            hits.push_back(record);
+            RayHitRecord entry;
+            entry.wall_index = static_cast<int>(i);
+            entry.distance_cm = mid_dist - total_thickness * 0.5;
+            entry.kind = HitKind::SolidWall;
+
+            RayHitRecord exit;
+            exit.wall_index = static_cast<int>(i);
+            exit.distance_cm = mid_dist + total_thickness * 0.5;
+            exit.kind = HitKind::SolidWall;
+
+            if (exit.distance_cm > entry.distance_cm) {
+                hits.push_back(entry);
+                hits.push_back(exit);
+            }
+
         }
 
         return hits;

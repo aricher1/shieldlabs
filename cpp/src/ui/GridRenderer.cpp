@@ -225,7 +225,7 @@ void GridRenderer::finalize_blueprint() {
 
         // canonical JSON
         nlohmann::json j = engine.to_json();
-        // ui_log.push(j.dump(2));
+        ui_log.push(j.dump(2));
 
         // compile
         calc::CalcScene scene = calc::SceneCompiler::compile(j);
@@ -240,7 +240,7 @@ void GridRenderer::finalize_blueprint() {
         ui_log.separator();
         output::print_to_ui(compiler_output, ui_log);
         // uncomment for terminal debugging
-        // output::print(compiler_output);
+        output::print(compiler_output);
 
     } else {
         ui_log.clear();
@@ -403,7 +403,11 @@ void GridRenderer::draw_new_project_setup() {
             "If you would like to re-calibrate the scale once entering editing mode, press the 'Edit Scale' button to return to this page. "
         );
         if (ImGui::Button("Apply Scale")) {
-            // engine.apply_scale(pixel_dist, scale_real_distance_cm);
+            double measured_draw_distance = distance_cm(scale_p1, scale_p2);
+            if (measured_draw_distance > 0.0) {
+                engine.set_distance_scale(scale_real_distance_cm / measured_draw_distance);
+            }
+
             update_viewport();
             app_state.mode = AppMode::Editing;
         }
@@ -619,9 +623,8 @@ void GridRenderer::draw_wall_tab() {
     auto& wall = walls[*inspector_wall_index];
 
     ImGui::Separator();
-    ImGui::Text("Length: %.1f cm", wall.length_cm);
+    ImGui::Text("Length: %.1f cm", wall.length_cm * engine.get_distance_scale());
 
-    // ===== Layer Tabs =====
     if (ImGui::BeginTabBar("WallLayers")) {
 
         for (size_t i = 0; i < wall.layers.size(); ++i) {
@@ -1195,7 +1198,7 @@ void GridRenderer::render() {
                 Cosmetics::WALL_NORMAL
         );
         window.draw(preview_rect);
-        double len_cm = distance_cm(start_point, preview_point);
+        double len_cm = distance_cm(start_point, preview_point) * engine.get_distance_scale();
         sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)};
         
         std::ostringstream ss;
@@ -1239,7 +1242,7 @@ void GridRenderer::render() {
             window.draw(rect);
 
             // draw text
-            double len_cm = distance_cm(start_point, preview_point);
+            double len_cm = distance_cm(start_point, preview_point) * engine.get_distance_scale();
             sf::Vector2f mid{
                 static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), 
                 static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)
@@ -1312,7 +1315,7 @@ void GridRenderer::render() {
 
             // actual text
             std::ostringstream ss;
-            ss << std::fixed << std::setprecision(1) << o.length_cm << " cm";
+            ss << std::fixed << std::setprecision(1) << (o.length_cm * engine.get_distance_scale()) << " cm";
             length_text.setString(ss.str());
 
             switch (o.type) {
@@ -1332,7 +1335,7 @@ void GridRenderer::render() {
         const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
 
         std::ostringstream ss;
-        ss << std::fixed << std::setprecision(1) << w.length_cm << " cm";
+        ss << std::fixed << std::setprecision(1) << (w.length_cm * engine.get_distance_scale()) << " cm";
         length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
         length_text.setString(ss.str());
         length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});

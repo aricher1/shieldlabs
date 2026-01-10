@@ -9,13 +9,15 @@ namespace calc {
 CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     CalcScene scene;
 
+    const double scale = j.value("distance_scale", 1.0);
+
     // walls
     if (j.contains("walls")) {
         for (const auto& jw : j["walls"]) {
             CalcWall wall;
 
-            wall.a = {jw["a"]["x"].get<double>(), jw["a"]["y"].get<double>()};
-            wall.b = {jw["b"]["x"].get<double>(), jw["b"]["y"].get<double>()};
+            wall.a = {jw["a"]["x"].get<double>() * scale, jw["a"]["y"].get<double>() * scale};
+            wall.b = {jw["b"]["x"].get<double>() * scale, jw["b"]["y"].get<double>() * scale};
 
             // wall length
             const double dx = wall.b.x_cm - wall.a.x_cm;
@@ -59,7 +61,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     if (j.contains("sources")) {
         for (const auto& js : j["sources"]) {
             CalcSource src;
-            src.position = {js["x"].get<double>(), js["y"].get<double>()};
+            src.position = {js["x"].get<double>() * scale, js["y"].get<double>() * scale};
             src.num_patients = js["num_patients"].get<double>();
             src.activity_per_patient_MBq = js["activity_per_patient_MBq"].get<double>();
             src.uptake_time_hours = js["uptake_time_hours"].get<double>();
@@ -75,7 +77,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     if (j.contains("dose_points")) {
         for (const auto& jd : j["dose_points"]) {
             CalcDosePoint dp;
-            dp.position = {jd["x"].get<double>(), jd["y"].get<double>()};
+            dp.position = {jd["x"].get<double>() * scale, jd["y"].get<double>() * scale};
             dp.occupancy = jd.value("occupancy", 1.0);
             dp.dose_limit_uSv = jd.value("dose_limit_uSv", 0.0);
             dp.label = jd.value("label", "");
