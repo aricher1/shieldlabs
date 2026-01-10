@@ -16,6 +16,8 @@
 #include "calc/CompilerOutput.hpp"
 #include "output/PrintCompilerOutput.hpp"
 #include "output/PrintCompilerOutputUI.hpp"
+#include "utils/PdfToPng.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <algorithm>
@@ -178,21 +180,32 @@ void GridRenderer::update_viewport() {
 }
 
 
-bool GridRenderer::load_background_image(const std::string& path) {
+bool GridRenderer::load_background_image(const std::string& path)
+{
+    background_sprite.reset();
+    background_texture = sf::Texture{};
+
     if (!background_texture.loadFromFile(path)) {
         std::cerr << "Failed to load background image: " << path << "\n";
         return false;
     }
 
     const auto size_px = background_texture.getSize();
-    const auto& bounds = engine.get_world_bounds();
+
     engine.set_world_bounds_from_image(size_px.x, size_px.y);
-    grid_view.setSize(sf::Vector2f{static_cast<float>(bounds.width_cm), static_cast<float>(bounds.height_cm)});
-    grid_view.setCenter(sf::Vector2f{static_cast<float>(bounds.width_cm * 0.5f), static_cast<float>(bounds.height_cm * 0.5f)});
+    const auto& bounds = engine.get_world_bounds();
+
+    grid_view.setSize({
+        static_cast<float>(bounds.width_cm),
+        static_cast<float>(bounds.height_cm)
+    });
+
+    grid_view.setCenter(sf::Vector2f{static_cast<float>(bounds.width_cm * 0.5), static_cast<float>(bounds.height_cm * 0.5)});
+
     update_viewport();
+
     background_sprite = std::make_unique<sf::Sprite>(background_texture);
-    background_sprite->setPosition(sf::Vector2f{0.f, 0.f});
-    std::cout << "Background loaded: " << size_px.x << " x " << size_px.y << " px\n";
+    background_sprite->setPosition({0.f, 0.f});
 
     return true;
 }
@@ -372,22 +385,38 @@ void GridRenderer::draw_project_picker() {
 
 void GridRenderer::draw_new_project_setup() {
     ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
-    ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX - 20, 220));
+    ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX - 20, 400));
 
     ImGui::Begin("Project Setup Mode", nullptr,
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse
     );
 
+
+    if (ImGui::Button("Upload PDF Floorplan")) {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "ChoosePDF",
+            "Select PDF",
+            ".pdf",
+            config
+        );
+    }
+
+    if (!pdf_error_message.empty()) {
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f),"Floorplan Error");
+        ImGui::TextWrapped("%s", pdf_error_message.c_str());
+    }
+    
+    ImGui::Spacing();
+    ImGui::Separator();
     ImGui::Text("Scale Calibration");
     ImGui::Separator();
-
-    ImGui::TextWrapped(
-        "Click two points on the grid that represent a known real-world distance."
-    );
-
+    ImGui::TextWrapped("Click two points on the grid that represent a known real-world distance.");
     ImGui::Spacing();
-
     ImGui::Text("Real-world distance (cm)");
     ImGui::SetNextItemWidth(-1);
     ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
@@ -420,6 +449,28 @@ void GridRenderer::draw_new_project_setup() {
     if (ImGui::Button("Reset Points")) {
         scale_has_p1 = false;
         scale_has_p2 = false;
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("ChoosePDF")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string pdf_path = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string png_path = "cache/blueprint.png";
+
+            if (pdf_to_png(pdf_path, png_path)) {
+                pdf_error_message.clear();
+                load_background_image(png_path);
+                scale_has_p1 = false;
+                scale_has_p2 = false;
+                update_viewport();
+            } else {
+                pdf_error_message = 
+                "PDF upload failed.\n"
+                "- Must be exactly 1 page\n"
+                "- Must not be encrypted\n"
+                "- Must contain visible content";
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
     }
 
     ImGui::End();

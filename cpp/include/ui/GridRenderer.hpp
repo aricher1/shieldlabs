@@ -85,6 +85,7 @@ class GridRenderer {
         sf::Texture background_texture;
         
         std::unique_ptr<sf::Sprite> background_sprite;
+        std::string pdf_error_message;
         std::optional<size_t> inspector_wall_index;
         std::optional<size_t> inspector_source_index;
         std::optional<size_t> inspector_dose_index;

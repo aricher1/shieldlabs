@@ -4,3 +4,6 @@
 [submodule "cpp/external/tabulate"]
 	path = cpp/external/tabulate
 	url = https://github.com/p-ranav/tabulate.git
+[submodule "cpp/external/ImGuiFileDialog"]
+	path = cpp/external/ImGuiFileDialog
+	url = https://github.com/aiekick/ImGuiFileDialog.git

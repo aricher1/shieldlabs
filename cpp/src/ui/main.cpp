@@ -9,7 +9,7 @@
 #include "isotopes/IsotopeRegistry.hpp"
 #include "ui/GridRenderer.hpp"
 #include "app/AppState.hpp"
-
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 
@@ -38,7 +38,7 @@ int main() {
     sf::Clock deltaClock;
     GeometryEngine engine(200, 5.0);
     GridRenderer renderer(window, engine, app_state);
-    renderer.load_background_image("../assets/floorplans/floorplan.png");
+    std::filesystem::create_directories("cache");
 
     while (window.isOpen()) {
         renderer.handle_events();

@@ -62,6 +62,8 @@ add_executable(xrct_ui
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
     src/ui/UiLog.cpp
+    src/utils/PdfToPng.cpp
+    external/ImGuiFileDialog/ImGuiFileDialog.cpp
     src/geometry/GeometryEngine.cpp
     src/materials/MaterialRegistry.cpp
     src/calc/HitClassification.cpp
@@ -96,6 +98,11 @@ target_include_directories(xrct_ui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/external
     ${CMAKE_CURRENT_SOURCE_DIR}/external/tabulate/include
+    ${POPPLER_CPP_INCLUDE_DIRS}
+)
+
+target_compile_options(xrct_ui PRIVATE
+    ${POPPLER_CPP_CFLAGS_OTHER}
 )
 
 # --------------------
@@ -108,4 +115,5 @@ target_link_libraries(xrct_ui PRIVATE
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
     yaml-cpp
+    ${POPPLER_CPP_LIBRARIES}
 )
