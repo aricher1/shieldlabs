@@ -28,7 +28,7 @@ int main() {
         return 1;
     }
 
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "XRCT Radiation Shielding Optimization", sf::Style::Titlebar | sf::Style::Resize | sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 800)), "ShieldLabs", sf::Style::Titlebar | sf::Style::Resize | sf::Style::Close);
     AppState app_state;
 
     if (!ImGui::SFML::Init(window)) {

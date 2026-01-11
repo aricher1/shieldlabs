@@ -83,6 +83,7 @@ class GridRenderer {
         sf::Font font;
         sf::Text length_text;
         sf::Texture background_texture;
+        sf::Texture shieldlabs_logo;
         
         std::unique_ptr<sf::Sprite> background_sprite;
         std::string pdf_error_message;

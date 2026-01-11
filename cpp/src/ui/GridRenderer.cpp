@@ -123,7 +123,7 @@ namespace {
 } // end of anonymous namespace
 
 
-GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e, AppState& state) : window(w), engine(e), app_state(state),length_text(font) {
+GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e, AppState& state) : window(w), engine(e), app_state(state), length_text(font) {
     
     window_size = window.getSize();
     const auto& bounds = engine.get_world_bounds();
@@ -146,7 +146,10 @@ GridRenderer::GridRenderer(sf::RenderWindow& w, GeometryEngine& e, AppState& sta
     }
     update_viewport();
     if (!font.openFromFile("assets/fonts/Inter-Regular.ttf")) {
-        std::cerr << "Failed to load font\n" << std::endl;
+        std::cerr << "Failed to load font\n";
+    }
+    if (!shieldlabs_logo.loadFromFile("assets/logos/ShieldLabsTitleLogoTransparent.png")) {
+        std::cerr << "Failed to load logo\n"; 
     }
     length_text.setFont(font);
     length_text.setCharacterSize(18);
@@ -347,39 +350,65 @@ double GridRenderer::distance_cm(Point a, Point b) const {
     return std::sqrt(dx * dx + dy * dy);
 }
 
-
-void GridRenderer::draw_project_picker() {
-    ImGui::SetNextWindowSize(ImVec2(420, 220), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(
-        ImVec2(window.getSize().x * 0.5f, window.getSize().y * 0.5f),
-        ImGuiCond_Always,
-        ImVec2(0.5f, 0.5f)
-    );
+void GridRenderer::draw_project_picker()
+{
+    ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window.getSize().x), static_cast<float>(window.getSize().y)), ImGuiCond_Always);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(11.f/255.f, 11.f/255.f, 20.f/255.f, 1.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
 
     ImGui::Begin(
-        "Project Picker",
+        "ShieldLabs",
         nullptr,
+        ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoMove
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
     );
 
-    ImGui::Text("XRCT Shielding");
-    ImGui::Separator();
-    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(22.f/255.f, 22.f/255.f, 42.f/255.f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(31.f/255.f, 31.f/255.f, 61.f/255.f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(42.f/255.f, 42.f/255.f, 90.f/255.f, 1.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(14.f, 10.f));
 
-    if (ImGui::Button("New Project", ImVec2(180, 40))) {
+    const sf::Vector2u logo_size = shieldlabs_logo.getSize();
+    float scale = 0.25f; // image size
+
+    ImVec2 img_size(logo_size.x * scale, logo_size.y * scale);
+    ImGui::SetCursorPos(ImVec2(24.f, 24.f));
+
+    ImGui::Image(shieldlabs_logo.getNativeHandle(), img_size);
+    float button_width = 240.f;
+    float button_height = 48.f;
+    float center_x = (ImGui::GetWindowWidth() - button_width) * 0.5f;
+    float center_y = (ImGui::GetWindowHeight() * 0.5f) - 36.f;
+
+    ImGui::SetCursorPos(ImVec2(center_x, center_y));
+
+    if (ImGui::Button("New Project", ImVec2(button_width, button_height))) {
         app_state.mode = AppMode::NewProjectSetup;
         scale_has_p1 = false;
         scale_has_p2 = false;
         update_viewport();
     }
 
+    ImGui::SetCursorPosX(center_x);
+    ImGui::TextDisabled("Start from a floorplan PDF");
+    ImGui::Spacing();
     ImGui::Spacing();
     ImGui::BeginDisabled();
-    ImGui::Button("Open Project", ImVec2(180, 40));
+    ImGui::SetCursorPosX(center_x);
+    ImGui::Button("Open Project", ImVec2(button_width, button_height));
     ImGui::EndDisabled();
+    ImGui::SetCursorPosX(center_x);
+    ImGui::TextDisabled("Load an existing project");
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(3);
     ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
 }
 
 
