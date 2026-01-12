@@ -79,6 +79,7 @@ add_executable(xrct_ui
     src/output/PrintCompilerOutput.cpp
     src/output/PrintCompilerOutputUI.cpp
     src/output/BuildDosePointReports.cpp
+    src/output/ExportCompilerOutputCSV.cpp
     src/isotopes/IsotopeRegistry.cpp
 )
 

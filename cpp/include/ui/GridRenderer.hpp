@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "geometry/GeometryEngine.hpp"
 #include "geometry/WorldBounds.hpp"
+#include "calc/CompilerOutput.hpp"
 #include "ui/UndoStack.hpp"
 #include "app/AppState.hpp"
 #include <optional>
@@ -90,6 +91,7 @@ class GridRenderer {
         std::optional<size_t> inspector_wall_index;
         std::optional<size_t> inspector_source_index;
         std::optional<size_t> inspector_dose_index;
+        std::optional<calc::CompilerOutput> last_compiler_output;
 
         bool scale_calibration_active = false;
         bool scale_has_p1 = false;
@@ -131,6 +133,6 @@ class GridRenderer {
         void draw_source_tab();
         void draw_dose_tab();
         void handle_events();
-        void render_grid_only();                        // used in scaling state of app
+        void render_grid_only();
         void render();
 };

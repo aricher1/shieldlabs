@@ -16,12 +16,14 @@
 #include "calc/CompilerOutput.hpp"
 #include "output/PrintCompilerOutput.hpp"
 #include "output/PrintCompilerOutputUI.hpp"
+#include "output/ExportCompilerOutputCSV.hpp"
 #include "utils/PdfToPng.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
 #include <sstream>
 #include <iomanip>
 #include <cmath>
@@ -256,7 +258,8 @@ void GridRenderer::finalize_blueprint() {
         ui_log.separator();
         output::print_to_ui(compiler_output, ui_log);
         // uncomment for terminal debugging
-        output::print(compiler_output);
+        // output::print(compiler_output);
+        last_compiler_output = compiler_output;
 
     } else {
         ui_log.clear();
@@ -623,7 +626,22 @@ void GridRenderer::draw_toolbar() {
         scale_has_p1 = false;
         scale_has_p2 = false;
     }
+    ImGui::SameLine();
 
+    ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
+    if (ToolbarButton("Export CSV", false)) {
+        IGFD::FileDialogConfig config;
+        config.path = std::filesystem::path(std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".")).string();
+        config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "SaveDoseCSV",
+            "Save Dose Results",
+            ".csv",
+            config
+        );
+    } 
+    ImGui::EndDisabled();
     ImGui::End();
 }
 
@@ -1462,5 +1480,22 @@ void GridRenderer::render() {
     }
     ImGui::EndChild();
     ImGui::End();
+
+    if (ImGuiFileDialog::Instance()->Display("SaveDoseCSV")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+            if (last_compiler_output.has_value()) {
+                if (output::export_compiler_output_csv(*last_compiler_output, filepath)) {
+                    ui_log.push("CSV exported to:");
+                    ui_log.push(filepath);
+                } else {
+                    ui_log.push("CSV export failed.");
+                }
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
 
 }
