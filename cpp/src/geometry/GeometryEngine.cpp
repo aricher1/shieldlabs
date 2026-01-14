@@ -110,7 +110,6 @@ void GeometryEngine::add_source(Point p) {
         .activity_per_patient_MBq = 0.0f,
         .uptake_time_hours = 0.0f
     };
-
     entities.push_back(e);
 }
 
@@ -127,7 +126,6 @@ void GeometryEngine::add_dose(Point p) {
         .occupancy_type = "",
         .dose_limit_uSv = 0.0f
     };
-
     entities.push_back(e);
 }
 
@@ -143,7 +141,10 @@ const std::vector<PointEntity>& GeometryEngine::get_entities() const { return en
 
 
 nlohmann::json GeometryEngine::to_json() const {
-
+    // IMPORTANT:
+    // all geometry is stored in raw grid units.
+    // distance_scale is applied only for display and calculations.
+    // never scale or snap during save/load.
     json j;
 
     j["version"] = 2;
@@ -166,7 +167,7 @@ nlohmann::json GeometryEngine::to_json() const {
         for (const auto& layer : w.layers) {
             jw["layers"].push_back({{"material_id", layer.material_id}, {"thickness_cm", layer.thickness_cm}});
         }
-        jw["length_cm"] = w.length_cm * distance_scale;
+        jw["length_cm"] = w.length_cm;
         
         // openings
         jw["openings"] = json::array();
@@ -179,7 +180,7 @@ nlohmann::json GeometryEngine::to_json() const {
             }
 
             jo["center_t"] = o.center_t;
-            jo["length_cm"] = o.length_cm * distance_scale;
+            jo["length_cm"] = o.length_cm;
             jw["openings"].push_back(jo);
         }
 
@@ -225,47 +226,41 @@ nlohmann::json GeometryEngine::to_json() const {
 }
 
 
-bool GeometryEngine::load_from_json(const std::string& json_str) {
-
-    json j;
-    try {
-        j = json::parse(json_str);
-    } catch (...) {
-        return false;
-    }
+bool GeometryEngine::load_from_json(const nlohmann::json& j) {
 
     if (!j.contains("version")) { return false; }
     int version = j["version"];
     if (version != 1 && version != 2) { return false; }
     if (!j.contains("grid")) { return false; }
 
-    grid_cells  = j["grid"]["cells"];
-    cm_per_cell = j["grid"]["cm_per_cell"];
-    distance_scale = j["distance_scale"];
     clear();
     entities.clear();
 
-    if (j.contains("walls")) {
+    grid_cells = j["grid"]["cells"];
+    cm_per_cell = j["grid"]["cm_per_cell"];
+    distance_scale = j.value("distance_scale", 1.0);
 
+    // walls
+    if (j.contains("walls")) {
         for (const auto& jw : j["walls"]) {
 
             Point a{jw["a"]["x"], jw["a"]["y"]};
             Point b{jw["b"]["x"], jw["b"]["y"]};
 
             Wall w;
-            w.a = add_point(a);
-            w.b = add_point(b);
+            w.a = reuse_or_add(a);
+            w.b = reuse_or_add(b);
             w.length_cm = std::hypot(w.a.x_cm - w.b.x_cm, w.a.y_cm - w.b.y_cm);
 
-            if (version == 1) {
-                w.layers.push_back({jw["material_id"], jw["thickness_cm"]});
-            }
-
-            if (version == 2 && jw.contains("layers")) {
+            if (jw.contains("layers")) {
                 for (const auto& jl : jw["layers"]) {
-                    w.layers.push_back({jl["material_id"], jl["thickness_cm"]});
+                    w.layers.push_back({
+                        jl["material_id"],
+                        jl["thickness_cm"]
+                    });
                 }
             }
+
             walls.push_back(w);
 
             if (jw.contains("openings")) {
@@ -273,13 +268,7 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
                 for (const auto& jo : jw["openings"]) {
                     WallOpening o;
                     const std::string type = jo["type"];
-                    if (type == "door") {
-                        o.type = OpeningType::Door;
-                    } else if (type == "window") {
-                        o.type = OpeningType::Window;
-                    } else {
-                        o.type = OpeningType::Open;
-                    }
+                    o.type = (type == "door") ? OpeningType::Door : (type == "window") ? OpeningType::Window : OpeningType::Open;
                     o.center_t = jo["center_t"];
                     o.length_cm = jo["length_cm"];
                     wref.openings.push_back(o);
@@ -288,7 +277,7 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
         }
     }
 
-    // source points
+    // sources
     if (j.contains("sources")) {
         for (const auto& s : j["sources"]) {
             PointEntity e;
@@ -298,9 +287,10 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
             e.source = SourceData{
                 .num_patients = s.value("num_patients", 1.0f),
                 .activity_per_patient_MBq = s.value("activity_per_patient_MBq", 0.0f),
-                .uptake_time_hours = s.value("uptake_time_hours", 0.0f)
+                .uptake_time_hours = s.value("uptake_time_hours", 0.0f),
+                .apply_patient_attenuation = s.value("apply_patient_attenuation", true),
+                .apply_radioactive_decay = s.value("apply_radioactive_decay", true)
             };
-        
             entities.push_back(e);
         }
     }
@@ -317,7 +307,6 @@ bool GeometryEngine::load_from_json(const std::string& json_str) {
                 .occupancy_type = d.value("occupancy_type", ""),
                 .dose_limit_uSv = d.value("dose_limit_uSv", 0.0f)
             };
-
             entities.push_back(e);
         }
     }
@@ -437,6 +426,5 @@ void GeometryEngine::set_world_bounds(const WorldBounds& bounds) {
 void GeometryEngine::set_world_bounds_from_image(int px_w, int px_h) {
     world_bounds.width_cm = static_cast<double>(px_w);
     world_bounds.height_cm = static_cast<double>(px_h);
-
     cm_per_cell = world_bounds.width_cm / grid_cells;
 }

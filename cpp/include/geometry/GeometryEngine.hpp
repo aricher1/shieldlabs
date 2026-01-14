@@ -57,7 +57,7 @@ class GeometryEngine {
         std::vector<PointEntity>& get_entities_mutable() { return entities; }
 
         nlohmann::json to_json() const;
-        bool load_from_json(const std::string& json_str);
+        bool load_from_json(const nlohmann::json& j);
 
         // error handling for validate() func
         struct ValidationError {

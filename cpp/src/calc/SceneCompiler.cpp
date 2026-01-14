@@ -1,6 +1,7 @@
 #include "calc/SceneCompiler.hpp"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 
 
@@ -23,6 +24,16 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
             const double dx = wall.b.x_cm - wall.a.x_cm;
             const double dy = wall.b.y_cm - wall.a.y_cm;
             wall.length_cm = std::sqrt(dx * dx + dy * dy);
+
+            // ===== SCALE SANITY CHECK ==============================================================================
+            // std::cout << "SCALE SANITY CHECK\n";
+            // std::cout << "distance_scale = " << scale << "\n";
+            // std::cout << "Wall A raw: (" << jw["a"]["x"].get<double>() << ", " << jw["a"]["y"].get<double>() << ")\n";
+            // std::cout << "Wall B raw: (" << jw["b"]["x"].get<double>() << ", " << jw["b"]["y"].get<double>() << ")\n";
+            // std::cout << "Wall A scaled: (" << wall.a.x_cm << ", " << wall.a.y_cm << ")\n";
+            // std::cout << "Wall B scaled: (" << wall.b.x_cm << ", " << wall.b.y_cm << ")\n";
+            // std::cout << "Wall length (cm): " << wall.length_cm << "\n";
+            // =======================================================================================================
 
             if (jw.contains("layers")) {
                 for (const auto& jl : jw["layers"]) {

@@ -63,6 +63,7 @@ add_executable(xrct_ui
     src/ui/GridRenderer.cpp
     src/ui/UiLog.cpp
     src/utils/PdfToPng.cpp
+    src/utils/ProjectIO.cpp
     external/ImGuiFileDialog/ImGuiFileDialog.cpp
     src/geometry/GeometryEngine.cpp
     src/materials/MaterialRegistry.cpp

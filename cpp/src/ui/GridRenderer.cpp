@@ -18,6 +18,7 @@
 #include "output/PrintCompilerOutputUI.hpp"
 #include "output/ExportCompilerOutputCSV.hpp"
 #include "utils/PdfToPng.hpp"
+#include "utils/ProjectIO.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
@@ -243,7 +244,7 @@ void GridRenderer::finalize_blueprint() {
 
         // canonical JSON
         nlohmann::json j = engine.to_json();
-        ui_log.push(j.dump(2));
+        // ui_log.push(j.dump(2));
 
         // compile
         calc::CalcScene scene = calc::SceneCompiler::compile(j);
@@ -401,10 +402,21 @@ void GridRenderer::draw_project_picker()
     ImGui::TextDisabled("Start from a floorplan PDF");
     ImGui::Spacing();
     ImGui::Spacing();
-    ImGui::BeginDisabled();
     ImGui::SetCursorPosX(center_x);
-    ImGui::Button("Open Project", ImVec2(button_width, button_height));
-    ImGui::EndDisabled();
+    
+    if (ImGui::Button("Open Project", ImVec2(button_width, button_height))) {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "OpenProject",
+            "Open Project",
+            ".json",
+            config
+        );
+
+        app_state.mode = AppMode::OpeningProject;
+    }
+    
     ImGui::SetCursorPosX(center_x);
     ImGui::TextDisabled("Load an existing project");
     ImGui::PopStyleVar(2);
@@ -490,6 +502,7 @@ void GridRenderer::draw_new_project_setup() {
 
             if (pdf_to_png(pdf_path, png_path)) {
                 pdf_error_message.clear();
+                current_floorplan_png_path = png_path;
                 load_background_image(png_path);
                 scale_has_p1 = false;
                 scale_has_p2 = false;
@@ -625,6 +638,17 @@ void GridRenderer::draw_toolbar() {
         app_state.mode = AppMode::NewProjectSetup;
         scale_has_p1 = false;
         scale_has_p2 = false;
+    }
+    ImGui::SameLine();
+
+    if (ToolbarButton("Save Project", false)) {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "SaveProject",
+            "Save Project",
+            ".slab"
+        );
     }
     ImGui::SameLine();
 
@@ -1251,6 +1275,50 @@ void GridRenderer::render() {
 
     // 3. Editor
 
+    // 4. open project
+    if (app_state.mode == AppMode::OpeningProject) {
+        window.setView(window.getDefaultView());
+        window.clear(sf::Color::White);
+
+        draw_project_picker();
+
+        if (ImGuiFileDialog::Instance()->Display("OpenProject")) {
+            if (ImGuiFileDialog::Instance()->IsOk()) {
+                std::filesystem::path project_file = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::filesystem::path project_dir = project_file.parent_path();
+                std::string image_path;
+
+                if (load_project(engine, project_dir.string(), image_path)) {
+                    current_floorplan_png_path = image_path;
+                    load_background_image(image_path);
+                    blueprint_finalized = false;
+                    last_compiler_output.reset();
+                    selection.clear();
+                    drawing = false;
+                    placing_opening = false;
+                    update_viewport();
+                    app_state.mode = AppMode::Editing;
+
+                    ui_log.push("Project loaded.");
+                } else {
+                    ui_log.push("Failed to load project.");
+                    app_state.mode = AppMode::ProjectPicker;
+                }
+            } else {
+                // user cancelled
+                app_state.mode = AppMode::ProjectPicker;
+            }
+            
+            ImGuiFileDialog::Instance()->Close();
+        }
+        
+        ImGui::SFML::Render(window);
+        window.display();
+        
+        return;
+    }
+
+
     window.setView(grid_view);
     float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
     length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));
@@ -1480,6 +1548,19 @@ void GridRenderer::render() {
     }
     ImGui::EndChild();
     ImGui::End();
+
+    if (ImGuiFileDialog::Instance()->Display("SaveProject")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string project_dir = ImGuiFileDialog::Instance()->GetFilePathName();
+            
+            if (save_project(engine, project_dir, current_floorplan_png_path)) {
+                ui_log.push("Project saved. You may safely close the application.");
+            } else {
+                ui_log.push("Error: Failed to save project.");
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
 
     if (ImGuiFileDialog::Instance()->Display("SaveDoseCSV")) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
