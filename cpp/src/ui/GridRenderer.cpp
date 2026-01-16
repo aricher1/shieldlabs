@@ -430,12 +430,16 @@ void GridRenderer::draw_project_picker()
 void GridRenderer::draw_new_project_setup() {
     ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
     ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX - 20, 400));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
 
-    ImGui::Begin("Project Setup Mode", nullptr,
+    ImGui::Begin("##ProjectSetup", nullptr,
         ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoTitleBar
     );
-
 
     if (ImGui::Button("Upload PDF Floorplan")) {
         IGFD::FileDialogConfig config;
@@ -463,7 +467,9 @@ void GridRenderer::draw_new_project_setup() {
     ImGui::Spacing();
     ImGui::Text("Real-world distance (cm)");
     ImGui::SetNextItemWidth(-1);
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.30f, 0.22f, 0.22f, 1.0f));
     ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
+    ImGui::PopStyleColor();
 
 
     if (scale_has_p1 && scale_has_p2) {
@@ -471,7 +477,6 @@ void GridRenderer::draw_new_project_setup() {
         ImGui::TextWrapped("Measured distance on plan: %.2f grid units", pixel_dist);
         ImGui::TextWrapped(
             "Grid units are arbitrary until calibrated. "
-            "They will be converted to centimeters using the real-world distance you enter. "
             "Press 'Apply Scale' to calibrate and proceed to editing. "
             "If you would like to re-calibrate the scale once entering editing mode, press the 'Edit Scale' button to return to this page. "
         );
@@ -517,14 +522,18 @@ void GridRenderer::draw_new_project_setup() {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     ImGui::End();
+    ImGui::PopStyleColor(4);
 }
 
 
 void GridRenderer::draw_toolbar() {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(window.getSize().x, TOOLBAR_HEIGHT_PX));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
 
     ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 
@@ -627,10 +636,10 @@ void GridRenderer::draw_toolbar() {
     ImGui::SameLine();
 
     ImGui::Separator();
-    ImGui::SameLine();
+    ImGui::SameLine(ImGui::GetWindowWidth() - 220.f);
 
     if (ToolbarButton("Finalize", false)) {
-        finalize_blueprint();
+        ImGui::OpenPopup("FinalizeMenu");
     }
     ImGui::SameLine();
 
@@ -641,43 +650,59 @@ void GridRenderer::draw_toolbar() {
     }
     ImGui::SameLine();
 
-    if (ToolbarButton("Save Project", false)) {
-        IGFD::FileDialogConfig config;
-        config.path = ".";
-        ImGuiFileDialog::Instance()->OpenDialog(
-            "SaveProject",
-            "Save Project",
-            ".slab"
-        );
+    if (ImGui::BeginPopup("FinalizeMenu")) {
+
+        if (ImGui::MenuItem("Lock Geometry")) {
+            finalize_blueprint();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Save Project")) {
+            IGFD::FileDialogConfig config;
+            config.path = ".";
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "SaveProject",
+                "Save Project",
+                ".slab"
+            );
+        }
+
+        if (blueprint_finalized && last_compiler_output.has_value()) {
+            if (ImGui::MenuItem("Export CSV")) {
+                IGFD::FileDialogConfig config;
+                config.path = std::filesystem::path(
+                    std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".")
+                ).string();
+                config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+
+                ImGuiFileDialog::Instance()->OpenDialog(
+                    "SaveDoseCSV",
+                    "Save Dose Results",
+                    ".csv",
+                    config
+                );
+            }
+        } else {
+            ImGui::BeginDisabled();
+            ImGui::MenuItem("Export CSV");
+            ImGui::EndDisabled();
+        }
+
+        ImGui::EndPopup();
     }
-    ImGui::SameLine();
 
-    ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
-    if (ToolbarButton("Export CSV", false)) {
-        IGFD::FileDialogConfig config;
-        config.path = std::filesystem::path(std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".")).string();
-        config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
-
-        ImGuiFileDialog::Instance()->OpenDialog(
-            "SaveDoseCSV",
-            "Save Dose Results",
-            ".csv",
-            config
-        );
-    } 
-    ImGui::EndDisabled();
     ImGui::End();
+    ImGui::PopStyleColor(4);
 }
 
 
 void GridRenderer::draw_left_panel() {
     ImGui::SetNextWindowPos(ImVec2(0.f, TOOLBAR_HEIGHT_PX));
-    ImGui::SetNextWindowSize(
-        ImVec2(LEFT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX)
-    );
+    ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
 
     ImGui::Begin(
-        "LeftPanel",
+        "Entity Information",
         nullptr,
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoResize |
@@ -1193,6 +1218,14 @@ void GridRenderer::handle_events() {
 
 void GridRenderer::render_grid_only() {
     window.setView(grid_view);
+    
+    // white background behind grid only
+    sf::RectangleShape grid_bg;
+    const auto& bounds = engine.get_world_bounds();
+    grid_bg.setSize(sf::Vector2f(static_cast<float>(bounds.width_cm), static_cast<float>(bounds.height_cm)));
+    grid_bg.setPosition(sf::Vector2f{0.f, 0.f});
+    grid_bg.setFillColor(sf::Color::White);
+    window.draw(grid_bg);
 
     float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
     length_text.setCharacterSize(static_cast<unsigned>(18.f / pixels_per_cm));
@@ -1201,7 +1234,6 @@ void GridRenderer::render_grid_only() {
         window.draw(*background_sprite);
     }
 
-    const auto& bounds = engine.get_world_bounds();
     const double min_x = 0.0;
     const double max_x = bounds.width_cm;
     const double min_y = 0.0;
@@ -1257,7 +1289,7 @@ void GridRenderer::render() {
     // 1. project picker mode
     if (app_state.mode == AppMode::ProjectPicker) {
         window.setView(window.getDefaultView());
-        window.clear(sf::Color::White);
+        window.clear(sf::Color(11, 11, 20));
         draw_project_picker();
         ImGui::SFML::Render(window);
         window.display();
@@ -1266,6 +1298,8 @@ void GridRenderer::render() {
     
     // 2. new project setup
     if (app_state.mode == AppMode::NewProjectSetup) {
+        window.setView(window.getDefaultView());
+        window.clear(sf::Color(11, 11, 20));
         render_grid_only();    
         draw_new_project_setup();
         ImGui::SFML::Render(window);
@@ -1278,7 +1312,7 @@ void GridRenderer::render() {
     // 4. open project
     if (app_state.mode == AppMode::OpeningProject) {
         window.setView(window.getDefaultView());
-        window.clear(sf::Color::White);
+        window.clear(sf::Color(11, 11, 20));
 
         draw_project_picker();
 
