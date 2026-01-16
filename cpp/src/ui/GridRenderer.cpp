@@ -222,7 +222,7 @@ void GridRenderer::finalize_blueprint() {
     if (!blueprint_finalized) {
         auto errors = engine.validate();
         if (!errors.empty()) {
-            ui_log.push("VALIDATION ERRORS: ");
+            ui_log.push("Validation Errors: ");
             for (const auto& e : errors) {
                 ui_log.push("  - " + e.message);
             }
@@ -636,11 +636,26 @@ void GridRenderer::draw_toolbar() {
     ImGui::SameLine();
 
     ImGui::Separator();
-    ImGui::SameLine(ImGui::GetWindowWidth() - 220.f);
+    float spacing = ImGui::GetStyle().ItemSpacing.x;
+    float lock_w = ImGui::CalcTextSize("Lock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
+    float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
+    float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
+    float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
+    float total_w = lock_w + spacing + unlock_w + spacing + edit_w + spacing + save_w;
+    ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
-    if (ToolbarButton("Finalize", false)) {
-        ImGui::OpenPopup("FinalizeMenu");
+    ImGui::BeginDisabled(blueprint_finalized);
+    if (ToolbarButton("Lock Geometry", blueprint_finalized)) {
+        finalize_blueprint(); // locks geometry
     }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+
+    ImGui::BeginDisabled(!blueprint_finalized);
+    if (ToolbarButton("Unlock Geometry", false)) {
+        finalize_blueprint(); // unlocks geometry
+    }
+    ImGui::EndDisabled();
     ImGui::SameLine();
 
     if (ToolbarButton("Edit Scale", false)) {
@@ -650,13 +665,9 @@ void GridRenderer::draw_toolbar() {
     }
     ImGui::SameLine();
 
-    if (ImGui::BeginPopup("FinalizeMenu")) {
+    ImGui::BeginDisabled(!blueprint_finalized);
 
-        if (ImGui::MenuItem("Lock Geometry")) {
-            finalize_blueprint();
-        }
-
-        ImGui::Separator();
+    if (ImGui::BeginMenu("Save")) {
 
         if (ImGui::MenuItem("Save Project")) {
             IGFD::FileDialogConfig config;
@@ -668,29 +679,25 @@ void GridRenderer::draw_toolbar() {
             );
         }
 
-        if (blueprint_finalized && last_compiler_output.has_value()) {
-            if (ImGui::MenuItem("Export CSV")) {
-                IGFD::FileDialogConfig config;
-                config.path = std::filesystem::path(
-                    std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".")
-                ).string();
-                config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+        if (ImGui::MenuItem("Export CSV")) {
+            IGFD::FileDialogConfig config;
+            config.path = std::filesystem::path(
+                getenv("HOME") ? getenv("HOME") : "."
+            ).string();
+            config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 
-                ImGuiFileDialog::Instance()->OpenDialog(
-                    "SaveDoseCSV",
-                    "Save Dose Results",
-                    ".csv",
-                    config
-                );
-            }
-        } else {
-            ImGui::BeginDisabled();
-            ImGui::MenuItem("Export CSV");
-            ImGui::EndDisabled();
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "SaveDoseCSV",
+                "Save Dose Results",
+                ".csv",
+                config
+            );
         }
 
-        ImGui::EndPopup();
+        ImGui::EndMenu();
     }
+
+    ImGui::EndDisabled();
 
     ImGui::End();
     ImGui::PopStyleColor(4);

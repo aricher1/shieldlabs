@@ -403,6 +403,52 @@ std::vector<GeometryEngine::ValidationError> GeometryEngine::validate() const {
         if (!std::isfinite(e.position.x_cm) || !std::isfinite(e.position.y_cm)) {
             errors.push_back({"Entity " + std::to_string(i) + " has invalid coordinates."});
         }
+
+        // all point entities must have a name
+        if (e.label.empty()) {
+            errors.push_back({"All source and dose points must have a name."});
+            continue;
+        }
+
+        // source info validation
+        if (e.type == PointType::Source) {
+
+            if (!e.source.has_value()) {
+                errors.push_back({"Source [" + e.label + "] has no source data."});
+            } else {
+                const auto& s = *e.source;
+
+                if (s.num_patients < 0.0f) {
+                    errors.push_back({"Source [" + e.label + "] has non-positive patient count."});
+                }
+
+                if (s.activity_per_patient_MBq <= 0.0f) {
+                    errors.push_back({"Source [" + e.label + "] has non-positive activity per patient."});
+                }
+
+                if (s.uptake_time_hours < 0.0f) {
+                    errors.push_back({"Source [" + e.label + "] has negative uptake time."});
+                }
+            }
+        }
+
+        // dose info validation
+        if (e.type == PointType::Dose) {
+
+            if (!e.dose.has_value()) {
+                errors.push_back({"Dose point [" + e.label + "] has no dose data."});
+            } else {
+                const auto& d = *e.dose;
+
+                if (d.occupancy < 0.0f || d.occupancy > 1.0f) {
+                    errors.push_back({"Dose point [" + e.label + "] has occupancy outside [0,1]."});
+                }
+
+                if (d.dose_limit_uSv <= 0.0f) {
+                    errors.push_back({"Dose point [" + e.label + "] has non-positive dose limit."});
+                }
+            }
+        }
     }
 
     return errors;
