@@ -12,7 +12,6 @@ namespace calc {
         TransportRay ray;
         SingleRayDoseResult dose;
         IntegratedDoseResult integrated;
-        std::string isotope_key;
         std::string source_label;
         std::string dose_label;
     };
@@ -28,6 +27,7 @@ namespace calc {
     };
 
     struct CompilerOutput {
+        std::string isotope_key;
         std::vector<CompilerRayOutput> rays;
         std::vector<DosePointTotal> dose_totals;
     };

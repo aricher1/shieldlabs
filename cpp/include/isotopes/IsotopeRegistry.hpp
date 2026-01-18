@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 
 struct ShieldingData {
@@ -32,5 +33,5 @@ class IsotopeRegistry {
         bool load_from_file(const std::string& path);
         const IsotopeDef* get(int id) const;
         const IsotopeDef* get_by_key(const std::string& key) const;
-
+        const std::vector<std::string>& get_all_keys() const;
 };

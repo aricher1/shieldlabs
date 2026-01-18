@@ -54,6 +54,7 @@ namespace calc {
     };
 
     struct CalcScene {
+        std::string isotope_key;
         std::vector<CalcWall> walls;
         std::vector<CalcSource> sources;
         std::vector<CalcDosePoint> dose_points;

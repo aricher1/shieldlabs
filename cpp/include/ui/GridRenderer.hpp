@@ -133,6 +133,7 @@ class GridRenderer {
         void draw_wall_tab();
         void draw_source_tab();
         void draw_dose_tab();
+        void draw_isotope_tab();
         void handle_events();
         void render_grid_only();
         void render();

@@ -1,7 +1,10 @@
 #include "output/ExportCompilerOutputCSV.hpp"
 #include "output/BuildDosePointReports.hpp"
+#include "isotopes/IsotopeRegistry.hpp"
 #include <fstream>
 #include <iomanip>
+
+extern IsotopeRegistry isotope_registry;
 
 namespace output {
 
@@ -10,6 +13,15 @@ bool export_compiler_output_csv(const calc::CompilerOutput& out, const std::stri
     if (!file.is_open()) {
         return false;
     }
+
+    const IsotopeDef* iso = isotope_registry.get_by_key(out.isotope_key);
+    if (iso) {
+        file << "Isotope," << iso->key << "\n";
+        file << "Isotope Name," << iso->name << "\n";
+        file << "Gamma Constant (uSv_m2_per_MBq_h)," << iso->gamma_constant_uSv_m2_per_MBq_h << "\n";
+        file << "Half-life (hours)," << iso->half_life_hours << "\n";
+    }
+    file << "\n";
 
     const auto reports = build_dose_point_reports(out);
 

@@ -67,3 +67,14 @@ const IsotopeDef* IsotopeRegistry::get_by_key(const std::string& key) const {
     if (it == key_to_id.end()) { return nullptr; }
     return get(it->second);
 }
+
+
+const std::vector<std::string>& IsotopeRegistry::get_all_keys() const {
+    static std::vector<std::string> keys;
+    keys.clear();
+
+    for (const auto& [key, _] : key_to_id) {
+        keys.push_back(key);
+    }
+    return keys;
+}

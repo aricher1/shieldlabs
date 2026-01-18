@@ -11,6 +11,7 @@ CalcScene SceneCompiler::compile(const nlohmann::json& j) {
     CalcScene scene;
 
     const double scale = j.value("distance_scale", 1.0);
+    scene.isotope_key = j.value("isotope", "f18");
 
     // walls
     if (j.contains("walls")) {

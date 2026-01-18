@@ -1,6 +1,7 @@
 #include "output/PrintCompilerOutput.hpp"
 #include "output/BuildDosePointReports.hpp"
 #include "materials/MaterialRegistry.hpp"
+#include "isotopes/IsotopeRegistry.hpp"
 #include <tabulate/table.hpp>
 #include <iostream>
 #include <iomanip>
@@ -9,6 +10,7 @@
 constexpr double WEEKS_PER_YEAR = 52.0;
 
 extern MaterialRegistry material_registry;
+extern IsotopeRegistry isotope_registry;
 
 namespace output {
 
@@ -20,6 +22,8 @@ static std::string fmt(double v, int precision = 6) {
 
 void print(const calc::CompilerOutput& out) {
     std::cout << "\n====================== COMPILER OUTPUT ======================\n";
+    std::cout << "Isotope: " << out.isotope_key << "\n";          
+
     const auto reports = build_dose_point_reports(out);
 
     // Per-ray detailed output (debug)
@@ -36,8 +40,6 @@ void print(const calc::CompilerOutput& out) {
             cumulative += seg.path_length_cm;
             std::cout << "    " << (seg.material_id < 0 ? "Air" : "Material") << " | " << seg.path_length_cm << " cm | cumulative: " << cumulative << " cm\n";
         }
-
-        std::cout << "  Isotope: " << entry.isotope_key << "\n";
     }
 
     if (reports.empty()) {

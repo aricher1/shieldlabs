@@ -17,10 +17,9 @@ class GeometryEngine {
         int grid_cells;
         double cm_per_cell;
         double distance_scale = 1.0;
-
+        std::string selected_isotope_key = "f18";
         std::vector<Point> points;
         std::vector<Wall> walls;
-
         std::vector<PointEntity> entities;
 
         Point reuse_or_add(Point p);
@@ -35,7 +34,9 @@ class GeometryEngine {
         int get_grid_cells() const { return grid_cells; }
         double get_cm_per_cell() const { return cm_per_cell; }
         double get_distance_scale() const { return distance_scale; }
+        const std::string& get_selected_isotope_key() const { return selected_isotope_key; }
         void set_distance_scale(double scale);
+        void set_selected_isotope_key(const std::string& key);
         void set_scale(int cells, double cm);
         std::vector<Wall>& get_walls_mutable() { return walls; }
 

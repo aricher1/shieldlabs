@@ -140,6 +140,11 @@ void GeometryEngine::set_distance_scale(double scale) {
 }
 
 
+void GeometryEngine::set_selected_isotope_key(const std::string& key) {
+    selected_isotope_key = key;
+}
+
+
 const std::vector<PointEntity>& GeometryEngine::get_entities() const { return entities; }
 
 
@@ -159,6 +164,7 @@ nlohmann::json GeometryEngine::to_json() const {
     };
 
     j["distance_scale"] = distance_scale;
+    j["isotope"] = selected_isotope_key;
     j["walls"] = json::array();
     
     for (const auto& w : walls) {
@@ -243,6 +249,7 @@ bool GeometryEngine::load_from_json(const nlohmann::json& j) {
     grid_cells = j["grid"]["cells"];
     cm_per_cell = j["grid"]["cm_per_cell"];
     distance_scale = j.value("distance_scale", 1.0);
+    selected_isotope_key = j.value("isotope", "f18");
 
     // walls
     if (j.contains("walls")) {

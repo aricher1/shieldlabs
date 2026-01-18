@@ -16,12 +16,13 @@ namespace calc {
 
 CompilerOutput build_compiler_output(const CalcScene& scene) {
     CompilerOutput out;
+    out.isotope_key = scene.isotope_key;
 
     if (scene.sources.empty() || scene.dose_points.empty()) { return out; }
 
-    const IsotopeDef* isotope = isotope_registry.get_by_key("f18");
+    const IsotopeDef* isotope = isotope_registry.get_by_key(scene.isotope_key);
     if (!isotope) {
-        throw std::runtime_error("Isotope not found");
+        throw std::runtime_error("Isotope not found: " + scene.isotope_key);
     }
 
     // loop over dose points

@@ -1,5 +1,6 @@
 #include "ui/GridRenderer.hpp"
 #include "materials/MaterialRegistry.hpp"
+#include "isotopes/IsotopeRegistry.hpp"
 #include "ui/AddWallCommand.hpp"
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
@@ -31,6 +32,7 @@
 
 
 extern MaterialRegistry material_registry;
+extern IsotopeRegistry isotope_registry;
 
 namespace {
 
@@ -721,6 +723,7 @@ void GridRenderer::draw_left_panel() {
         draw_wall_tab();
         draw_source_tab();
         draw_dose_tab();
+        draw_isotope_tab();
 
         ImGui::EndTabBar();
     }
@@ -970,6 +973,71 @@ void GridRenderer::draw_dose_tab() {
 
     ImGui::InputFloat("Occupancy", &d.occupancy);
     ImGui::InputFloat("Dose limit (uSv)", &d.dose_limit_uSv);
+
+    ImGui::EndTabItem();
+}
+
+
+void GridRenderer::draw_isotope_tab() {
+    if (!ImGui::BeginTabItem("Isotope"))
+        return;
+
+    ImGui::Text("Project Isotope");
+    ImGui::Separator();
+    ImGui::TextWrapped(
+        "Select the radioactive isotope used for all sources in this project. "
+        "Changing the isotope will affect dose calculations after geometry is locked."
+    );
+
+    ImGui::Spacing();
+
+    static std::vector<std::string> isotope_keys;
+    static bool initialized = false;
+
+    if (!initialized) {
+        isotope_keys.clear();
+        for (const std::string& key : isotope_registry.get_all_keys()) {
+            isotope_keys.push_back(key);
+        }
+        initialized = true;
+    }
+
+    // Find current index
+    int current_idx = 0;
+    for (int i = 0; i < isotope_keys.size(); ++i) {
+        if (isotope_keys[i] == engine.get_selected_isotope_key()) {
+            current_idx = i;
+            break;
+        }
+    }
+
+    if (ImGui::Combo(
+            "Isotope",
+            &current_idx,
+            [](void* data, int idx, const char** out) {
+                auto& v = *static_cast<std::vector<std::string>*>(data);
+                *out = v[idx].c_str();
+                return true;
+            },
+            &isotope_keys,
+            isotope_keys.size()))
+    {
+        engine.set_selected_isotope_key(isotope_keys[current_idx]);
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (const IsotopeDef* iso = isotope_registry.get_by_key(engine.get_selected_isotope_key())) {
+        ImGui::Text("Name: %s", iso->name.c_str());
+        ImGui::Text("Gamma constant:");
+        ImGui::Text("  %.8f µSv_m2_per_MBq_h", iso->gamma_constant_uSv_m2_per_MBq_h);
+        ImGui::Text("Half-life:");
+        ImGui::Text("  %.2f hours", iso->half_life_hours);
+    }
+
+    ImGui::Spacing();
+    ImGui::TextDisabled("Unlock and lock geometry to recalculate dose.");
 
     ImGui::EndTabItem();
 }

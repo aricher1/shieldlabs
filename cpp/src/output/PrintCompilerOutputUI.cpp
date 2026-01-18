@@ -1,7 +1,10 @@
 #include "output/PrintCompilerOutputUI.hpp"
-#include "output/BuildDosePointReports.hpp" 
+#include "output/BuildDosePointReports.hpp"
+#include "isotopes/IsotopeRegistry.hpp" 
 #include <sstream>
 #include <iomanip>
+
+extern IsotopeRegistry isotope_registry;
 
 namespace {
 
@@ -16,6 +19,19 @@ std::string fmt(double v, int p = 4) {
 namespace output {
 
 void print_to_ui(const calc::CompilerOutput& out, UiLog& log) {
+    
+    if (!out.isotope_key.empty()) {
+        if (const IsotopeDef* iso = isotope_registry.get_by_key(out.isotope_key)) {
+            log.separator();
+            log.push("ISOTOPE");
+            log.push("  Key: " + iso->key);
+            log.push("  Name: " + iso->name);
+            log.push("  Gamma constant (uSv_m2_per_MBq_h): " + fmt(iso->gamma_constant_uSv_m2_per_MBq_h, 8));
+            log.push("  Half-life (hours): " + fmt(iso->half_life_hours, 2));
+            log.separator();
+        }
+    }
+    
     const auto reports = build_dose_point_reports(out);
 
     if (reports.empty()) {
