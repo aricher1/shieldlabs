@@ -14,6 +14,7 @@ struct SourceData {
     float activity_per_patient_MBq;      // MBq per patient
     float uptake_time_hours;             // hours
     bool apply_patient_attenuation;      // user-defined -> yes/no
+    float patient_attenuation_percent;   // user-defined [0.0, 1.0] = 0-100%
     bool apply_radioactive_decay;        // user-defined -> yes/no
 };
 

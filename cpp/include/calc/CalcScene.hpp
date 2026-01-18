@@ -42,6 +42,7 @@ namespace calc {
         double activity_per_patient_MBq;
         double uptake_time_hours;
         bool apply_patient_attenuation;
+        float patient_attenuation_percent;
         bool apply_radioactive_decay;
     };
 

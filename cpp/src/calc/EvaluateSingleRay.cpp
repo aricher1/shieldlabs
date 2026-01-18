@@ -2,8 +2,9 @@
 #include <cmath>
 #include <stdexcept>
 #include <unordered_map>
+#include <algorithm>
 
-// IMPORTANT:
+
 // Shielding attenuation is applied once per material using total path length along the ray (HVL/TVL models are non-linear).
 
 
@@ -27,9 +28,9 @@ SingleRayDoseResult evaluate_single_ray(const calc::TransportRay& ray, const cal
     // patient attenuation
     double patient_transmission = 1.0;
 
-    if (source.apply_patient_attenuation && isotope.patient_attenuation > 0.0) {
+    if (source.apply_patient_attenuation) {
         // user-selected + isotope-defined
-        patient_transmission = 1.0 - isotope.patient_attenuation;
+        patient_transmission = 1.0 - std::clamp(source.patient_attenuation_percent, 0.0f, 1.0f);
     }
 
     out.patient_transmission = patient_transmission;

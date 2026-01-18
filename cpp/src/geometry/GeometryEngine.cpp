@@ -108,7 +108,10 @@ void GeometryEngine::add_source(Point p) {
     e.source = SourceData{
         .num_patients = 1.0f,
         .activity_per_patient_MBq = 0.0f,
-        .uptake_time_hours = 0.0f
+        .uptake_time_hours = 0.0f,
+        .apply_patient_attenuation = false,
+        .patient_attenuation_percent = 0.0f,
+        .apply_radioactive_decay = true
     };
     entities.push_back(e);
 }
@@ -206,6 +209,7 @@ nlohmann::json GeometryEngine::to_json() const {
             entry["activity_per_patient_MBq"] = s.activity_per_patient_MBq;
             entry["uptake_time_hours"] = s.uptake_time_hours;
             entry["apply_patient_attenuation"] = s.apply_patient_attenuation;
+            entry["patient_attenuation_percent"] = s.patient_attenuation_percent;
             entry["apply_radioactive_decay"] = s.apply_radioactive_decay;
 
             j["sources"].push_back(entry);
@@ -289,6 +293,7 @@ bool GeometryEngine::load_from_json(const nlohmann::json& j) {
                 .activity_per_patient_MBq = s.value("activity_per_patient_MBq", 0.0f),
                 .uptake_time_hours = s.value("uptake_time_hours", 0.0f),
                 .apply_patient_attenuation = s.value("apply_patient_attenuation", true),
+                .patient_attenuation_percent = s.value("patient_attenuation_percent", 0.0f),
                 .apply_radioactive_decay = s.value("apply_radioactive_decay", true)
             };
             entities.push_back(e);

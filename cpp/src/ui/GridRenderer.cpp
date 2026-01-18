@@ -893,11 +893,15 @@ void GridRenderer::draw_source_tab() {
         e.label = name_buf;
     }
 
-    ImGui::InputFloat("Patients / week", &s.num_patients);
-    ImGui::InputFloat("Activity / patient (MBq)", &s.activity_per_patient_MBq);
+    ImGui::InputFloat("Patients/week", &s.num_patients);
+    ImGui::InputFloat("Activity/patient (MBq)", &s.activity_per_patient_MBq);
     ImGui::InputFloat("Uptake (hours)", &s.uptake_time_hours);
-    ImGui::Checkbox("Patient attenuation", &s.apply_patient_attenuation);
-    ImGui::Checkbox("Radioactive decay", &s.apply_radioactive_decay);
+    ImGui::Checkbox("Apply patient attenuation", &s.apply_patient_attenuation);
+    if (s.apply_patient_attenuation) {
+        ImGui::InputFloat("Patient attenuation (%)", &s.patient_attenuation_percent, 0.05f, 0.1f);
+        s.patient_attenuation_percent = std::clamp(s.patient_attenuation_percent, 0.0f, 1.0f);
+    }
+    ImGui::Checkbox("Apply radioactive decay", &s.apply_radioactive_decay);
 
     ImGui::EndTabItem();
 }
@@ -1180,6 +1184,7 @@ void GridRenderer::handle_events() {
                         .activity_per_patient_MBq = 0.0f,       // activity per patient
                         .uptake_time_hours = 0.0f,              // uptake time (hours)
                         .apply_patient_attenuation = true,      // (bool) apply radiation decay 
+                        .patient_attenuation_percent = 0.0f,    // user defined [0.0, 1.0] patient attenuation
                         .apply_radioactive_decay = true         // (bool) apply radioactive decay
                     };
                     undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));

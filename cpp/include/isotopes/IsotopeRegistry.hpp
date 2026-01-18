@@ -17,7 +17,6 @@ struct IsotopeDef {
     std::string name;
     double gamma_constant_uSv_m2_per_MBq_h;
     double half_life_hours;
-    double patient_attenuation;
 
     std::unordered_map<std::string, ShieldingData> materials;
 };
