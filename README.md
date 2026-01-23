@@ -22,28 +22,28 @@ ShieldLabs is designed for scenario-based evaluation of shielding effectiveness,
 └── cpp/
     ├── CMakeLists.txt
     ├── assets/
-    │   ├── floorplans/     # 2D layouts used for ray tracing
-    │   ├── fonts/          # UI fonts
-    │   ├── isotopes/       # Isotope data (energies, constants, metadata)
-    │   ├── logos/          # Application branding
-    │   └── materials/      # Material attenuation / density data
+    │   ├── floorplans/     # Floorplans used for testing
+    │   ├── fonts/          # Font used in UI
+    │   ├── isotopes/       # Isotope YAML file (gamma constants, attenutation coefficients)
+    │   ├── logos/          # ShieldLabs Logos
+    │   └── materials/      # Material YAML file (concrete, steel, lead)
     │
-    ├── external/           # Git submodules (third-party libraries)
-    │   ├── ImGuiFileDialog
-    │   ├── json
-    │   └── tabulate
+    ├── external/           # Git submodules
+    │   ├── ImGuiFileDialog # File Dialog
+    │   ├── json            # nlohmann/json 
+    │   └── tabulate        # Terminal debugging
     │
-    ├── include/            # Public headers (interfaces)
-    │   ├── app/            # Application lifecycle / orchestration
-    │   ├── calc/           # Dose, ray, and shielding calculations
-    │   ├── geometry/       # Geometric primitives and spatial logic
-    │   ├── isotopes/       # Isotope models and interfaces
-    │   ├── materials/      # Material models and interfaces
+    ├── include/            # Header files (.hpp)
+    │   ├── app/            # Application mode status files
+    │   ├── calc/           # Computational math + physics logic (ray-based)
+    │   ├── geometry/       # Geometric entities + bounds logic
+    │   ├── isotopes/       # Isotope YAML file registry
+    │   ├── materials/      # Material YAML file registry
     │   ├── output/         # Reports, exports, result formatting
-    │   ├── ui/             # UI interfaces
-    │   └── utils/          # Shared utilities
+    │   ├── ui/             # UI interfaces (GridRenderer, main)
+    │   └── utils/          # Pdf to Png conversion
     │
-    └── src/                # Implementations
+    └── src/                # Implentation files (.cpp)
         ├── calc/
         ├── geometry/
         ├── isotopes/

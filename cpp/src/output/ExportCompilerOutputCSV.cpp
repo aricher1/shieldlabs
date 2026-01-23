@@ -24,12 +24,7 @@ bool export_compiler_output_csv(const calc::CompilerOutput& out, const std::stri
     file << "\n";
 
     const auto reports = build_dose_point_reports(out);
-
-    file <<
-        "Dose Point,Dose Label,Source,"
-        "t(hrs),dist(cm),T,"
-        "Lead(cm),Conc(cm),Steel(cm),"
-        "B,d(uSv),Ad(uSv/y)\n";
+    file <<"Dose Point,Dose Label,Source,""t(hrs),dist(cm),T,""Lead(cm),Conc(cm),Steel(cm),""B,d(uSv),Ad(uSv/y)\n";
 
     for (size_t i = 0; i < reports.size(); ++i) {
         const auto& report = reports[i];

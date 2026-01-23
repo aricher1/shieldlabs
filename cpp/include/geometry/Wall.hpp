@@ -14,7 +14,7 @@ enum class OpeningType {
 struct WallOpening {
     double center_t;        // where the user clicked on wall
     double length_cm;       // user-defined length
-    OpeningType type;       // type: open, door, window
+    ::OpeningType type;       // type: open, door, window
 };
 
 

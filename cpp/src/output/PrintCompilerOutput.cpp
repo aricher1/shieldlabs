@@ -21,7 +21,7 @@ static std::string fmt(double v, int precision = 6) {
 }
 
 void print(const calc::CompilerOutput& out) {
-    std::cout << "\n====================== COMPILER OUTPUT ======================\n";
+    std::cout << "\n====================== COMPILER OUTPUT DEBUG ======================\n";
     std::cout << "Isotope: " << out.isotope_key << "\n";          
 
     const auto reports = build_dose_point_reports(out);

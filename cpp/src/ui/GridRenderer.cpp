@@ -174,39 +174,34 @@ void GridRenderer::finalize_blueprint() {
     }
 
     blueprint_finalized = !blueprint_finalized;
-
     drawing = false;
     placing_opening = false;
     selection.clear();
 
     if (blueprint_finalized) {
-
         ui_log.clear();
-        ui_log.push("========= Final Blueprint =========");
-
+        ui_log.push("[Grid Editing Locked]");
+        ui_log.push("Dose Calculation Results:");
         // canonical JSON
         nlohmann::json j = engine.to_json();
+        // uncomment to dump json to application terminal for debugging
         // ui_log.push(j.dump(2));
-
         // compile
         calc::CalcScene scene = calc::SceneCompiler::compile(j);
-
         ui_log.separator();
-        ui_log.push("Compiled scene counts:");
-        ui_log.push("  sources: " + std::to_string(scene.sources.size()));
-        ui_log.push("  dose_points: " + std::to_string(scene.dose_points.size()));
-        ui_log.push("  walls: " + std::to_string(scene.walls.size()));
-
+        ui_log.push("[Captured Geometric Entities]");
+        ui_log.push("- Sources: " + std::to_string(scene.sources.size()));
+        ui_log.push("- Dose Points: " + std::to_string(scene.dose_points.size()));
+        ui_log.push("- Walls: " + std::to_string(scene.walls.size()));
         calc::CompilerOutput compiler_output = calc::build_compiler_output(scene);
         ui_log.separator();
         output::print_to_ui(compiler_output, ui_log);
         // uncomment for terminal debugging
         // output::print(compiler_output);
         last_compiler_output = compiler_output;
-
     } else {
         ui_log.clear();
-        ui_log.push("========= Editing Resumed =========");
+        ui_log.push("[Grid Editing Unlocked]");
     }
 }
 
@@ -302,17 +297,7 @@ void GridRenderer::draw_project_picker()
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window.getSize().x), static_cast<float>(window.getSize().y)), ImGuiCond_Always);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(11.f/255.f, 11.f/255.f, 20.f/255.f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
-
-    ImGui::Begin(
-        "ShieldLabs",
-        nullptr,
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
-    );
-
+    ImGui::Begin("ShieldLabs", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(22.f/255.f, 22.f/255.f, 42.f/255.f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(31.f/255.f, 31.f/255.f, 61.f/255.f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(42.f/255.f, 42.f/255.f, 90.f/255.f, 1.0f));
@@ -376,12 +361,7 @@ void GridRenderer::draw_new_project_setup() {
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
-
-    ImGui::Begin("##ProjectSetup", nullptr,
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoTitleBar
-    );
+    ImGui::Begin("##ProjectSetup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
     if (ImGui::Button("Upload PDF Floorplan")) {
         IGFD::FileDialogConfig config;
@@ -476,7 +456,6 @@ void GridRenderer::draw_toolbar() {
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
-
     ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 
     if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
@@ -579,7 +558,7 @@ void GridRenderer::draw_toolbar() {
 
     ImGui::Separator();
     float spacing = ImGui::GetStyle().ItemSpacing.x;
-    float lock_w = ImGui::CalcTextSize("Lock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
+    float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
     float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
     float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
     float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
@@ -587,7 +566,7 @@ void GridRenderer::draw_toolbar() {
     ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
     ImGui::BeginDisabled(blueprint_finalized);
-    if (ToolbarButton("Lock Geometry", blueprint_finalized)) {
+    if (ToolbarButton("Calculate & Lock", blueprint_finalized)) {
         finalize_blueprint(); // locks geometry
     }
     ImGui::EndDisabled();
@@ -649,25 +628,15 @@ void GridRenderer::draw_toolbar() {
 void GridRenderer::draw_left_panel() {
     ImGui::SetNextWindowPos(ImVec2(0.f, TOOLBAR_HEIGHT_PX));
     ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
-
-    ImGui::Begin(
-        "Entity Information",
-        nullptr,
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse
-    );
-
+    ImGui::Begin("Geometric Entity Information", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+    
     if (ImGui::BeginTabBar("LeftPanelTabs")) {
-
         draw_wall_tab();
         draw_source_tab();
         draw_dose_tab();
         draw_isotope_tab();
-
         ImGui::EndTabBar();
     }
-
     ImGui::End();
 }
 
@@ -729,15 +698,40 @@ void GridRenderer::draw_wall_tab() {
 
             if (ImGui::BeginTabItem(label.c_str())) {
                 auto& layer = wall.layers[i];
+                const auto& mat_ids = material_registry.ordered_ids();
 
-                // Material
-                int mat_id = layer.material_id;
-                if (ImGui::InputInt("Material ID", &mat_id)) {
-                    layer.material_id = mat_id;
+                // Find current index
+                int current_idx = 0;
+                for (int mi = 0; mi < static_cast<int>(mat_ids.size()); ++mi) {
+                    if (mat_ids[mi] == layer.material_id) {
+                        current_idx = mi;
+                        break;
+                    }
+                }
+
+                // Material dropdown
+                if (ImGui::BeginCombo("Material", material_registry.get(mat_ids[current_idx])->name.c_str())) {
+                    for (int mi = 0; mi < static_cast<int>(mat_ids.size()); ++mi) {
+                        const MaterialDef* m = material_registry.get(mat_ids[mi]);
+                        if (!m) continue;
+
+                        bool selected = (mi == current_idx);
+                        if (ImGui::Selectable(m->name.c_str(), selected)) {
+                            layer.material_id = m->id;
+                        }
+
+                        if (selected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                    ImGui::EndCombo();
                 }
 
                 // Thickness
-                ImGui::InputDouble("Thickness (cm)", &layer.thickness_cm);
+                ImGui::PushTextWrapPos(0.0f);
+                ImGui::TextWrapped("Thickness (cm)");
+                ImGui::PopTextWrapPos();
+                ImGui::InputDouble("##LayerThickness", &layer.thickness_cm);
 
                 // Remove layer
                 if (wall.layers.size() > 1) {
@@ -781,10 +775,12 @@ void GridRenderer::draw_source_tab() {
     auto& entities = engine.get_entities_mutable();
 
     std::vector<size_t> sources;
-    for (size_t i = 0; i < entities.size(); ++i)
-        if (entities[i].type == PointType::Source)
+    for (size_t i = 0; i < entities.size(); ++i) {
+        if (entities[i].type == PointType::Source) {
             sources.push_back(i);
-
+        }
+    }   
+    
     if (sources.empty()) {
         ImGui::TextDisabled("No source points created yet.");
         ImGui::EndTabItem();
@@ -798,13 +794,15 @@ void GridRenderer::draw_source_tab() {
         }
     }
 
-    if (!inspector_source_index.has_value())
+    if (!inspector_source_index.has_value()) {
         inspector_source_index = sources[0];
+    }
 
     // Source selector
     std::vector<std::string> labels;
-    for (size_t i = 0; i < sources.size(); ++i)
+    for (size_t i = 0; i < sources.size(); ++i) {
         labels.push_back("Source " + std::to_string(i + 1));
+    }
 
     static int src_idx = 0;
     src_idx = std::find(sources.begin(), sources.end(), *inspector_source_index) - sources.begin();
@@ -836,12 +834,25 @@ void GridRenderer::draw_source_tab() {
         e.label = name_buf;
     }
 
-    ImGui::InputFloat("Patients/week", &s.num_patients);
-    ImGui::InputFloat("Activity/patient (MBq)", &s.activity_per_patient_MBq);
-    ImGui::InputFloat("Uptake (hours)", &s.uptake_time_hours);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextWrapped("Patients per week");
+    ImGui::PopTextWrapPos();
+    ImGui::InputFloat("##PatientsPerWeek", &s.num_patients);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextWrapped("Activity per patient (MBq)");
+    ImGui::PopTextWrapPos();
+    ImGui::InputFloat("##ActivityPerPatient", &s.activity_per_patient_MBq);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextWrapped("Uptake time (hrs)");
+    ImGui::PopTextWrapPos();
+    ImGui::InputFloat("##UptakeTime", &s.uptake_time_hours);
+
     ImGui::Checkbox("Apply patient attenuation", &s.apply_patient_attenuation);
     if (s.apply_patient_attenuation) {
-        ImGui::InputFloat("Patient attenuation (%)", &s.patient_attenuation_percent, 0.05f, 0.1f);
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextWrapped("Patient attenuation [0,1]");
+        ImGui::PopTextWrapPos();
+        ImGui::InputFloat("##PatientAttenuation", &s.patient_attenuation_percent, 0.05f, 0.1f);
         s.patient_attenuation_percent = std::clamp(s.patient_attenuation_percent, 0.0f, 1.0f);
     }
     ImGui::Checkbox("Apply radioactive decay", &s.apply_radioactive_decay);
@@ -851,15 +862,18 @@ void GridRenderer::draw_source_tab() {
 
 
 void GridRenderer::draw_dose_tab() {
-    if (!ImGui::BeginTabItem("Dose"))
+    if (!ImGui::BeginTabItem("Dose")) {
         return;
+    }
 
     auto& entities = engine.get_entities_mutable();
 
     std::vector<size_t> doses;
-    for (size_t i = 0; i < entities.size(); ++i)
-        if (entities[i].type == PointType::Dose)
+    for (size_t i = 0; i < entities.size(); ++i) {
+        if (entities[i].type == PointType::Dose) {
             doses.push_back(i);
+        }
+    }
 
     if (doses.empty()) {
         ImGui::TextDisabled("No dose points created yet.");
@@ -874,13 +888,15 @@ void GridRenderer::draw_dose_tab() {
         }
     }
 
-    if (!inspector_dose_index.has_value())
+    if (!inspector_dose_index.has_value()) {
         inspector_dose_index = doses[0];
+    }
 
     std::vector<std::string> labels;
-    for (size_t i = 0; i < doses.size(); ++i)
+    for (size_t i = 0; i < doses.size(); ++i) {
         labels.push_back("Dose " + std::to_string(i + 1));
-
+    }
+    
     static int dose_idx = 0;
     dose_idx = std::find(doses.begin(), doses.end(), *inspector_dose_index) - doses.begin();
 
@@ -910,9 +926,14 @@ void GridRenderer::draw_dose_tab() {
     if (ImGui::InputText("Name", name_buf, sizeof(name_buf))) {
         e.label = name_buf;
     }
-
-    ImGui::InputFloat("Occupancy", &d.occupancy);
-    ImGui::InputFloat("Dose limit (uSv)", &d.dose_limit_uSv);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextWrapped("Occupancy [0, 1]");
+    ImGui::PopTextWrapPos();
+    ImGui::InputFloat("##Occupancy", &d.occupancy);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextWrapped("Dose limit (uSv)");
+    ImGui::PopTextWrapPos();
+    ImGui::InputFloat("##DoseLimit", &d.dose_limit_uSv);
 
     ImGui::EndTabItem();
 }
@@ -928,7 +949,6 @@ void GridRenderer::draw_isotope_tab() {
         "Select the radioactive isotope used for all sources in this project. "
         "Changing the isotope will affect dose calculations after geometry is locked."
     );
-
     ImGui::Spacing();
 
     static std::vector<std::string> isotope_keys;
@@ -964,28 +984,21 @@ void GridRenderer::draw_isotope_tab() {
     {
         engine.set_selected_isotope_key(isotope_keys[current_idx]);
     }
-
     ImGui::Spacing();
     ImGui::Separator();
 
     if (const IsotopeDef* iso = isotope_registry.get_by_key(engine.get_selected_isotope_key())) {
-        ImGui::Text("Name: %s", iso->name.c_str());
-        ImGui::Text("Gamma constant:");
-        ImGui::Text("  %.8f µSv_m2_per_MBq_h", iso->gamma_constant_uSv_m2_per_MBq_h);
-        ImGui::Text("Half-life:");
-        ImGui::Text("  %.2f hours", iso->half_life_hours);
+        ImGui::Text("Isotope: %s", iso->name.c_str());
+        ImGui::Text("- Gamma constant: %.9f", iso->gamma_constant_uSv_m2_per_MBq_h);
+        ImGui::Text("- Half-life: %.2f hours", iso->half_life_hours);
     }
-
     ImGui::Spacing();
-    ImGui::TextDisabled("Unlock and lock geometry to recalculate dose.");
-
     ImGui::EndTabItem();
 }
 
 
 void GridRenderer::handle_events() {
     while (const auto event = window.pollEvent()) {
-
         ImGui::SFML::ProcessEvent(window, *event);
 
         if (app_state.mode == AppMode::ProjectPicker) {
@@ -993,12 +1006,10 @@ void GridRenderer::handle_events() {
         }
 
         const ImGuiIO& io = ImGui::GetIO();
-        
         // close
         if (event->is<sf::Event::Closed>()) {
             window.close();
         }
-
         // resize
         if (const auto* resized = event->getIf<sf::Event::Resized>()) {
             window_size = {resized->size.x, resized->size.y};
@@ -1033,12 +1044,11 @@ void GridRenderer::handle_events() {
             Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
             if (placing_opening) {
-
                 const Wall& w = engine.get_walls()[opening_wall_index];
                 double t = project_t_onto_wall(p, w);
                 preview_point = lerp_point(w.a, w.b, t);
+                
                 continue;
-
             }
 
             if (!drawing) { continue; }
@@ -1046,16 +1056,8 @@ void GridRenderer::handle_events() {
         }
 
         if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
-
             if (io.WantCaptureKeyboard) {
-                if (
-                    key->code != sf::Keyboard::Key::Left &&
-                    key->code != sf::Keyboard::Key::Right &&
-                    key->code != sf::Keyboard::Key::Up &&
-                    key->code != sf::Keyboard::Key::Down &&
-                    key->code != sf::Keyboard::Key::Escape &&
-                    key->code != sf::Keyboard::Key::LShift
-                ) {
+                if (key->code != sf::Keyboard::Key::Left && key->code != sf::Keyboard::Key::Right && key->code != sf::Keyboard::Key::Up && key->code != sf::Keyboard::Key::Down && key->code != sf::Keyboard::Key::Escape && key->code != sf::Keyboard::Key::LShift) {
                     continue;
                 }
             }
@@ -1097,7 +1099,6 @@ void GridRenderer::handle_events() {
                 selection.clear();
                 drawing = false;
                 placing_opening = false;
-
                 undo_stack.execute(std::make_unique<ShiftGeometryCommand>(engine, dx, dy));
 
                 continue;
@@ -1106,7 +1107,6 @@ void GridRenderer::handle_events() {
 
         if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
             if (io.WantCaptureMouse) { continue; }
-
             if (app_state.mode == AppMode::NewProjectSetup) {
                 if (mouse->button == sf::Mouse::Button::Left) {
                     sf::Vector2i mouse_px{mouse->position.x, mouse->position.y};
@@ -1121,6 +1121,7 @@ void GridRenderer::handle_events() {
                         scale_has_p2 = true;
                     }
                 }
+                
                 return;
             }
 
@@ -1134,7 +1135,6 @@ void GridRenderer::handle_events() {
                 Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
                 if (interaction_mode == InteractionMode::Draw && (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen)) {
-
                     if (placing_opening) { 
                         double len = distance_cm(start_point, preview_point);
                         if (len > 1.0) {
@@ -1149,6 +1149,7 @@ void GridRenderer::handle_events() {
                             undo_stack.execute(std::make_unique<AddOpeningCommand>(engine, opening_wall_index, opening_index, o));
                         }
                         placing_opening = false;
+
                         return;
                     } 
 

@@ -4,7 +4,7 @@
 
 struct UiLog {
     std::deque<std::string> lines;
-    std::size_t max_lines = 500;
+    std::size_t max_lines = 1000;
 
     void clear() {
         lines.clear();
@@ -13,7 +13,7 @@ struct UiLog {
     void push(const std::string& s);
 
     void separator() {
-        push("-------------------------------");
+        push("-------------------------------------------------");
     }
 };
 
