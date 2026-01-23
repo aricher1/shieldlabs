@@ -61,6 +61,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 add_executable(xrct_ui
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
+    src/ui/GridMath.cpp
     src/ui/UiLog.cpp
     src/utils/PdfToPng.cpp
     src/utils/ProjectIO.cpp

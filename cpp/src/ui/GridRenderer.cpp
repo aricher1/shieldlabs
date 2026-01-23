@@ -1,6 +1,7 @@
 #include "ui/GridRenderer.hpp"
 #include "materials/MaterialRegistry.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
+#include "ui/GridMath.hpp"
 #include "ui/AddWallCommand.hpp"
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
@@ -36,80 +37,19 @@ extern IsotopeRegistry isotope_registry;
 
 namespace {
 
+    // interaction constants
     constexpr double SELECT_EPS_CM = 25.0;          // select wall/point by clicking within 25cm of it
     constexpr double SNAP_POINT_EPS_CM = 0.01;      // snap epsilon, checking if p equals an existing endpoint for selection logic
     constexpr float PICK_RADIUS_PX = 10.0f;
     constexpr double SHIFT_MOVE_MULTIPLIER = 10.0;  // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
+    
+    // ui layout constants
     constexpr float TOOLBAR_HEIGHT_PX = 40.f;       // toolbar
     constexpr float RIGHT_PANEL_WIDTH_PX = 300.f;   // terminal
     constexpr float LEFT_PANEL_WIDTH_PX = 300.f;    // user input
 
-    double distance_point_to_segment(Point p, Point a, Point b) {
-        const double dx = b.x_cm - a.x_cm;
-        const double dy = b.y_cm - a.y_cm;
-
-        if (dx == 0.0 && dy == 0.0) {
-            return std::hypot(p.x_cm - a.x_cm, p.y_cm - a.y_cm);
-        }
-
-        const double t = ((p.x_cm - a.x_cm) * dx + (p.y_cm - a.y_cm) * dy) / (dx * dx + dy * dy);
-        const double clamped = std::clamp(t, 0.0, 1.0);
-        const double proj_x = a.x_cm + clamped * dx;
-        const double proj_y = a.y_cm + clamped * dy;
-
-        return std::hypot(p.x_cm - proj_x, p.y_cm - proj_y);
-    }
-
-    double distance_point_to_point(Point a, Point b) {
-        return std::hypot(a.x_cm - b.x_cm, a.y_cm - b.y_cm);
-    }
-
-    bool snaps_to_existing_point(const Point& p, const GeometryEngine& engine) {
-
-        for (const auto& w : engine.get_walls()) {
-
-            if (std::hypot(p.x_cm - w.a.x_cm, p.y_cm - w.a.y_cm) < SNAP_POINT_EPS_CM) {
-                return true;
-            }
-
-            if (std::hypot(p.x_cm - w.b.x_cm, p.y_cm - w.b.y_cm) < SNAP_POINT_EPS_CM) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static double project_t_onto_wall(const Point& p, const Wall& w) {
-        double dx = w.b.x_cm - w.a.x_cm;
-        double dy = w.b.y_cm - w.a.y_cm;
-        double len2 = dx * dx + dy * dy;
-        if (len2 < 1e-9) {
-            return 0.0;
-        }
-        double t = ((p.x_cm - w.a.x_cm) * dx + (p.y_cm- w.a.y_cm) * dy) / len2;
-
-        return std::clamp(t, 0.0, 1.0);
-    }
-
-    static Point lerp_point(const Point& a, const Point& b, double t) {
-        return {a.x_cm + t * (b.x_cm - a.x_cm), a.y_cm + t * (b.y_cm - a.y_cm)};
-    }
-
-    sf::RectangleShape make_thick_segment(sf::Vector2f a, sf::Vector2f b, float thickness, sf::Color color) {
-
-        sf::Vector2f d = b - a;
-        float length = std::sqrt(d.x * d.x + d.y * d.y);
-        sf::RectangleShape r({length, thickness});
-        r.setFillColor(color);
-        r.setOrigin(sf::Vector2f{0.f, thickness * 0.5f});
-        r.setPosition(a);
-        r.setRotation(sf::degrees(std::atan2(d.y, d.x) * 180.f / M_PI));
-        
-        return r;
-    }
-
-
-    static bool ToolbarButton(const char* label, bool active) {
+    // used to be static method
+    bool ToolbarButton(const char* label, bool active) {
         if (active) {
             ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
@@ -1570,11 +1510,11 @@ void GridRenderer::render() {
 
             float opening_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
             auto rect = make_thick_segment(
-                                        {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)},
-                                        {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)},
-                                        opening_thickness_cm,
-                                        c
-                                    );
+                            {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)},
+                            {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)},
+                            opening_thickness_cm,
+                            c
+                        );
             window.draw(rect);
 
             // place text
