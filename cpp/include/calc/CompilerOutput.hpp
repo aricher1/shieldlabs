@@ -1,14 +1,17 @@
 #pragma once
+
+#include <vector>
+#include <string>
+
 #include "TransportRay.hpp"
 #include "EvaluateSingleRay.hpp"
 #include "IntegrateDose.hpp"
-#include <vector>
-#include <string>
+
 
 
 namespace calc {
 
-    struct CompilerRayOutput {
+    struct CompilerRayOutput {                                      // Result of a single ray
         TransportRay ray;
         SingleRayDoseResult dose;
         IntegratedDoseResult integrated;
@@ -16,7 +19,7 @@ namespace calc {
         std::string dose_label;
     };
 
-    struct DosePointTotal {
+    struct DosePointTotal {                                         // Aggregated dose results for a single dose point
         int dose_index;
         std::string dose_name;
         double integrated_dose_uSv = 0.0;
@@ -26,7 +29,7 @@ namespace calc {
         double annual_dose_uSv = 0.0;
     };
 
-    struct CompilerOutput {
+    struct CompilerOutput {                                         // Full calculation output
         std::string isotope_key;
         std::vector<CompilerRayOutput> rays;
         std::vector<DosePointTotal> dose_totals;

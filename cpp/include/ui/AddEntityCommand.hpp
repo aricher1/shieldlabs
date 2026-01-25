@@ -1,28 +1,29 @@
 #pragma once
+
 #include "ui/Command.hpp"
 #include "geometry/GeometryEngine.hpp"
 
 
 
-class AddEntityCommand : public Command {
+namespace ui {
 
-    private: 
-        GeometryEngine& engine;
-        PointEntity entity;
+    class AddEntityCommand : public Command {
 
-    public:
-        AddEntityCommand(GeometryEngine& engine, const PointEntity& entity) : engine(engine), entity(entity) {}
+        private: 
+            geom::GeometryEngine& engine;
+            geom::PointEntity entity;
 
-        void execute() override { // override derived
+        public:
+            AddEntityCommand(geom::GeometryEngine& engine, const geom::PointEntity& entity) : engine(engine), entity(entity) {}
 
-            engine.add_entity_direct(entity);
+            void execute() override { // override derived
+                engine.add_entity_direct(entity);
+            }
 
-        }
+            void undo() override { // override derived
+                engine.remove_entity_at(engine.get_entities().size() - 1);
+            }
 
-        void undo() override { // override derived
+    };
 
-            engine.remove_entity_at(engine.get_entities().size() - 1);
-        
-        }
-
-};
+} // end namespace ui

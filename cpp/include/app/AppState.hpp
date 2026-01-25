@@ -2,6 +2,10 @@
 #include "AppMode.hpp"
 
 
-struct AppState {
-    AppMode mode = AppMode::ProjectPicker;
-};
+namespace app {
+
+    struct AppState {
+        AppMode mode = AppMode::ProjectPicker;
+    };
+
+} // end namespace app

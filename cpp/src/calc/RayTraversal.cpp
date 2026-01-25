@@ -4,13 +4,13 @@
 #include "calc/HitClassification.hpp"
 
 
+
 namespace calc {
 
     std::vector<RayHitRecord> trace_ray(const CalcScene& scene, int source_index, int dose_index) {
         std::vector<RayHitRecord> hits; // vector to store all hits
         const auto& source = scene.sources[source_index];
         const auto& dose = scene.dose_points[dose_index];
-
         const double sx = source.position.x_cm;
         const double sy = source.position.y_cm;
         const double dx = dose.position.x_cm;

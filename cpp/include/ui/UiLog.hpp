@@ -1,20 +1,29 @@
 #pragma once
+
+#include <cstddef>
 #include <deque>
 #include <string>
 
-struct UiLog {
-    std::deque<std::string> lines;
-    std::size_t max_lines = 1000;
 
-    void clear() {
-        lines.clear();
-    }
 
-    void push(const std::string& s);
+namespace ui {
 
-    void separator() {
-        push("-------------------------------------------------");
-    }
-};
+    struct UiLog {
+        std::deque<std::string> lines;
+        std::size_t max_lines = 1000;
 
-extern UiLog ui_log;
+        void clear() {
+            lines.clear();
+        }
+
+        void push(const std::string& s);
+
+        void separator() {
+            push("-------------------------------------------------");
+        }
+    };
+
+    // Global UI log
+    extern UiLog ui_log;
+
+} // end namespace ui

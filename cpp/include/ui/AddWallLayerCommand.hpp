@@ -1,26 +1,32 @@
-#pragma once 
+#pragma once
+
 #include "Command.hpp"
 #include "geometry/GeometryEngine.hpp"
 
 
-class AddWallLayerCommand : public Command {
 
-    private:
-        GeometryEngine& engine;
-        std::size_t wall_index;
-        std::size_t insert_index;
-        WallLayer layer;
+namespace ui {
 
-    public:
-        AddWallLayerCommand(GeometryEngine& e, std::size_t wi, std::size_t idx, const WallLayer& l) : engine(e), wall_index(wi), insert_index(idx), layer(l) {}
+    class AddWallLayerCommand : public Command {
 
-        void execute() override { // override derived
-            auto& layers = engine.get_walls_mutable()[wall_index].layers;
-            layers.insert(layers.begin() + insert_index, layer);
-        }
+        private:
+            geom::GeometryEngine& engine;
+            std::size_t wall_index;
+            std::size_t insert_index;
+            geom::WallLayer layer;
 
-        void undo() override { // override derived
-            auto& layers = engine.get_walls_mutable()[wall_index].layers;
-            layers.erase(layers.begin() + insert_index);
-        }
-};
+        public:
+            AddWallLayerCommand(geom::GeometryEngine& e, std::size_t wi, std::size_t idx, const geom::WallLayer& l) : engine(e), wall_index(wi), insert_index(idx), layer(l) {}
+
+            void execute() override { // override derived
+                auto& layers = engine.get_walls_mutable()[wall_index].layers;
+                layers.insert(layers.begin() + insert_index, layer);
+            }
+
+            void undo() override { // override derived
+                auto& layers = engine.get_walls_mutable()[wall_index].layers;
+                layers.erase(layers.begin() + insert_index);
+            }
+    };
+
+} // end namespace ui

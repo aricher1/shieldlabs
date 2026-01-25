@@ -2,11 +2,15 @@
 #include "materials/MaterialRegistry.hpp"
 
 
+using namespace material;
+using namespace calc;
+
 extern MaterialRegistry material_registry;
+
 
 namespace output {
 
-    std::vector<DosePointReport> build_dose_point_reports(const calc::CompilerOutput& out) {
+    std::vector<DosePointReport> build_dose_point_reports(const CompilerOutput& out) {
         std::vector<DosePointReport> reports;
         for (const auto& dose_total : out.dose_totals) {
             DosePointReport report{};

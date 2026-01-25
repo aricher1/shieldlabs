@@ -1,6 +1,10 @@
 #pragma once
+
+#include <vector>
+
 #include "calc/CompilerOutput.hpp"
 #include "DosePointReport.hpp"
+
 
 
 namespace output {

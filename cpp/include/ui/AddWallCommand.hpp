@@ -1,24 +1,29 @@
 #pragma once
+
 #include "ui/Command.hpp"
 #include "geometry/GeometryEngine.hpp"
 
 
 
-class AddWallCommand : public Command {
+namespace ui {
 
-    private:
-        GeometryEngine& engine;
-        Wall wall;
+    class AddWallCommand : public Command {
 
-    public:
-        AddWallCommand(GeometryEngine& engine, const Wall& wall) : engine(engine), wall(wall) {} 
+        private:
+            geom::GeometryEngine& engine;
+            geom::Wall wall;
 
-        void execute() override { 
-            engine.add_wall_direct(wall);
-        }
+        public:
+            AddWallCommand(geom::GeometryEngine& engine, const geom::Wall& wall) : engine(engine), wall(wall) {} 
 
-        void undo() override {
-            engine.remove_last_wall();
-        }
+            void execute() override { // override derived
+                engine.add_wall_direct(wall);
+            }
 
-};
+            void undo() override { // override derived
+                engine.remove_last_wall();
+            }
+
+    };
+
+} // end namespace ui

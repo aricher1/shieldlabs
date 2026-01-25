@@ -1,29 +1,30 @@
 #pragma once
+
 #include "ui/Command.hpp"
 #include "geometry/GeometryEngine.hpp"
 
 
 
-class RemoveEntityCommand : public Command {
+namespace ui {
 
-    private:
-        GeometryEngine& engine;
-        std::size_t index;
-        PointEntity saved;
+    class RemoveEntityCommand : public Command {
 
-    public:
-        RemoveEntityCommand(GeometryEngine& engine, std::size_t index) : engine(engine), index(index), saved(engine.get_entities()[index]) {} 
+        private:
+            geom::GeometryEngine& engine;
+            std::size_t index;
+            geom::PointEntity saved;
 
-        void execute() override { // override derived
+        public:
+            RemoveEntityCommand(geom::GeometryEngine& engine, std::size_t index) : engine(engine), index(index), saved(engine.get_entities()[index]) {} 
 
-            engine.remove_entity_at(index);
+            void execute() override { // override derived
+                engine.remove_entity_at(index);
+            }
 
-        }
+            void undo() override { // override derived
+                engine.add_entity_direct(saved);
+            }
 
-        void undo() override { // override derived
+    };
 
-            engine.add_entity_direct(saved);
-
-        }
-
-};
+} // end namespace ui

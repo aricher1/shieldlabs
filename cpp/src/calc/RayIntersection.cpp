@@ -1,6 +1,7 @@
 #include "calc/RayIntersection.hpp"
 
 
+
 namespace calc {
     
     bool intersect_ray_with_segment ( double rx0, double ry0, double rx1, double ry1, double wx0, double wy0, double wx1, double wy1, RayHit& hit) {

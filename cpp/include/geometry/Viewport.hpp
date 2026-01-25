@@ -4,13 +4,17 @@
 
 
 
-class Viewport {
+namespace geom {
 
-    public: 
-        double pixels_per_cm = 10.0;
-        double origin_x_px = 0.0;
-        double origin_y_px = 0.0;
+    class Viewport {
 
-        Point pixel_to_world(double px, double py) const;
+        public: 
+            double pixels_per_cm = 10.0;
+            double origin_x_px = 0.0;
+            double origin_y_px = 0.0;
 
-};
+            Point pixel_to_world(double px, double py) const;
+
+    };
+
+} // end namespace geom

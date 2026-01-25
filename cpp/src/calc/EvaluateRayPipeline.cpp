@@ -1,11 +1,18 @@
+#include <stdexcept>
+
 #include "calc/EvaluateRayPipeline.hpp"
 #include "calc/TransportRay.hpp"
 #include "calc/EvaluateSingleRay.hpp"
 #include "calc/IntegrateDose.hpp"
 #include "materials/MaterialRegistry.hpp"
-#include <stdexcept>
+
+
+using namespace isotope;
+using namespace material;
+using namespace calc;
 
 extern MaterialRegistry material_registry;
+
 
 namespace calc {
 

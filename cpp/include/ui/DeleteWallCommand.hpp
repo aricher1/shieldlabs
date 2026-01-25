@@ -1,29 +1,30 @@
 #pragma once
+
 #include "ui/Command.hpp"
 #include "geometry/GeometryEngine.hpp"
 
 
 
-class DeleteWallCommand : public Command {
+namespace ui {
 
-    private:
-        GeometryEngine& engine;
-        std::size_t index;
-        Wall removed_wall;
+    class DeleteWallCommand : public Command {
 
-    public:
-        DeleteWallCommand(GeometryEngine& engine, std::size_t index) : engine(engine), index(index) {}
+        private:
+            geom::GeometryEngine& engine;
+            std::size_t index;
+            geom::Wall removed_wall;
 
-        void execute() override {   // override from derived class
+        public:
+            DeleteWallCommand(geom::GeometryEngine& engine, std::size_t index) : engine(engine), index(index) {}
 
-            removed_wall = engine.get_walls()[index];
-            engine.remove_wall_at(index);
+            void execute() override {   // override from derived class
+                removed_wall = engine.get_walls()[index];
+                engine.remove_wall_at(index);
+            }
 
-        }
+            void undo() override {   // override from derived class
+                engine.add_wall_direct(removed_wall);
+            }
+    };
 
-        void undo() override {   // override from derived class
-
-            engine.add_wall_direct(removed_wall);
-
-        }
-};
+} // end namespace ui

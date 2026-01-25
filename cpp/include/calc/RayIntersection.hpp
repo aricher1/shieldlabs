@@ -1,16 +1,19 @@
 #pragma once
+
 #include <cmath>
+
 
 
 namespace calc {
 
+    // Parametric intersection data for a ray-segment hit
     struct RayHit {
         double t_ray;   // [0,1] along source -> dose
         double t_wall;  // [0,1] along wall a -> b
     };
 
-    // intersects segment Ray0 -> Ray1 with segment Wall0 -> Wall1
-    // will return true iff they intersect within both segments
+    // Computes the intersection between a ray and a wall segment
+    // Reutrns true if the intersection lies within both wall segments
     bool intersect_ray_with_segment (
         double rx0, double ry0,
         double rx1, double ry1,

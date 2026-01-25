@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "calc/CalcScene.hpp"
 #include "calc/CompilerOutput.hpp"
 #include "calc/TransportRay.hpp"
@@ -5,12 +7,17 @@
 #include "calc/EvaluateRayPipeline.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
 #include "materials/MaterialRegistry.hpp"
-#include <stdexcept>
 
 constexpr double WEEKS_PER_YEAR = 52.0;
 
+using namespace isotope;
+using namespace material;
+using namespace calc;
+
 extern IsotopeRegistry isotope_registry;
 extern MaterialRegistry material_registry;
+
+
 
 namespace calc {
 

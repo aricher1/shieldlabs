@@ -13,8 +13,12 @@
 #include <iostream>
 #include <fstream>
 
-MaterialRegistry material_registry;
-IsotopeRegistry isotope_registry;
+material::MaterialRegistry material_registry;
+isotope::IsotopeRegistry isotope_registry;
+
+using namespace app;
+using namespace geom;
+using namespace ui;
 
 int main() {
 

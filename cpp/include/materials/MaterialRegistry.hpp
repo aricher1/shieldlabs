@@ -1,25 +1,33 @@
 #pragma once
+
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 
-struct MaterialDef {
-    int id;
-    std::string key;
-    std::string name;
-};
+
+namespace material {
+
+    struct MaterialDef {
+        int id;
+        std::string key;
+        std::string name;
+    };
 
 
-class MaterialRegistry {
+    class MaterialRegistry {
 
-    private:
-        std::unordered_map<int, MaterialDef> materials;
-        std::vector<int> material_order;
+        private:
+            std::unordered_map<int, MaterialDef> materials;
+            std::vector<int> material_order;
 
-    public:
-        bool load_from_file(const std::string& path);
-        const MaterialDef* get(int id) const;
-        const std::vector<int>& ordered_ids() const;
-        int next_id(int current_id) const;
-};
+        public:
+            bool load_from_file(const std::string& path);
+
+            const MaterialDef* get(int id) const;
+            const std::vector<int>& ordered_ids() const;
+            
+            int next_id(int current_id) const;
+    };
+
+}

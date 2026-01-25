@@ -1,70 +1,81 @@
 #pragma once
-#include "Point.hpp"
-#include "Wall.hpp"
-#include "PointEntity.hpp"
-#include "WorldBounds.hpp"
+
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>
 
+#include "Point.hpp"
+#include "Wall.hpp"
+#include "PointEntity.hpp"
+#include "WorldBounds.hpp"
 
 
 
-class GeometryEngine {
+namespace geom {
 
-    private:
-        WorldBounds world_bounds;
-        int grid_cells;
-        double cm_per_cell;
-        double distance_scale = 1.0;
-        std::string selected_isotope_key = "f18";
-        std::vector<Point> points;
-        std::vector<Wall> walls;
-        std::vector<PointEntity> entities;
+    class GeometryEngine {
 
-        Point reuse_or_add(Point p);
+        private:
+            WorldBounds world_bounds;
+            int grid_cells;
+            double cm_per_cell;
+            double distance_scale = 1.0;
+            std::string selected_isotope_key = "f18";
+            std::vector<Point> points;
+            std::vector<Wall> walls;
+            std::vector<PointEntity> entities;
 
-    public:
-        explicit GeometryEngine(int grid_cells, double cm_per_cell);
+            Point reuse_or_add(Point p);
 
-        const WorldBounds& get_world_bounds() const;
-        void set_world_bounds(const WorldBounds& bounds);
-        void set_world_bounds_from_image(int px_w, int px_h);
+        public:
+            explicit GeometryEngine(int grid_cells, double cm_per_cell);
 
-        int get_grid_cells() const { return grid_cells; }
-        double get_cm_per_cell() const { return cm_per_cell; }
-        double get_distance_scale() const { return distance_scale; }
-        const std::string& get_selected_isotope_key() const { return selected_isotope_key; }
-        void set_distance_scale(double scale);
-        void set_selected_isotope_key(const std::string& key);
-        void set_scale(int cells, double cm);
-        std::vector<Wall>& get_walls_mutable() { return walls; }
+            // World configuration
+            const WorldBounds& get_world_bounds() const;
+            void set_world_bounds(const WorldBounds& bounds);
+            void set_world_bounds_from_image(int px_w, int px_h);
 
-        Point add_point(Point p);
-        Point snap_to_grid(Point p) const;
+            // Getters
+            int get_grid_cells() const { return grid_cells; }
+            double get_cm_per_cell() const { return cm_per_cell; }
+            double get_distance_scale() const { return distance_scale; }
+            const std::vector<Wall>& get_walls() const;
+            std::vector<Wall>& get_walls_mutable() { return walls; }
+            const std::vector<PointEntity>& get_entities() const;
+            std::vector<PointEntity>& get_entities_mutable() { return entities; }
+            const std::string& get_selected_isotope_key() const { return selected_isotope_key; }
 
-        void add_wall(Point a, Point b, double thickness_cm, int material_id);
-        void add_wall_direct(const Wall& w);
+            // Setters
+            void set_distance_scale(double scale);
+            void set_selected_isotope_key(const std::string& key);
+            void set_scale(int cells, double cm);
 
-        void remove_last_wall();
-        void remove_wall_at(std::size_t index);
-        void remove_entity_at(std::size_t index);
-        void add_entity_direct(const PointEntity& e);
-        const std::vector<Wall>& get_walls() const;
+            // Add
+            Point add_point(Point p);
+            Point snap_to_grid(Point p) const;
+            void add_wall(Point a, Point b, double thickness_cm, int material_id);
+            void add_wall_direct(const Wall& w);
+            void add_entity_direct(const PointEntity& e);
+            void add_source(Point p);
+            void add_dose(Point p);
 
-        void add_source(Point p);
-        void add_dose(Point p);
-        const std::vector<PointEntity>& get_entities() const;
-        std::vector<PointEntity>& get_entities_mutable() { return entities; }
+            // Remove
+            void remove_last_wall();
+            void remove_wall_at(std::size_t index);
+            void remove_entity_at(std::size_t index);
 
-        nlohmann::json to_json() const;
-        bool load_from_json(const nlohmann::json& j);
+            // JSON
+            nlohmann::json to_json() const;
+            bool load_from_json(const nlohmann::json& j);
 
-        // error handling for validate() func
-        struct ValidationError {
-            std::string message;
-        };
-        std::vector<ValidationError> validate() const;
-        
-        void clear();        
-};
+            // Validation
+            struct ValidationError {
+                std::string message;
+            };
+            std::vector<ValidationError> validate() const;
+            
+            // Clear walls and points
+            void clear();        
+    };
+
+} // end namespace geom

@@ -1,6 +1,9 @@
 #pragma once
-#include "CalcScene.hpp"
+
 #include <nlohmann/json.hpp>
+
+#include "CalcScene.hpp"
+
 
 
 namespace calc {
@@ -8,7 +11,7 @@ namespace calc {
     class SceneCompiler {
 
         public:
-            static CalcScene compile(const nlohmann::json& j); // throws on parse error or missing fields
+            static CalcScene compile(const nlohmann::json& j); // Throws on parse error or missing fields
 
     };
 
