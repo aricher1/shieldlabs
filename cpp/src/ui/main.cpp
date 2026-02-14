@@ -40,7 +40,7 @@ int main() {
     }
     
     sf::Clock deltaClock;
-    GeometryEngine engine(200, 5.0);
+    GeometryEngine engine(800, 5.0);
     GridRenderer renderer(window, engine, app_state);
     std::filesystem::create_directories("cache");
 
