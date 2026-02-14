@@ -78,6 +78,7 @@ add_executable(xrct_ui
     src/calc/EvaluateSingleRay.cpp
     src/calc/IntegrateDose.cpp
     src/calc/EvaluateRayPipeline.cpp
+    src/optimization/ShieldOptimizer.cpp
     src/output/PrintCompilerOutput.cpp
     src/output/PrintCompilerOutputUI.cpp
     src/output/BuildDosePointReports.cpp

@@ -35,6 +35,8 @@ CompilerRayOutput evaluate_ray_pipeline(const CalcScene& scene, int source_index
     IntegratedDoseResult integrated = integrate_single_ray(dose, src, isotope);
 
     CompilerRayOutput out;
+    out.source_index = source_index;
+    out.dose_index = dose_index;
     out.ray = ray;
     out.dose = dose;
     out.integrated = integrated;

@@ -36,6 +36,7 @@ CompilerOutput build_compiler_output(const CalcScene& scene) {
     for (size_t d = 0; d < scene.dose_points.size(); ++d) {
         DosePointTotal dose_total;
         dose_total.dose_index = static_cast<int>(d);
+        dose_total.dose_limit_uSv = scene.dose_points[d].dose_limit_uSv;
         dose_total.dose_name = scene.dose_points[d].label;
         dose_total.occupancy = scene.dose_points[d].occupancy;
 

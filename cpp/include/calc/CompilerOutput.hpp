@@ -12,6 +12,8 @@
 namespace calc {
 
     struct CompilerRayOutput {                                      // Result of a single ray
+        int source_index;
+        int dose_index;
         TransportRay ray;
         SingleRayDoseResult dose;
         IntegratedDoseResult integrated;
@@ -22,6 +24,7 @@ namespace calc {
     struct DosePointTotal {                                         // Aggregated dose results for a single dose point
         int dose_index;
         std::string dose_name;
+        double dose_limit_uSv;
         double integrated_dose_uSv = 0.0;
         double average_rate_uSv_h = 0.0;
         double occupancy = 1.0;
