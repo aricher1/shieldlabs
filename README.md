@@ -39,6 +39,7 @@ ShieldLabs is designed for scenario-based evaluation of shielding effectiveness,
     │   ├── geometry/       # Geometric entities + bounds logic
     │   ├── isotopes/       # Isotope YAML file registry
     │   ├── materials/      # Material YAML file registry
+    │   ├── optimization/   # NLopt's COBYLA optimization algorithm for lead shielding
     │   ├── output/         # Reports, exports, result formatting
     │   ├── ui/             # UI interfaces (GridRenderer, main)
     │   └── utils/          # Pdf to Png conversion
@@ -48,6 +49,7 @@ ShieldLabs is designed for scenario-based evaluation of shielding effectiveness,
         ├── geometry/
         ├── isotopes/
         ├── materials/
+        ├── optimization/
         ├── output/
         ├── ui/
         └── utils/
