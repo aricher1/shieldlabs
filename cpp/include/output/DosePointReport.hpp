@@ -26,6 +26,7 @@ namespace output {
         std::string dose_label;
         std::vector<SourceDoseRow> rows;
 
+        double dose_limit_uSv;
         double total_effective_dose_uSv;
         double total_annual_dose_uSv;
     };

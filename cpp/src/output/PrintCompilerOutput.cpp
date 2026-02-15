@@ -58,7 +58,7 @@ namespace output {
             std::cout << "\n======================= DOSE POINT " << report.dose_label << " ========================\n\n";
             tabulate::Table table;
 
-            table.add_row({"s","t(hrs)","d(cm)","T","Lead(cm)","Conc(cm)","Steel(cm)","B","d(uSv)","Ad(uSv/y)"});
+            table.add_row({"s","t(hrs)","d(cm)","T","Lead(cm)","Conc(cm)","Steel(cm)","B","d(uSv)","Ad(uSv/y)", "DoseLimit(uSv)"});
             for (const auto& row : report.rows) {
                 table.add_row({
                     row.source_label,
@@ -74,7 +74,12 @@ namespace output {
                 });
             }
 
-            table.add_row({"Total","-","-","-","-","-","-","-",fmt(report.total_effective_dose_uSv, 6),fmt(report.total_annual_dose_uSv, 6)});
+            table.add_row({
+                "Total","-","-","-","-","-","-","-",
+                fmt(report.total_effective_dose_uSv, 6),
+                fmt(report.total_annual_dose_uSv, 6),
+                fmt(report.dose_limit_uSv, 6)
+            });
             table.format().font_align(tabulate::FontAlign::right);
 
             for (size_t c = 0; c < table[0].size(); ++c) {

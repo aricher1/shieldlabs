@@ -20,6 +20,11 @@ using namespace app;
 using namespace geom;
 using namespace ui;
 
+
+// TO DO:
+//      - get rid of windows, openings logic
+//      - find a good way to export the optimization results
+
 int main() {
 
     // Load materials

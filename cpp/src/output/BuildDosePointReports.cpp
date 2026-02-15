@@ -15,6 +15,7 @@ namespace output {
         for (const auto& dose_total : out.dose_totals) {
             DosePointReport report{};
             report.dose_index = dose_total.dose_index;
+            report.dose_limit_uSv = dose_total.dose_limit_uSv;
             report.dose_label = "";
             report.total_effective_dose_uSv = 0.0;
             report.total_annual_dose_uSv = 0.0;

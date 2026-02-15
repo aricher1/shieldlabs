@@ -73,4 +73,14 @@ namespace material {
         return *it;
     }
 
+    int MaterialRegistry::get_id_by_key(const std::string& key) const {
+        for (const auto& [id, mat] : materials) {
+            if (mat.key == key) {
+                return id;
+            }
+        }
+        
+        return -1; // not found
+    }
+
 } // end namespace material

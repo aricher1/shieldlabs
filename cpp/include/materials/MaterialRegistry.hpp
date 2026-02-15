@@ -28,6 +28,8 @@ namespace material {
             const std::vector<int>& ordered_ids() const;
             
             int next_id(int current_id) const;
+
+            int get_id_by_key(const std::string& key) const;
     };
 
 }

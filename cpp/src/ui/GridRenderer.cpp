@@ -25,6 +25,7 @@
 #include "ui/Cosmetics.hpp"
 #include "calc/SceneCompiler.hpp"
 #include "calc/CompilerOutput.hpp"
+#include "optimization/ShieldOptimizer.hpp"
 #include "output/PrintCompilerOutput.hpp"
 #include "output/PrintCompilerOutputUI.hpp"
 #include "output/ExportCompilerOutputCSV.hpp"
@@ -72,6 +73,15 @@ namespace { // anonymous
         }
 
         return clicked;
+    }
+
+    // helper for debugging optimization
+    double find_worst_annual(const calc::CompilerOutput& out) {
+        double worst = 0.0;
+        for (const auto& d : out.dose_totals) {
+            worst = std::max(worst, d.annual_dose_uSv);
+        }
+        return worst; // worst annual dose point
     }
 
 } // end of anonymous namespace
@@ -571,9 +581,10 @@ namespace ui {
         float spacing = ImGui::GetStyle().ItemSpacing.x;
         float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
+        float optimize_w = ImGui::CalcTextSize("Optimize").x + ImGui::GetStyle().FramePadding.x * 2;
         float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
         float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
-        float total_w = lock_w + spacing + unlock_w + spacing + edit_w + spacing + save_w;
+        float total_w = lock_w + spacing + unlock_w + spacing + optimize_w + spacing + edit_w + spacing + save_w;
         ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
         ImGui::BeginDisabled(blueprint_finalized);
@@ -586,6 +597,80 @@ namespace ui {
         ImGui::BeginDisabled(!blueprint_finalized);
         if (ToolbarButton("Unlock Geometry", false)) {
             finalize_blueprint(); // unlocks geometry
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        
+        ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
+        if (ToolbarButton("Optimize", false)) {
+            nlohmann::json j = engine.to_json();
+            calc::CalcScene scene = calc::SceneCompiler::compile(j);
+            auto before = calc::build_compiler_output(scene);
+            optimization::ShieldOptimizer optimizer(scene);
+            calc::CalcScene optimized_scene = optimizer.optimize();
+            auto after = calc::build_compiler_output(optimized_scene);
+
+            ui_log.push("[OPTIMIZING DOSIMETRY]");
+            bool any_violation = false;
+            size_t n = std::min(before.dose_totals.size(), after.dose_totals.size());
+            ui_log.push("\nDose Limits Post Optimization:");
+
+            for (size_t i = 0; i < n; ++i) {
+
+                double b = before.dose_totals[i].annual_dose_uSv;
+                double a = after.dose_totals[i].annual_dose_uSv;
+                double limit = after.dose_totals[i].dose_limit_uSv;
+                bool violation = (a > limit + 1e-3);
+                if (violation) any_violation = true;
+
+                std::ostringstream ss;
+                ss << "- DP" << (i + 1)
+                << " " << std::fixed << std::setprecision(2)
+                << b << " -> " << a
+                << " (Limit: " << limit
+                << ")";
+
+                ui_log.push(ss.str());
+            }
+
+            ui_log.push("\nWall Changes:");
+            bool any_wall_change = false;
+
+            for (size_t i = 0; i < scene.walls.size(); ++i) {
+                double old_lead = 0.0;
+                double new_lead = 0.0;
+
+                for (const auto& layer : scene.walls[i].layers) {
+                    if (const auto* m = material_registry.get(layer.material_id)) {
+                        if (m->key == "lead") old_lead = layer.thickness_cm;
+                    }
+                }
+
+                for (const auto& layer : optimized_scene.walls[i].layers) {
+                    if (const auto* m = material_registry.get(layer.material_id)) {
+                        if (m->key == "lead") new_lead = layer.thickness_cm;
+                    }
+                }
+
+                if (std::abs(new_lead - old_lead) > 1e-6) {
+                    any_wall_change = true;
+
+                    std::ostringstream ss;
+                    ss << "- W" << (i + 1)
+                    << " Lead(cm) "
+                    << std::fixed << std::setprecision(2)
+                    << old_lead << " -> " << new_lead;
+
+                    ui_log.push(ss.str());
+                }
+            }
+
+            if (!any_wall_change) {
+                ui_log.push("No wall changes.");
+            }
+
+            ui_log.push(any_violation ? "\n[STATUS: FAILED]" : "\n[STATUS: SUCCESS]");
+            optimization_ran = true;
         }
         ImGui::EndDisabled();
         ImGui::SameLine();

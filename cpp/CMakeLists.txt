@@ -21,6 +21,17 @@ find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 find_package(yaml-cpp REQUIRED)
 
 # --------------------
+# Poppler (C++ API)
+# --------------------
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(POPPLER_CPP REQUIRED poppler-cpp)
+
+# --------------------
+# NLopt
+# --------------------
+find_package(NLopt REQUIRED PATHS /usr/local)
+
+# --------------------
 # nlohmann/json
 # --------------------
 FetchContent_Declare(
@@ -119,5 +130,6 @@ target_link_libraries(xrct_ui PRIVATE
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
     yaml-cpp
+    NLopt::nlopt
     ${POPPLER_CPP_LIBRARIES}
 )

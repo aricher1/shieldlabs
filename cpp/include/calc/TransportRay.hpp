@@ -10,6 +10,7 @@ namespace calc {
 
     // Material traversal for a ray segment
     struct TransportSegment {
+        int wall_index;
         int material_id;
         double path_length_cm;
     };

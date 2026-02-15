@@ -103,6 +103,7 @@ namespace ui {
             std::optional<size_t> inspector_dose_index;
             std::optional<calc::CompilerOutput> last_compiler_output;
 
+            bool optimization_ran = false;
             bool scale_calibration_active = false;
             bool scale_has_p1 = false;
             bool scale_has_p2 = false;

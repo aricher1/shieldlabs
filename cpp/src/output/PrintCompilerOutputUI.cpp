@@ -63,6 +63,7 @@ namespace output {
             }
 
             log.push("[Total Dose]");
+            log.push("- Dose Limit (uSv): " + fmt(report.dose_limit_uSv, 6));
             log.push("- Effective (uSv): " + fmt(report.total_effective_dose_uSv, 6));
             log.push("- Annual (uSv/y): " + fmt(report.total_annual_dose_uSv, 6));
             log.separator();

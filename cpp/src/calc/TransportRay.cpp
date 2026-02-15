@@ -35,15 +35,16 @@ namespace calc {
 
         for (std::size_t i = 0; i + 1 < hits.size(); i += 2) {
             const auto& entry = hits[i];
-            const auto& exit  = hits[i + 1];
+            const auto& exit = hits[i + 1];
+            const int wall_index = entry.wall_index;
 
             // air before wall
             const double air_len = entry.distance_cm - prev_dist;
             if (air_len > 0.0) {
-                ray.segments.push_back({-1, air_len});
+                ray.segments.push_back({-1, -1, air_len});
             }
 
-            const CalcWall& wall = scene.walls[entry.wall_index];
+            const CalcWall& wall = scene.walls[wall_index];
 
             const double wx = wall.b.x_cm - wall.a.x_cm;
             const double wy = wall.b.y_cm - wall.a.y_cm;
@@ -58,6 +59,7 @@ namespace calc {
 
                 for (const auto& layer : wall.layers) {
                     ray.segments.push_back({
+                        wall_index,
                         layer.material_id,
                         layer.thickness_cm / cos_incidence
                     });
@@ -70,7 +72,7 @@ namespace calc {
         // tail air
         const double tail = total_distance_cm - prev_dist;
         if (tail > 0.0) {
-            ray.segments.push_back({-1, tail});
+            ray.segments.push_back({-1, -1, tail});
         }
 
         return ray;
