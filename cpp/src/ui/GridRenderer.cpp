@@ -513,6 +513,17 @@ namespace ui {
             }
         }
         ImGui::SameLine();
+
+        if (ToolbarButton("Isotopes", false)) {
+            show_isotope_popup = true;
+        }
+        ImGui::SameLine();
+
+        if (ToolbarButton("Materials", false)) {
+            show_material_popup = true;
+        }
+        ImGui::SameLine();
+
         ImGui::Separator();
 
         // calculate exact width of right-side buttons
@@ -1610,7 +1621,79 @@ namespace ui {
             ImGuiFileDialog::Instance()->Close();
         }
 
+        if (show_isotope_popup) {
+            ImGui::OpenPopup("Isotope Library");
+            show_isotope_popup = false;
+        }
 
+        ImGui::SetNextWindowSize(ImVec2(1100, 650), ImGuiCond_Always);
+        if (ImGui::BeginPopupModal("Isotope Library", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse)) {
+            ImGui::Text("Isotopes");
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGui::BeginChild("IsoScrollRegion", ImVec2(0, -40), false);
+            int columns = 3;
+            ImGui::Columns(columns, nullptr, false);
+
+            for (const std::string& key : isotope_registry.get_all_keys()) {
+
+                if (const auto* iso = isotope_registry.get_by_key(key)) {
+                    ImGui::BeginChild(key.c_str(), ImVec2(0, 0), true);
+                    ImGui::Text("%s", iso->name.c_str());
+                    ImGui::Separator();
+                    ImGui::BulletText("Gamma Constant: %.6e uSv_m^2/MBq_h", iso->gamma_constant_uSv_m2_per_MBq_h);
+                    ImGui::BulletText("Half-life: %.3f hours", iso->half_life_hours);
+                    ImGui::Spacing();
+                    ImGui::Text("Shielding Data (mm)");
+                    ImGui::Separator();
+
+                    // iterate materials for this isotope
+                    for (const auto& [mat_key, data] : iso->materials) {
+                        ImGui::Text("%s", mat_key.c_str());
+                        ImGui::BulletText("HVL1_mm: %.2f", data.hvl1_mm);
+                        ImGui::BulletText("HVL2_mm: %.2f", data.hvl2_mm);
+                        ImGui::BulletText("TVL1_mm: %.2f", data.tvl1_mm);
+                        ImGui::BulletText("TVL2_mm: %.2f", data.tvl2_mm);
+                        ImGui::Spacing();
+                    }
+                    ImGui::EndChild();
+                }
+                ImGui::NextColumn();
+            }
+            ImGui::Columns(1);
+            ImGui::EndChild();
+            ImGui::Spacing();
+
+            if (ImGui::Button("Close", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if (show_material_popup) {
+            ImGui::OpenPopup("Material Library");
+            show_material_popup = false;
+        }
+
+        if (ImGui::BeginPopupModal("Material Library", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Materials");
+            ImGui::Separator();
+
+            for (int id : material_registry.ordered_ids()) {
+                if (const auto* mat = material_registry.get(id)) {
+                    ImGui::Text("%s", mat->name.c_str());
+                    ImGui::BulletText("Key: %s", mat->key.c_str());
+                    ImGui::Spacing();
+                }
+            }
+
+            if (ImGui::Button("Close")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+    
     }
 
 } // end namespace geom

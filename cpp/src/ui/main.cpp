@@ -21,8 +21,6 @@ using namespace geom;
 using namespace ui;
 
 
-// TO DO:
-//      - add the material and isotope info features
 
 int main() {
 
