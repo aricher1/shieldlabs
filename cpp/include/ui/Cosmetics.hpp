@@ -20,6 +20,7 @@ namespace Cosmetics {
     // wall colours
     inline const sf::Color WALL_NORMAL = sf::Color::Black;
     inline const sf::Color WALL_SELECTED = sf::Color::Green;
+    inline const sf::Color WALL_OPTIMIZED = sf::Color(10, 10, 100); // navy
 
     // opening colours
     inline const sf::Color DOOR_COLOR = sf::Color(120, 60, 20);
@@ -33,6 +34,8 @@ namespace Cosmetics {
     inline const sf::Color SOURCE_SELECTED_COLOR = sf::Color::Green;
     inline const sf::Color DOSE_COLOR = sf::Color::Blue;
     inline const sf::Color DOSE_SELECTED_COLOR = sf::Color::Green;
+    inline const sf::Color DOSE_LIMIT_PASS = sf::Color(40, 150, 60);
+    inline const sf::Color DOSE_LIMIT_FAIL = sf::Color(180, 50, 50);
 
     // text
     inline const sf::Color LENGTH_TEXT_COLOR = sf::Color::Black;

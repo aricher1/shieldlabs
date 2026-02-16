@@ -68,6 +68,7 @@ namespace output {
             log.push("- Annual (uSv/y): " + fmt(report.total_annual_dose_uSv, 6));
             log.separator();
         }
+        log.push("Press [Optimize]");
     }
 
 } // end namespace output

@@ -102,8 +102,11 @@ namespace ui {
             std::optional<size_t> inspector_source_index;
             std::optional<size_t> inspector_dose_index;
             std::optional<calc::CompilerOutput> last_compiler_output;
+            std::optional<calc::CalcScene> optimized_scene_cache;
+            std::optional<calc::CompilerOutput> optimized_output_cache;
 
             bool optimization_ran = false;
+            bool show_optimization_overlay = false;
             bool scale_calibration_active = false;
             bool scale_has_p1 = false;
             bool scale_has_p2 = false;

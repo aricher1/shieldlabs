@@ -576,15 +576,17 @@ namespace ui {
             }
         }
         ImGui::SameLine();
-
         ImGui::Separator();
+
+        // calculate exact width of right-side buttons
         float spacing = ImGui::GetStyle().ItemSpacing.x;
         float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
         float optimize_w = ImGui::CalcTextSize("Optimize").x + ImGui::GetStyle().FramePadding.x * 2;
+        float show_w = ImGui::CalcTextSize("Show Optimization Results").x + ImGui::GetStyle().FramePadding.x * 2;
         float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
         float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
-        float total_w = lock_w + spacing + unlock_w + spacing + optimize_w + spacing + edit_w + spacing + save_w;
+        float total_w = lock_w + spacing + unlock_w + spacing + optimize_w + spacing + show_w + spacing + edit_w + spacing + save_w;
         ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
         ImGui::BeginDisabled(blueprint_finalized);
@@ -603,26 +605,35 @@ namespace ui {
         
         ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
         if (ToolbarButton("Optimize", false)) {
+            
             nlohmann::json j = engine.to_json();
             calc::CalcScene scene = calc::SceneCompiler::compile(j);
+            
             auto before = calc::build_compiler_output(scene);
+            
             optimization::ShieldOptimizer optimizer(scene);
             calc::CalcScene optimized_scene = optimizer.optimize();
+            
             auto after = calc::build_compiler_output(optimized_scene);
 
-            ui_log.push("[OPTIMIZING DOSIMETRY]");
+            // cache results for visualization
+            optimized_scene_cache = optimized_scene;
+            optimized_output_cache = after;
+
+            ui_log.push("\nOPTIMIZING DOSIMETRY...");
             bool any_violation = false;
             size_t n = std::min(before.dose_totals.size(), after.dose_totals.size());
             ui_log.push("\nDose Limits Post Optimization:");
 
             for (size_t i = 0; i < n; ++i) {
-
                 double b = before.dose_totals[i].annual_dose_uSv;
                 double a = after.dose_totals[i].annual_dose_uSv;
                 double limit = after.dose_totals[i].dose_limit_uSv;
-                bool violation = (a > limit + 1e-3);
-                if (violation) any_violation = true;
-
+                bool violation = (a - limit > 1e-2);
+                if (violation) {
+                    any_violation = true;
+                }
+                 
                 std::ostringstream ss;
                 ss << "- DP" << (i + 1)
                 << " " << std::fixed << std::setprecision(2)
@@ -670,7 +681,15 @@ namespace ui {
             }
 
             ui_log.push(any_violation ? "\n[STATUS: FAILED]" : "\n[STATUS: SUCCESS]");
+            ui_log.push("Press [Show Optimization Results]");
             optimization_ran = true;
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled(!optimized_scene_cache.has_value());
+        if (ToolbarButton("Show Optimization Results", show_optimization_overlay)) {
+            show_optimization_overlay = !show_optimization_overlay;
         }
         ImGui::EndDisabled();
         ImGui::SameLine();
@@ -685,7 +704,7 @@ namespace ui {
         ImGui::BeginDisabled(!blueprint_finalized);
 
         if (ImGui::BeginMenu("Save")) {
-
+            // save to computer
             if (ImGui::MenuItem("Save Project")) {
                 IGFD::FileDialogConfig config;
                 config.path = ".";
@@ -695,12 +714,10 @@ namespace ui {
                     ".slab"
                 );
             }
-
+            // export to CSV
             if (ImGui::MenuItem("Export CSV")) {
                 IGFD::FileDialogConfig config;
-                config.path = std::filesystem::path(
-                    getenv("HOME") ? getenv("HOME") : "."
-                ).string();
+                config.path = std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".").string();
                 config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 
                 ImGuiFileDialog::Instance()->OpenDialog(
@@ -1515,14 +1532,18 @@ namespace ui {
                     Cosmetics::WALL_NORMAL
             );
             window.draw(preview_rect);
-            double len_cm = distance_cm(start_point, preview_point) * engine.get_distance_scale();
-            sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)};
-            
-            std::ostringstream ss;
-            ss << std::fixed << std::setprecision(1) << len_cm << " cm";
-            length_text.setString(ss.str());
-            length_text.setPosition(mid);
-            window.draw(length_text);
+
+            // hide preview length text if optimization overlay is active
+            if (!show_optimization_overlay) {
+                double len_cm = distance_cm(start_point, preview_point) * engine.get_distance_scale();
+                sf::Vector2f mid{static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)};
+                
+                std::ostringstream ss;
+                ss << std::fixed << std::setprecision(1) << len_cm << " cm";
+                length_text.setString(ss.str());
+                length_text.setPosition(mid);
+                window.draw(length_text);
+            }
         }
 
         // draw walls
@@ -1538,7 +1559,51 @@ namespace ui {
                     wall_color
             );
             window.draw(wall_rect);
-        
+
+            if (show_optimization_overlay && optimized_scene_cache.has_value()) {
+                double old_lead = 0.0;
+                double new_lead = 0.0;
+
+                for (const auto& layer : walls[i].layers) {
+                    if (const auto* m = material_registry.get(layer.material_id)) {
+                        if (m->key == "lead") old_lead = layer.thickness_cm;
+                    }
+                }
+
+                const auto& opt_wall = optimized_scene_cache->walls[i];
+                for (const auto& layer : opt_wall.layers) {
+                    if (const auto* m = material_registry.get(layer.material_id)) {
+                        if (m->key == "lead") new_lead = layer.thickness_cm;
+                    }
+                }
+
+                if (std::abs(new_lead - old_lead) > 1e-6) {
+
+                    // highlight wall
+                    auto highlight_rect = make_thick_segment(
+                        {static_cast<float>(w.a.x_cm), static_cast<float>(w.a.y_cm)},
+                        {static_cast<float>(w.b.x_cm), static_cast<float>(w.b.y_cm)},
+                        wall_thickness_cm * 1.4f,
+                        Cosmetics::WALL_OPTIMIZED
+                    );
+                    window.draw(highlight_rect);
+
+                    Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
+
+                    std::ostringstream ss;
+                    ss << std::fixed << std::setprecision(2)
+                    << new_lead << " cm Lead";
+
+                    length_text.setString(ss.str());
+                    length_text.setFillColor(sf::Color::Black);
+                    length_text.setOutlineThickness(2.f);
+                    length_text.setOutlineColor(sf::Color::White);
+                    length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
+
+                    window.draw(length_text);
+                }
+            }
+
             if (placing_opening && i == opening_wall_index) {
                 sf::Vertex preview[2];
                 preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
@@ -1651,13 +1716,15 @@ namespace ui {
 
             const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
 
-            std::ostringstream ss;
-            ss << std::fixed << std::setprecision(1) << (w.length_cm * engine.get_distance_scale()) << " cm";
-            length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
-            length_text.setString(ss.str());
-            length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
+            if (!show_optimization_overlay) {
+                std::ostringstream ss;
+                ss << std::fixed << std::setprecision(1) << (w.length_cm * engine.get_distance_scale()) << " cm";
+                length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
+                length_text.setString(ss.str());
+                length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
 
-            window.draw(length_text);
+                window.draw(length_text);
+            }
         }
 
         // draw source + dose points
@@ -1680,6 +1747,47 @@ namespace ui {
             }
 
             window.draw(marker);
+
+            if (show_optimization_overlay && optimized_output_cache.has_value()) {
+                
+                if (e.type == PointType::Dose) {
+
+                    size_t dose_counter = 0;
+                    for (size_t j = 0; j < entities.size(); ++j) {
+                        if (entities[j].type == PointType::Dose) {
+                            if (j == i) break;
+                            dose_counter++;
+                        }
+                    }
+
+                    if (dose_counter < optimized_output_cache->dose_totals.size()) {
+                        const auto& d = optimized_output_cache->dose_totals[dose_counter];
+                        double annual = d.annual_dose_uSv;
+                        double limit = d.dose_limit_uSv;
+                        bool violation = (annual > limit + 1e-2);  // equality passes
+
+                        std::ostringstream ss;
+                        ss << "DP" << (dose_counter + 1)
+                        << "\n"
+                        << std::fixed << std::setprecision(2)
+                        << annual << " / " << limit << " uSv";
+
+                        length_text.setString(ss.str());
+
+                        if (violation) {
+                            length_text.setFillColor(Cosmetics::DOSE_LIMIT_FAIL);   
+                        } else {
+                            length_text.setFillColor(Cosmetics::DOSE_LIMIT_PASS);   
+                        }
+
+                        length_text.setOutlineThickness(1.f);
+                        length_text.setOutlineColor(sf::Color::White);
+                        length_text.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm + 20), static_cast<float>(e.position.y_cm - 30)});
+
+                        window.draw(length_text);
+                    }
+                }
+            }
         } 
 
         // temporary panel view
