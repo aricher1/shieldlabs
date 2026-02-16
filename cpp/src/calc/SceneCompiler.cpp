@@ -43,29 +43,6 @@ namespace calc {
                     }
                 }
 
-                if (jw.contains("openings")) {
-                    for (const auto& jo : jw["openings"]) {
-                        const double center_t = jo["center_t"].get<double>();
-                        const double length_cm = jo["length_cm"].get<double>();
-                        const double half_t = length_cm / (2.0 * wall.length_cm);
-
-                        CalcOpening opening;
-                        opening.t0 = std::clamp(center_t - half_t, 0.0, 1.0);
-                        opening.t1 = std::clamp(center_t + half_t, 0.0, 1.0);
-
-                        const std::string type = jo["type"].get<std::string>();
-                        if (type == "door") {
-                            opening.type = OpeningType::Door;
-                        } else if (type == "window") {
-                            opening.type = OpeningType::Window;
-                        } else {
-                            opening.type = OpeningType::Open;
-                        }
-
-                        wall.openings.push_back(opening);
-                    }
-                }
-
                 scene.walls.push_back(wall);
             }
         }

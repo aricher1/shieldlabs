@@ -178,21 +178,6 @@ namespace geom {
                 jw["layers"].push_back({{"material_id", layer.material_id}, {"thickness_cm", layer.thickness_cm}});
             }
             jw["length_cm"] = w.length_cm;
-            
-            // openings
-            jw["openings"] = json::array();
-            for (const auto& o : w.openings) {
-                json jo;
-                switch (o.type) {
-                    case OpeningType::Door: jo["type"] = "door"; break;
-                    case OpeningType::Window: jo["type"] = "window"; break;
-                    case OpeningType::Open: jo["type"] = "open"; break; 
-                }
-
-                jo["center_t"] = o.center_t;
-                jo["length_cm"] = o.length_cm;
-                jw["openings"].push_back(jo);
-            }
 
             j["walls"].push_back(jw);
         }
@@ -274,18 +259,6 @@ namespace geom {
                 }
 
                 walls.push_back(w);
-
-                if (jw.contains("openings")) {
-                    Wall& wref = walls.back();
-                    for (const auto& jo : jw["openings"]) {
-                        WallOpening o;
-                        const std::string type = jo["type"];
-                        o.type = (type == "door") ? OpeningType::Door : (type == "window") ? OpeningType::Window : OpeningType::Open;
-                        o.center_t = jo["center_t"];
-                        o.length_cm = jo["length_cm"];
-                        wref.openings.push_back(o);
-                    }
-                }
             }
         }
 
@@ -360,46 +333,6 @@ namespace geom {
 
                 if (layer.material_id < 0) {
                     errors.push_back({"Wall " + std::to_string(i) + " has invalid layer material_id."});
-                }
-            }
-
-            // check openings on wall
-            for (std::size_t j = 0; j < w.openings.size(); ++j) {
-                const auto& o = w.openings[j];
-
-                if (o.length_cm <= 0.0) { // not possible to have negative length
-                    errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " has non-positive length."});
-                }
-
-                if (o.center_t < 0.0 || o.center_t > 1.0) {
-                    errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " has center_t outside [0,1]."});
-                }
-
-                if (w.length_cm > 0.0) {
-                    double half_t = (o.length_cm * 0.5) / w.length_cm;
-                    if (o.center_t - half_t < 0.0 || o.center_t + half_t > 1.0) {
-                        errors.push_back({"Opening " + std::to_string(j) + " on wall " + std::to_string(i) + " extends beyond wall bounds."});
-                    }
-                }
-            }
-
-            // check for overlap on openings
-            for (std::size_t a = 0; a < w.openings.size(); ++a) {
-                const auto& oa = w.openings[a];
-                double half_t_a = (oa.length_cm * 0.5) / w.length_cm;
-                double a_start = oa.center_t - half_t_a;
-                double a_end = oa.center_t + half_t_a;
-
-                for (std::size_t b = a + 1; b < w.openings.size(); ++b) {
-                    const auto& ob = w.openings[b];
-                    double half_t_b = (ob.length_cm * 0.5) / w.length_cm;
-                    double b_start = ob.center_t - half_t_b;
-                    double b_end = ob.center_t + half_t_b;
-
-                    // check for overlap
-                    if (std::max(a_start, b_start) < std::min(a_end, b_end)) {
-                        errors.push_back({"Openings " + std::to_string(a) + " and " + std::to_string(b) + " overlap on wall " + std::to_string(i) + "."});
-                    }
                 }
             }
         }

@@ -27,9 +27,6 @@ namespace ui {
         DrawWall,           // wall segment
         PlaceSource,        // source point
         PlaceDose,          // dose point
-        PlaceDoor,          // door
-        PlaceWindow,        // window
-        PlaceOpen           // open segment in wall (neither door or window)
     };
 
 
@@ -38,21 +35,18 @@ namespace ui {
             None,
             Wall,
             WallLayer,
-            Opening,
             Entity
         };
 
         Type type = Type::None;
         std::size_t wall_index = 0;
         std::size_t layer_index = 0;
-        std::size_t opening_index = 0;
         std::size_t entity_index = 0;
 
         void clear() {
             type = Type::None;
             wall_index = 0;
             layer_index = 0;
-            opening_index = 0;
             entity_index = 0;
         }
 
@@ -121,12 +115,6 @@ namespace ui {
             bool blueprint_finalized = false;
             Point start_point;
             Point preview_point;
-
-            bool placing_opening = false;
-            size_t opening_wall_index = 0;
-            double opening_center_t = 0.0;
-            double preview_opening_length_cm = 0.0;
-            geom::OpeningType opening_type;
 
             double pixel_radius_to_world_cm(float px) const;
             Point screen_to_world(sf::Vector2f mouse) const;

@@ -8,10 +8,7 @@ namespace calc {
 
     // Enumerate through all different possible wall hit types
     enum class HitKind {
-        SolidWall,
-        Open,
-        Door,
-        Window
+        SolidWall
     };
 
     // Helper to classify the wall hit once hit

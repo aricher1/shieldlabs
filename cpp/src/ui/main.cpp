@@ -22,8 +22,6 @@ using namespace ui;
 
 
 // TO DO:
-//      - get rid of windows, openings logic
-//      - find a good way to export the optimization results
 //      - add the material and isotope info features
 
 int main() {

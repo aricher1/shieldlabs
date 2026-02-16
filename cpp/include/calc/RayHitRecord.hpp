@@ -10,7 +10,7 @@ namespace calc {
         int wall_index;         // which wall was hit
         double t_ray;           // parametric [0,1] along source to dose
         double distance_cm;     // distance from source to hit
-        HitKind kind;           // kind: SolidWall, Open, Door, Window
+        HitKind kind;           // kind: SolidWall
     };
 
 } // end namespace calc

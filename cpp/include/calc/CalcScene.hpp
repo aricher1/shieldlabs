@@ -16,24 +16,11 @@ namespace calc {
         double thickness_cm;
     };
 
-    enum class OpeningType {                        // Openings on wall types
-        Open,
-        Door,
-        Window
-    };
-
-    struct CalcOpening {                            // Openings geometry + type
-        double t0;                                  // start along wall [0,1]
-        double t1;                                  // end along wall [0,1]
-        OpeningType type;
-    };
-
     struct CalcWall {                               // Wall info for calculations
         CalcPoint a;
         CalcPoint b;
         double length_cm;
         std::vector<CalcLayer> layers;
-        std::vector<CalcOpening> openings;
     };
 
     struct CalcSource {                             // Source info for calculations

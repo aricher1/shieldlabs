@@ -11,7 +11,6 @@ namespace Cosmetics {
 
     // thickness    
     constexpr float WALL_THICKNESS_PX = 4.0f;
-    constexpr float OPENING_THICKNESS_PX = 5.0f;
 
     // point sizes
     constexpr float POINT_RADIUS_PX = 4.0f;
@@ -21,11 +20,6 @@ namespace Cosmetics {
     inline const sf::Color WALL_NORMAL = sf::Color::Black;
     inline const sf::Color WALL_SELECTED = sf::Color::Green;
     inline const sf::Color WALL_OPTIMIZED = sf::Color(10, 10, 100); // navy
-
-    // opening colours
-    inline const sf::Color DOOR_COLOR = sf::Color(120, 60, 20);
-    inline const sf::Color WINDOW_COLOR = sf::Color(0, 120, 255);
-    inline const sf::Color OPEN_COLOR = sf::Color(0, 140, 140);
 
     // points
     constexpr float POINT_RADIUS = 5.0f;
@@ -39,8 +33,5 @@ namespace Cosmetics {
 
     // text
     inline const sf::Color LENGTH_TEXT_COLOR = sf::Color::Black;
-    inline const sf::Color DOOR_TEXT_COLOR = DOOR_COLOR;
-    inline const sf::Color WINDOW_TEXT_COLOR = WINDOW_COLOR;
-    inline const sf::Color OPEN_TEXT_COLOR = OPEN_COLOR;
 
 }

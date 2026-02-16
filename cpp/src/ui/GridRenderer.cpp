@@ -15,8 +15,6 @@
 #include "ui/DeleteWallCommand.hpp"
 #include "ui/RemoveEntityCommand.hpp"
 #include "ui/AddEntityCommand.hpp"
-#include "ui/AddOpeningCommand.hpp"
-#include "ui/RemoveOpeningCommand.hpp"
 #include "ui/ShiftGeometryCommand.hpp"
 #include "ui/AddWallLayerCommand.hpp"
 #include "ui/RemoveWallLayerCommand.hpp"
@@ -196,7 +194,6 @@ namespace ui {
 
         blueprint_finalized = !blueprint_finalized;
         drawing = false;
-        placing_opening = false;
         selection.clear();
 
         if (blueprint_finalized) {
@@ -252,37 +249,6 @@ namespace ui {
             }
 
             if (selection.type == Selection::Type::Entity) { return; }
-        }
-
-        // opening selection
-        {
-            const auto& walls = engine.get_walls();
-            double best_dist = SELECT_EPS_CM;
-
-            for (std::size_t wi = 0; wi < walls.size(); ++wi) {
-                const auto& w = walls[wi];
-
-                for (std::size_t oi = 0; oi < w.openings.size(); ++oi) {
-                    const auto& o = w.openings[oi];
-
-                    double half_t = (o.length_cm * 0.5) / w.length_cm;
-                    double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
-                    double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
-
-                    Point p0 = lerp_point(w.a, w.b, t0);
-                    Point p1 = lerp_point(w.a, w.b, t1);
-
-                    double d = distance_point_to_segment(p, p0, p1);
-                    if (d < best_dist) {
-                        best_dist = d;
-                        selection.type = Selection::Type::Opening;
-                        selection.wall_index = wi;
-                        selection.opening_index = oi;
-                    }
-                }
-            }
-
-            if (selection.type == Selection::Type::Opening) { return; }
         }
 
         // wall selection
@@ -484,7 +450,6 @@ namespace ui {
             current_tool = Tool::None;
             selection.clear();
             drawing = false;
-            placing_opening = false;
         }
         ImGui::SameLine();
 
@@ -492,7 +457,6 @@ namespace ui {
             interaction_mode = InteractionMode::Draw;
             selection.clear();
             drawing = false;
-            placing_opening = false;
         }
         ImGui::SameLine();
 
@@ -518,27 +482,6 @@ namespace ui {
         }
         ImGui::SameLine();
 
-        if (ToolbarButton("Opening", current_tool == Tool::PlaceOpen)) {
-            interaction_mode = InteractionMode::Draw;
-            current_tool = Tool::PlaceOpen;
-            placing_opening = false;
-        }
-        ImGui::SameLine();
-
-        if (ToolbarButton("Window", current_tool == Tool::PlaceWindow)) {
-            interaction_mode = InteractionMode::Draw;
-            current_tool = Tool::PlaceWindow;
-            placing_opening = false;
-        }
-        ImGui::SameLine();
-
-        if (ToolbarButton("Door", current_tool == Tool::PlaceDoor)) {
-            interaction_mode = InteractionMode::Draw;
-            current_tool = Tool::PlaceDoor;
-            placing_opening = false;
-        }
-        ImGui::SameLine();
-
         ImGui::Separator();
         ImGui::SameLine();
 
@@ -560,13 +503,7 @@ namespace ui {
                     selection.clear();
                     break;
 
-            case Selection::Type::Opening:
-                    undo_stack.execute(
-                        std::make_unique<RemoveOpeningCommand>(engine, selection.wall_index, selection.opening_index));
-                    selection.clear();
-                    break;
-
-            case Selection::Type::Entity:
+                case Selection::Type::Entity:
                     undo_stack.execute(std::make_unique<RemoveEntityCommand>(engine, selection.entity_index));
                     selection.clear();
                     break;
@@ -1156,14 +1093,6 @@ namespace ui {
                 sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
                 Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
-                if (placing_opening) {
-                    const Wall& w = engine.get_walls()[opening_wall_index];
-                    double t = project_t_onto_wall(p, w);
-                    preview_point = lerp_point(w.a, w.b, t);
-                    
-                    continue;
-                }
-
                 if (!drawing) { continue; }
                 preview_point = p;
             }
@@ -1211,7 +1140,6 @@ namespace ui {
                     // clear all selections and cancel interactions
                     selection.clear();
                     drawing = false;
-                    placing_opening = false;
                     undo_stack.execute(std::make_unique<ShiftGeometryCommand>(engine, dx, dy));
 
                     continue;
@@ -1247,50 +1175,6 @@ namespace ui {
                     sf::Vector2f mouse_world = window.mapPixelToCoords(mouse_px, grid_view);
                     Point p = engine.snap_to_grid({mouse_world.x, mouse_world.y});
 
-                    if (interaction_mode == InteractionMode::Draw && (current_tool == Tool::PlaceDoor || current_tool == Tool::PlaceWindow || current_tool == Tool::PlaceOpen)) {
-                        if (placing_opening) { 
-                            double len = distance_cm(start_point, preview_point);
-                            if (len > 1.0) {
-                                const Wall& w = engine.get_walls()[opening_wall_index];
-                                Point mid{(start_point.x_cm + preview_point.x_cm) * 0.5, (start_point.y_cm + preview_point.y_cm) * 0.5};
-                                WallOpening o;
-                                o.center_t = project_t_onto_wall(mid, w);
-                                o.length_cm = len;
-                                o.type = (current_tool == Tool::PlaceDoor) ? ::OpeningType::Door : (current_tool == Tool::PlaceWindow) ? ::OpeningType::Window : ::OpeningType::Open;
-                                auto& openings = engine.get_walls_mutable()[opening_wall_index].openings;
-                                std::size_t opening_index = openings.size();
-                                undo_stack.execute(std::make_unique<AddOpeningCommand>(engine, opening_wall_index, opening_index, o));
-                            }
-                            placing_opening = false;
-
-                            return;
-                        } 
-
-                        double best_dist = pixel_radius_to_world_cm(PICK_RADIUS_PX);
-                        std::optional<size_t> hit_wall;
-
-                        for (size_t i = 0; i < engine.get_walls().size(); ++i) {
-                            const auto& w = engine.get_walls()[i];
-                            double d = distance_point_to_segment(p, w.a, w.b);
-                            if (d < best_dist) {
-                                best_dist = d;
-                                hit_wall = i;
-                            }
-                        }
-
-                        if (!hit_wall.has_value()) { return; } // didn't click on wall
-
-                        opening_wall_index = *hit_wall;
-                        opening_type = (current_tool == Tool::PlaceDoor) ? ::OpeningType::Door : (current_tool == Tool::PlaceWindow) ? ::OpeningType::Window : ::OpeningType::Open;
-                        const Wall& w = engine.get_walls()[opening_wall_index];
-                        double t = project_t_onto_wall(p, w);
-                        start_point = lerp_point(w.a, w.b, t);
-                        preview_point = start_point;
-                        placing_opening = true;
-                        drawing = false;
-                        return;
-                    }
-
                     if (interaction_mode == InteractionMode::Select) {
                         handle_select_click(p);
                         return;
@@ -1324,10 +1208,6 @@ namespace ui {
                             .dose_limit_uSv = 0.0f                  // dose limit at dose point
                         };
                         undo_stack.execute(std::make_unique<AddEntityCommand>(engine, e));
-                        return;
-                    }
-
-                    if (placing_opening) {
                         return;
                     }
 
@@ -1463,7 +1343,6 @@ namespace ui {
                         last_compiler_output.reset();
                         selection.clear();
                         drawing = false;
-                        placing_opening = false;
                         update_viewport();
                         app_state.mode = AppMode::Editing;
 
@@ -1604,116 +1483,6 @@ namespace ui {
                 }
             }
 
-            if (placing_opening && i == opening_wall_index) {
-                sf::Vertex preview[2];
-                preview[0].position = sf::Vector2f{static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)};
-                preview[1].position = sf::Vector2f{static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)};
-                sf::Color c;
-                switch (opening_type) {
-                    case ::OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
-                    case ::OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
-                    case ::OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
-                }
-                float opening_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
-                auto rect = make_thick_segment(
-                                            {static_cast<float>(start_point.x_cm), static_cast<float>(start_point.y_cm)},
-                                            {static_cast<float>(preview_point.x_cm), static_cast<float>(preview_point.y_cm)},
-                                            opening_thickness_cm,
-                                            c
-                                        );
-                window.draw(rect);
-
-                // draw text
-                double len_cm = distance_cm(start_point, preview_point) * engine.get_distance_scale();
-                sf::Vector2f mid{
-                    static_cast<float>((start_point.x_cm + preview_point.x_cm) * 0.5), 
-                    static_cast<float>((start_point.y_cm + preview_point.y_cm) * 0.5)
-                };
-
-                std::ostringstream ss;
-                ss << std::fixed << std::setprecision(1) << len_cm << " cm";
-                length_text.setString(ss.str());
-
-                // color matches opening type on top of wall
-                switch (opening_type) {
-                    case ::OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
-                    case ::OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
-                    case ::OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
-                }
-
-                length_text.setPosition(mid);
-                window.draw(length_text);
-            }
-
-            for (const auto& o : w.openings) {
-
-                double half_t = (o.length_cm * 0.5) / w.length_cm;
-                double t0 = std::clamp(o.center_t - half_t, 0.0, 1.0);
-                double t1 = std::clamp(o.center_t + half_t, 0.0, 1.0);
-
-                Point p0 = lerp_point(w.a, w.b, t0);
-                Point p1 = lerp_point(w.a, w.b, t1);
-
-                sf::Vertex opening[2];
-                opening[0].position = {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)};
-                opening[1].position = {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)};
-
-                sf::Color c;
-
-                if (selection.type == Selection::Type::Opening && selection.wall_index == i && selection.opening_index == (&o - &w.openings[0])) {
-                    c = Cosmetics::WALL_SELECTED;
-                } else {
-                    switch (o.type) {
-                        case ::OpeningType::Door: c = Cosmetics::DOOR_COLOR; break;
-                        case ::OpeningType::Window: c = Cosmetics::WINDOW_COLOR; break;
-                        case ::OpeningType::Open: c = Cosmetics::OPEN_COLOR; break;
-                    }
-                }
-
-                float opening_thickness_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
-                auto rect = make_thick_segment(
-                                {static_cast<float>(p0.x_cm), static_cast<float>(p0.y_cm)},
-                                {static_cast<float>(p1.x_cm), static_cast<float>(p1.y_cm)},
-                                opening_thickness_cm,
-                                c
-                            );
-                window.draw(rect);
-
-                // place text
-                sf::Vector2f mid{static_cast<float>((p0.x_cm + p1.x_cm) * 0.5), static_cast<float>((p0.y_cm + p1.y_cm) * 0.5)};
-                sf::Vector2f direction{static_cast<float>(p1.x_cm - p0.x_cm), static_cast<float>(p1.y_cm - p0.y_cm)};
-                float mag = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-                if (mag > 0.f) {
-                    direction /= mag;
-                }
-
-                // perpendicular offset so text sits beside opening once placed
-                sf::Vector2f normal{-direction.y, direction.x};
-                if (std::abs(direction.x) > std::abs(direction.y)) {
-                    normal = sf::Vector2f{direction.y, -direction.x};
-                }
-                float opening_offset_cm = static_cast<float>(pixel_radius_to_world_cm(Cosmetics::OPENING_THICKNESS_PX));
-                sf::Vector2f text_position = mid + normal * opening_offset_cm;
-
-                // actual text
-                std::ostringstream ss;
-                ss << std::fixed << std::setprecision(1) << (o.length_cm * engine.get_distance_scale()) << " cm";
-                length_text.setString(ss.str());
-
-                switch (o.type) {
-                    case ::OpeningType::Door: length_text.setFillColor(Cosmetics::DOOR_TEXT_COLOR); break;
-                    case ::OpeningType::Window: length_text.setFillColor(Cosmetics::WINDOW_TEXT_COLOR); break;
-                    case ::OpeningType::Open: length_text.setFillColor(Cosmetics::OPEN_TEXT_COLOR); break;
-                }
-
-                if (selection.type == Selection::Type::Opening && selection.wall_index == i && selection.opening_index == (&o - &w.openings[0])) {
-                    length_text.setFillColor(Cosmetics::WALL_SELECTED);
-                }
-
-                length_text.setPosition(text_position);
-                window.draw(length_text);
-            }
-
             const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
 
             if (!show_optimization_overlay) {
@@ -1799,9 +1568,13 @@ namespace ui {
         ImGui::SetNextWindowSize(ImVec2(RIGHT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
         ImGui::Begin("Terminal", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::BeginChild("terminal_scroll");
+        
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x);
         for (const auto& line : ui_log.lines) {
-            ImGui::TextUnformatted(line.c_str());
+            ImGui::TextWrapped("%s", line.c_str());
         }
+        ImGui::PopTextWrapPos();
+
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
             ImGui::SetScrollHereY(1.0f);
         }
