@@ -6,6 +6,9 @@
 
 namespace Cosmetics {
 
+    // splash window
+    inline const sf::Color PROGRESS_BAR = sf::Color(10, 10, 100);
+
     // grid
     inline const sf::Color GRID_COLOR = sf::Color(220, 220, 220);
 
@@ -19,7 +22,7 @@ namespace Cosmetics {
     // wall colours
     inline const sf::Color WALL_NORMAL = sf::Color::Black;
     inline const sf::Color WALL_SELECTED = sf::Color::Green;
-    inline const sf::Color WALL_OPTIMIZED = sf::Color(10, 10, 100); // navy
+    inline const sf::Color WALL_OPTIMIZED = sf::Color(10, 10, 100);
 
     // points
     constexpr float POINT_RADIUS = 5.0f;
@@ -34,4 +37,4 @@ namespace Cosmetics {
     // text
     inline const sf::Color LENGTH_TEXT_COLOR = sf::Color::Black;
 
-}
+} // end namespace Comsmetics

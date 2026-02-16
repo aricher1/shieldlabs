@@ -59,9 +59,9 @@ namespace { // anonymous
     // used to be static method
     bool ToolbarButton(const char* label, bool active) {
         if (active) {
-            ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
         }
 
         bool clicked = ImGui::Button(label);
@@ -333,6 +333,14 @@ namespace ui {
         
         ImGui::SetCursorPosX(center_x);
         ImGui::TextDisabled("Load an existing project");
+        float padding = 20.f;
+        float box_width = 400.f;
+        float box_height = 35.f;
+        ImGui::SetCursorPos(ImVec2(padding, ImGui::GetWindowHeight() - box_height - padding));
+        ImGui::BeginChild("BottomLeftInfo", ImVec2(box_width, box_height), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::TextWrapped("ShieldLabs v1.0");
+        ImGui::TextWrapped("Radiation shielding design and optimization application.");
+        ImGui::EndChild();
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(3);
         ImGui::End();
@@ -380,7 +388,6 @@ namespace ui {
         ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
         ImGui::PopStyleColor();
 
-
         if (scale_has_p1 && scale_has_p2) {
             double pixel_dist = distance_cm(scale_p1, scale_p2);
             ImGui::TextWrapped("Measured distance on plan: %.2f grid units", pixel_dist);
@@ -401,7 +408,6 @@ namespace ui {
         } else {
             ImGui::TextDisabled("Select two points on the grid.");
         }
-
         ImGui::Spacing();
 
         if (ImGui::Button("Reset Points")) {
@@ -459,7 +465,6 @@ namespace ui {
             drawing = false;
         }
         ImGui::SameLine();
-
         ImGui::Separator();
         ImGui::SameLine();
 
@@ -481,7 +486,6 @@ namespace ui {
             current_tool = Tool::PlaceDose;
         }
         ImGui::SameLine();
-
         ImGui::Separator();
         ImGui::SameLine();
 
@@ -523,10 +527,8 @@ namespace ui {
             show_material_popup = true;
         }
         ImGui::SameLine();
-
         ImGui::Separator();
 
-        // calculate exact width of right-side buttons
         float spacing = ImGui::GetStyle().ItemSpacing.x;
         float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
@@ -675,12 +677,9 @@ namespace ui {
                     config
                 );
             }
-
             ImGui::EndMenu();
         }
-
         ImGui::EndDisabled();
-
         ImGui::End();
         ImGui::PopStyleColor(4);
     }
@@ -703,8 +702,9 @@ namespace ui {
 
 
     void GridRenderer::draw_wall_tab() {
-        if (!ImGui::BeginTabItem("Wall"))
+        if (!ImGui::BeginTabItem("Wall")) {
             return;
+        }
 
         auto& walls = engine.get_walls_mutable();
 
@@ -718,14 +718,14 @@ namespace ui {
             inspector_wall_index = selection.wall_index;
         }
 
-        // Default inspector target
-        if (!inspector_wall_index.has_value())
+        if (!inspector_wall_index.has_value()) {
             inspector_wall_index = 0;
-
-        // Wall selector
+        }
+        
         std::vector<std::string> wall_labels;
-        for (size_t i = 0; i < walls.size(); ++i)
+        for (size_t i = 0; i < walls.size(); ++i) {
             wall_labels.push_back("Wall " + std::to_string(i + 1));
+        }
 
         static int wall_idx = 0;
         wall_idx = static_cast<int>(*inspector_wall_index);
@@ -787,8 +787,6 @@ namespace ui {
                         }
                         ImGui::EndCombo();
                     }
-
-                    // Thickness
                     ImGui::PushTextWrapPos(0.0f);
                     ImGui::TextWrapped("Thickness (cm)");
                     ImGui::PopTextWrapPos();
@@ -797,14 +795,11 @@ namespace ui {
                     // Remove layer
                     if (wall.layers.size() > 1) {
                         if (ImGui::Button("Remove Layer")) {
-                            undo_stack.execute(
-                                std::make_unique<RemoveWallLayerCommand>(
-                                    engine, *inspector_wall_index, i));
+                            undo_stack.execute(std::make_unique<RemoveWallLayerCommand>(engine, *inspector_wall_index, i));
                             ImGui::EndTabItem();
                             break;
                         }
                     }
-
                     ImGui::EndTabItem();
                 }
             }
@@ -815,23 +810,19 @@ namespace ui {
                 new_layer.material_id = wall.layers.back().material_id;
                 new_layer.thickness_cm = 10.0;
 
-                undo_stack.execute(
-                    std::make_unique<AddWallLayerCommand>(
-                        engine, *inspector_wall_index,
-                        wall.layers.size() - 1,
-                        new_layer));
+                undo_stack.execute(std::make_unique<AddWallLayerCommand>(engine, *inspector_wall_index, wall.layers.size() - 1, new_layer));
             }
-
             ImGui::EndTabBar();
         }
-
         ImGui::EndTabItem();
     }
 
 
     void GridRenderer::draw_source_tab() {
-        if (!ImGui::BeginTabItem("Source"))
+        
+        if (!ImGui::BeginTabItem("Source")) {
             return;
+        }
 
         auto& entities = engine.get_entities_mutable();
 
@@ -917,7 +908,6 @@ namespace ui {
             s.patient_attenuation_percent = std::clamp(s.patient_attenuation_percent, 0.0f, 1.0f);
         }
         ImGui::Checkbox("Apply radioactive decay", &s.apply_radioactive_decay);
-
         ImGui::EndTabItem();
     }
 
