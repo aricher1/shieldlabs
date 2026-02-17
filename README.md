@@ -96,11 +96,17 @@ Let
 The optimization problem is:
 
 $$
-\begin{aligned}
-\text{minimize} \quad & \sum_i x_i \\\\
-\text{subject to} \quad & D_j(x) \le L_j \quad \text{for all dose points with } L_j > 0 \\\\
-& 0 \le x_i \le 20 \quad \forall i
-\end{aligned}
+\min_{x} \sum_i x_i
+$$
+
+subject to
+
+$$
+D_j(x) \le L_j \quad \text{for all dose points with } L_j > 0
+$$
+
+$$
+0 \le x_i \le 20 \quad \text{for all walls } i
 $$
 
 Dose $D_j(x)$ is evaluated deterministically at each iteration using the ray-based transport model.
