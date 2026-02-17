@@ -91,7 +91,7 @@ Let
 
 - $x_i$ = lead thickness (cm) applied to wall $i$  
 - $D_j(x)$ = computed annual dose at dose point $j$  
-- $L_j$ = dose limit at dose point $j$ (if specified and positive)  
+- $L_j$ = dose limit at dose point $j$
 
 The optimization problem is:
 
