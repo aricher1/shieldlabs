@@ -2,7 +2,7 @@
   <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="420">
 </p>
 
-## ShieldLabs
+## Overview
 
 ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application written in C++. It models gamma radiation transport through multi-layer materials using calibrated 2D floorplans to compute spatial dose distributions with engineering-level precision.
 
@@ -64,14 +64,14 @@ A packaged desktop executable is planned.
 ## Supported Isotopes
 
 The current version (v1.0) supports the following isotopes:
-- Carbon-11 (c11)
-- Fluorine-18 (f18)
-- Gallium-68 (ga68)
-- Technetium-99m (tc99m)
-- Iodine-131 (i131)
-- Lutetium-177 (lu177)
-- Radium-226 (ra226)
-- Actinium-225 (ac225)
+- Carbon-11 (C-11)
+- Fluorine-18 (F-18)
+- Gallium-68 (Ga-68)
+- Technetium-99m (Tc-99m)
+- Iodine-131 (I-131)
+- Lutetium-177 (Lu-177)
+- Radium-226 (Ra-226)
+- Actinium-225 (Ac-225)
 
 
 ## Supported Materials
