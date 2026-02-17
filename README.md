@@ -21,9 +21,8 @@ ShieldLabs is designed for evaluating shielding effectiveness, layout modificati
 └── cpp/
     ├── CMakeLists.txt
     ├── assets/
-    │   ├── floorplans/     # Floorplans used for testing
     │   ├── fonts/          # Font used in UI
-    │   ├── isotopes/       # Isotope YAML file (gamma constants, attenutation coefficients)
+    │   ├── isotopes/       # Isotope YAML file (gamma constants, attenutatio coefficients)
     │   ├── logos/          # ShieldLabs Logos
     │   └── materials/      # Material YAML file (concrete, steel, lead)
     │
