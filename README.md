@@ -4,7 +4,7 @@
 
 ## Overview
 
-ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application written in C++. It models gamma radiation transport through multi-layer materials using calibrated 2D floorplans to compute spatial dose distributions with engineering-level precision.
+ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application written in C++17. It models gamma radiation transport through multi-layer materials using calibrated 2D floorplans to compute spatial dose distributions with engineering-level precision.
 
 The system integrates geometric intersection logic, material attenuation modeling, isotope-specific emission data, and constrained shielding optimization into a single analysis workflow. All calculations are deterministic and reproducible, making results suitable for technical validation, regulatory comparison, and scenario-based engineering studies.
 
