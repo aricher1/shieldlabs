@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="200">
+  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="350">
 </p>
 
 ## Overview
