@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="420">
+  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="400">
 </p>
 
 ## Overview
@@ -109,3 +109,7 @@ $$
 $$
 
 Dose $D_j(x)$ is evaluated deterministically at each iteration using the ray-based transport model.
+
+
+## Author
+Developed by Aidan Richer
