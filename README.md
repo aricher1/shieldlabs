@@ -1,6 +1,10 @@
+# ShieldLabs
+
 <p align="center">
-  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png" alt="ShieldLabs logo" width="300">
+  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png"
+       alt="ShieldLabs logo">
 </p>
+
 
 ## Overview
 
