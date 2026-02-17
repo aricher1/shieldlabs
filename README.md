@@ -84,3 +84,23 @@ The current version (v1.0) supports the following isotopes:
 ## Optimization
 
 ShieldLabs includes a nonlinear constrained optimization module that computes the minimum required lead shielding across all walls in a scene while satisfying specified dose limits at defined evaluation points. Each wall is assigned an independent lead thickness variable, and the objective is to minimize total lead usage subject to annual dose constraints at each dose location. At every iteration, the optimizer applies the candidate thickness configuration to the scene and deterministically recomputes the full dose distribution, since dose response is nonlinear with respect to shielding thickness. The system uses the derivative-free COBYLA algorithm from NLopt, which handles inequality constraints directly and does not require analytical gradients. The result is an updated scene configuration containing the minimum-lead shielding solution that satisfies all achievable dose constraints within defined physical bounds. ShieldLabs allows the user to visually inspect the optimization results directly within the scene. Walls modified by the optimizer are displayed with their applied lead shielding thickness, clearly indicating where material was added. Dose evaluation points update to reflect their computed annual dose relative to their specified dose limits, making it immediately visible which constraints are satisfied.
+
+### Mathematical Formulation
+
+Let  
+
+- $x_i$ = lead thickness (cm) applied to wall $i$  
+- $D_j(x)$ = computed annual dose at dose point $j$  
+- $L_j$ = dose limit at dose point $j$ (if specified and positive)  
+
+The optimization problem is:
+
+$$
+\begin{aligned}
+\text{minimize} \quad & \sum_i x_i \\\\
+\text{subject to} \quad & D_j(x) \le L_j \quad \text{for all dose points with } L_j > 0 \\\\
+& 0 \le x_i \le 20 \quad \forall i
+\end{aligned}
+$$
+
+Dose $D_j(x)$ is evaluated deterministically at each iteration using the ray-based transport model.
