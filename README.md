@@ -4,12 +4,11 @@
 
 ## ShieldLabs
 
-ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application. 
-It models radiation transport through materials using calibrated 2D floorplans to estimate real-world exposure with spatial accuracy.
+ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application written in C++. It models gamma radiation transport through multi-layer materials using calibrated 2D floorplans to compute spatial dose distributions with engineering-level precision.
 
-The application combines geometry, material attenuation, and isotope-specific emission data to compute dose at defined points and regions. Calculations are fully deterministic, making results reproducible and suitable for engineering analysis, validation, and reporting.
+The system integrates geometric intersection logic, material attenuation modeling, isotope-specific emission data, and constrained shielding optimization into a single analysis workflow. All calculations are deterministic and reproducible, making results suitable for technical validation, regulatory comparison, and scenario-based engineering studies.
 
-ShieldLabs is designed for scenario-based evaluation of shielding effectiveness, layout changes, and source placement, with a clear separation between computational logic, assets, and the UI.
+ShieldLabs is designed for evaluating shielding effectiveness, layout modifications, source placement, and minimum-lead optimization, with a strict separation between computational core, data registries, and user interface.
 
 
 ## Repository Structure
@@ -39,7 +38,7 @@ ShieldLabs is designed for scenario-based evaluation of shielding effectiveness,
     │   ├── geometry/       # Geometric entities + bounds logic
     │   ├── isotopes/       # Isotope YAML file registry
     │   ├── materials/      # Material YAML file registry
-    │   ├── optimization/   # NLopt's COBYLA optimization algorithm for lead shielding
+    │   ├── optimization/   # NLopt's COBYLA optimization algorithm
     │   ├── output/         # Reports, exports, result formatting
     │   ├── ui/             # UI interfaces (GridRenderer, main)
     │   └── utils/          # Pdf to Png conversion
@@ -60,3 +59,28 @@ ShieldLabs is designed for scenario-based evaluation of shielding effectiveness,
 
 Terminal based application. 
 A packaged desktop executable is planned.
+
+
+## Supported Isotopes
+
+The current version (v1.0) supports the following isotopes:
+- Carbon-11 (c11)
+- Fluorine-18 (f18)
+- Gallium-68 (ga68)
+- Technetium-99m (tc99m)
+- Iodine-131 (i131)
+- Lutetium-177 (lu177)
+- Radium-226 (ra226)
+- Actinium-225 (ac225)
+
+
+## Supported Materials
+
+- Concrete
+- Lead
+- Steel
+
+
+## Optimization
+
+ShieldLabs includes a nonlinear constrained optimization module that computes the minimum required lead shielding across all walls in a scene while satisfying specified dose limits at defined evaluation points. Each wall is assigned an independent lead thickness variable, and the objective is to minimize total lead usage subject to annual dose constraints at each dose location. At every iteration, the optimizer applies the candidate thickness configuration to the scene and deterministically recomputes the full dose distribution, since dose response is nonlinear with respect to shielding thickness. The system uses the derivative-free COBYLA algorithm from NLopt, which handles inequality constraints directly and does not require analytical gradients. The result is an updated scene configuration containing the minimum-lead shielding solution that satisfies all achievable dose constraints within defined physical bounds. ShieldLabs allows the user to visually inspect the optimization results directly within the scene. Walls modified by the optimizer are displayed with their applied lead shielding thickness, clearly indicating where material was added. Dose evaluation points update to reflect their computed annual dose relative to their specified dose limits, making it immediately visible which constraints are satisfied.
