@@ -59,42 +59,8 @@ int main() {
         splashSprite.setScale({scale, scale});
 
         // center
-        float logoWidth = texSize.x * scale;
         splashSprite.setOrigin({texSize.x / 2.f, texSize.y / 2.f});
-        splashSprite.setPosition({250.f, 120.f});
-
-        // load font
-        sf::Font splashFont;
-        if (!splashFont.openFromFile("../assets/fonts/Inter-Regular.ttf")) { return 1; }
-
-        // status text
-        sf::Text statusText(splashFont);
-        statusText.setString("Initializing ShieldLabs...");
-        statusText.setCharacterSize(14);
-        statusText.setFillColor(sf::Color(180, 180, 200));
-        
-        // center text
-        sf::FloatRect textBounds = statusText.getLocalBounds();
-        statusText.setOrigin({textBounds.size.x / 2.f, 0.f});
-        statusText.setPosition({250.f, 210.f});
-
-        // progress bar dimensions
-        float barWidth = logoWidth * 0.75f;
-        float barHeight = 16.f;
-        float barX = 250.f - barWidth / 2.f;
-        float barY = 240.f;
-
-        // progress bar backround
-        sf::RectangleShape barBackground;
-        barBackground.setSize({barWidth, barHeight});
-        barBackground.setFillColor(sf::Color(40, 40, 60));
-        barBackground.setPosition({barX, barY});
-        
-        // fill the progress bar
-        sf::RectangleShape barFill;
-        barFill.setSize({0.f, barHeight});
-        barFill.setFillColor(Cosmetics::PROGRESS_BAR);
-        barFill.setPosition({barX, barY});
+        splashSprite.setPosition({250.f, 160.f});
 
         sf::Clock timer;
 
@@ -107,25 +73,11 @@ int main() {
                 }
             }
 
-            float elapsed = timer.getElapsedTime().asSeconds();
-            float duration = 2.2f;
-            float t = std::min(elapsed / duration, 1.0f);
-            float eased = 1.f - std::pow(1.f - t, 3.f);
-            float width = barWidth * eased;
-            
-            // update progress bar width
-            barFill.setSize({width, barHeight});
-            splash.clear(sf::Color(11, 11, 20));
-            splash.draw(splashSprite);
-            splash.draw(statusText);
-            splash.draw(barBackground);
-            splash.draw(barFill);
-            splash.display();
+            if (timer.getElapsedTime().asSeconds() >= 1.5f) { splash.close(); }
 
-            // close splash when animation is done
-            if (t >= 1.0f) {
-                splash.close();
-            }
+            splash.clear(sf::Color::Black);
+            splash.draw(splashSprite);
+            splash.display();
         }
     }
     
