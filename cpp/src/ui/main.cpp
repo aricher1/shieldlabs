@@ -93,9 +93,7 @@ int main() {
     // Application state
     AppState app_state;
 
-    if (!ImGui::SFML::Init(window)) {
-        return 1;
-    }
+    if (!ImGui::SFML::Init(window)) { return 1; }
     
     sf::Clock deltaClock;
     GeometryEngine engine(800, 5.0);
