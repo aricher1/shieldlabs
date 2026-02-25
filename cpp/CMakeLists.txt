@@ -15,7 +15,6 @@ find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 find_package(yaml-cpp REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(POPPLER_CPP REQUIRED poppler-cpp)
-find_package(NLopt REQUIRED PATHS /usr/local)
 
 # -----------------------------
 # Vendored ImGui
@@ -50,6 +49,19 @@ add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/external/json/include
 )
+
+# -----------------------------
+# Vendored NLopt
+# -----------------------------
+
+set(NLOPT_PYTHON OFF CACHE BOOL "" FORCE)
+set(NLOPT_OCTAVE OFF CACHE BOOL "" FORCE)
+set(NLOPT_MATLAB OFF CACHE BOOL "" FORCE)
+set(NLOPT_GUILE OFF CACHE BOOL "" FORCE)
+set(NLOPT_SWIG OFF CACHE BOOL "" FORCE)
+set(NLOPT_TESTS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(external/nlopt)
 
 # -----------------------------
 # Executable
@@ -123,10 +135,10 @@ target_link_libraries(shieldlabs PRIVATE
     imgui
     ImGui-SFML
     nlohmann_json
+    nlopt
     SFML::Graphics
     SFML::Window
     SFML::System
     yaml-cpp
-    NLopt::nlopt
     ${POPPLER_CPP_LIBRARIES}
 )
