@@ -183,13 +183,13 @@ namespace ui {
         if (!blueprint_finalized) {
             auto errors = engine.validate();
             if (!errors.empty()) {
-                ui_log.push("Validation Errors: ");
+                ui_log.push("VALIDATION ERRORS: ");
                 for (const auto& e : errors) {
                     ui_log.push("  - " + e.message);
                 }
                 return;
             }
-            ui_log.push("Validation passed.");
+            ui_log.push("[VALIDATION PASSED]");
         }
 
         blueprint_finalized = !blueprint_finalized;
@@ -733,10 +733,9 @@ namespace ui {
         if (ImGui::Combo(
                 "Wall",
                 &wall_idx,
-                [](void* data, int idx, const char** out) {
+                [](void* data, int idx) -> const char* {
                     auto& labels = *static_cast<std::vector<std::string>*>(data);
-                    *out = labels[idx].c_str();
-                    return true;
+                    return labels[idx].c_str();
                 },
                 &wall_labels,
                 wall_labels.size()))
@@ -862,10 +861,9 @@ namespace ui {
         if (ImGui::Combo(
                 "Source",
                 &src_idx,
-                [](void* data, int idx, const char** out) {
+                [](void* data, int idx) -> const char* {
                     auto& labels = *static_cast<std::vector<std::string>*>(data);
-                    *out = labels[idx].c_str();
-                    return true;
+                    return labels[idx].c_str();
                 },
                 &labels,
                 labels.size()))
@@ -954,10 +952,9 @@ namespace ui {
         if (ImGui::Combo(
                 "Dose",
                 &dose_idx,
-                [](void* data, int idx, const char** out) {
+                [](void* data, int idx) -> const char* {
                     auto& labels = *static_cast<std::vector<std::string>*>(data);
-                    *out = labels[idx].c_str();
-                    return true;
+                    return labels[idx].c_str();
                 },
                 &labels,
                 labels.size()))
@@ -1025,10 +1022,9 @@ namespace ui {
         if (ImGui::Combo(
                 "Isotope",
                 &current_idx,
-                [](void* data, int idx, const char** out) {
+                [](void* data, int idx) -> const char* {
                     auto& v = *static_cast<std::vector<std::string>*>(data);
-                    *out = v[idx].c_str();
-                    return true;
+                    return v[idx].c_str();
                 },
                 &isotope_keys,
                 isotope_keys.size()))
