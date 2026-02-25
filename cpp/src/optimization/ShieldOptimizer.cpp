@@ -102,7 +102,7 @@ void ShieldOptimizer::applyThicknessVector(const std::vector<double>& x) {
 // f(x) = sum_i x_i
 //
 // The gradient is constant (1 for each variable), although COBYLA does not require gradients. Providing it is harmless.
-double ShieldOptimizer::objectiveCallback(const std::vector<double>& x, std::vector<double>& grad, void* data) {
+double ShieldOptimizer::objectiveCallback(const std::vector<double>& x, std::vector<double>& grad, [[maybe_unused]] void* data) {
 
     if (!grad.empty()) {
         for (size_t i = 0; i < x.size(); ++i) {
@@ -128,7 +128,7 @@ double ShieldOptimizer::objectiveCallback(const std::vector<double>& x, std::vec
 //
 // The constraint is satisfied when g_j(x) <= 0.
 // The full dose field is recomputed after applying x, since dose is a nonlinear function of shielding thickness.
-double ShieldOptimizer::constraintCallback(const std::vector<double>& x, std::vector<double>& grad, void* data) {
+double ShieldOptimizer::constraintCallback(const std::vector<double>& x, [[maybe_unused]] std::vector<double>& grad, void* data) {
 
     ConstraintData* cd = static_cast<ConstraintData*>(data);
     ShieldOptimizer* optimizer = cd->optimizer;
@@ -211,7 +211,7 @@ calc::CalcScene ShieldOptimizer::optimize() {
     double minf;
 
     try {
-        nlopt::result result = opt.optimize(x, minf);
+        opt.optimize(x, minf);
         // apply final optimized thickness vector to the scene
         applyThicknessVector(x);
         // uncomment for terminal debugging

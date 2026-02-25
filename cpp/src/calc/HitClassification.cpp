@@ -4,7 +4,7 @@
 
 namespace calc {
 
-    HitKind classify_wall_hit(const CalcWall& wall, double t_wall) {
+    HitKind classify_wall_hit([[maybe_unused]]const CalcWall& wall, [[maybe_unused]]double t_wall) {
         return HitKind::SolidWall;
     }
 

@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(shieldlabs)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_compile_definitions(NDEBUG)
 
 # -----------------------------
 # System Dependencies
@@ -54,6 +52,8 @@ target_include_directories(nlohmann_json INTERFACE
 # Vendored NLopt
 # -----------------------------
 
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 set(NLOPT_PYTHON OFF CACHE BOOL "" FORCE)
 set(NLOPT_OCTAVE OFF CACHE BOOL "" FORCE)
 set(NLOPT_MATLAB OFF CACHE BOOL "" FORCE)
@@ -102,6 +102,14 @@ add_executable(shieldlabs
     src/isotopes/IsotopeRegistry.cpp
 )
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(shieldlabs PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
+endif()
+
 # -----------------------------
 # Assets Copy
 # -----------------------------
@@ -117,9 +125,9 @@ add_custom_command(TARGET shieldlabs POST_BUILD
 # -----------------------------
 
 target_include_directories(shieldlabs PRIVATE
-    include
-    external
-    external/tabulate/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/external
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/tabulate/include
     ${POPPLER_CPP_INCLUDE_DIRS}
 )
 

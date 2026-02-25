@@ -36,8 +36,8 @@ namespace output {
         // Per-ray detailed output (debug)
         for (size_t i = 0; i < out.rays.size(); ++i) {
             const auto& entry = out.rays[i];
-            const auto& ray   = entry.ray;
-            const auto& dose  = entry.dose;
+            const auto& ray = entry.ray;
+            [[maybe_unused]] const auto& dose = entry.dose;
             std::cout << "\nRay " << i << ":\n";
             std::cout << "  Source Point: " << entry.source_label << "\n";
             std::cout << "  Dose Point: " << entry.dose_label << "\n";

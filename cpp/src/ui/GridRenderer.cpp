@@ -73,15 +73,6 @@ namespace { // anonymous
         return clicked;
     }
 
-    // helper for debugging optimization
-    double find_worst_annual(const calc::CompilerOutput& out) {
-        double worst = 0.0;
-        for (const auto& d : out.dose_totals) {
-            worst = std::max(worst, d.annual_dose_uSv);
-        }
-        return worst; // worst annual dose point
-    }
-
 } // end of anonymous namespace
 
 
@@ -1012,7 +1003,7 @@ namespace ui {
 
         // Find current index
         int current_idx = 0;
-        for (int i = 0; i < isotope_keys.size(); ++i) {
+        for (size_t i = 0; i < isotope_keys.size(); ++i) {
             if (isotope_keys[i] == engine.get_selected_isotope_key()) {
                 current_idx = i;
                 break;
