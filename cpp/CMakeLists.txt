@@ -1,23 +1,30 @@
 cmake_minimum_required(VERSION 3.15)
 project(shieldlabs)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # -----------------------------
 # System Dependencies
 # -----------------------------
-
-set(SFML_STATIC_LIBRARIES ON)
+set(SFML_STATIC_LIBRARIES ON CACHE BOOL "" FORCE)
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 find_package(yaml-cpp REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(POPPLER_CPP REQUIRED poppler-cpp)
+pkg_check_modules(POPPLER_CPP poppler-cpp)
+
+if(NOT POPPLER_CPP_FOUND)
+    message(FATAL_ERROR "Poppler-cpp not found. Required for PDF rendering.")
+endif()
 
 # -----------------------------
 # Vendored ImGui
 # -----------------------------
-
 add_library(imgui
     external/imgui/imgui.cpp
     external/imgui/imgui_draw.cpp
@@ -30,19 +37,16 @@ target_include_directories(imgui PUBLIC
     external/imgui
 )
 
-# Tell imgui-sfml where imgui lives
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
 
 # -----------------------------
 # Vendored ImGui-SFML
 # -----------------------------
-
 add_subdirectory(external/imgui-sfml)
 
 # -----------------------------
 # Vendored nlohmann/json (header-only)
 # -----------------------------
-
 add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/external/json/include
@@ -51,7 +55,6 @@ target_include_directories(nlohmann_json INTERFACE
 # -----------------------------
 # Vendored NLopt
 # -----------------------------
-
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 set(NLOPT_PYTHON OFF CACHE BOOL "" FORCE)
@@ -66,7 +69,6 @@ add_subdirectory(external/nlopt)
 # -----------------------------
 # Executable
 # -----------------------------
-
 add_executable(shieldlabs
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
@@ -111,9 +113,19 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # -----------------------------
+# Platform Fixes
+# -----------------------------
+if(WIN32)
+    add_definitions(-DNOMINMAX)
+endif()
+
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+# -----------------------------
 # Assets Copy
 # -----------------------------
-
 add_custom_command(TARGET shieldlabs POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/assets
@@ -123,7 +135,6 @@ add_custom_command(TARGET shieldlabs POST_BUILD
 # -----------------------------
 # Includes
 # -----------------------------
-
 target_include_directories(shieldlabs PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/external
@@ -138,7 +149,6 @@ target_compile_options(shieldlabs PRIVATE
 # -----------------------------
 # Link Libraries
 # -----------------------------
-
 target_link_libraries(shieldlabs PRIVATE
     imgui
     ImGui-SFML
