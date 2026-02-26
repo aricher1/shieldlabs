@@ -67,6 +67,7 @@ ShieldLabs is built and tested against the following versions:
 | ImGui-SFML | 3.0.0 |
 | ImGuiFileDialog | 0.6.9 |
 | NLopt | 2.7.1 |
+| yaml-cpp | 0.8.0 |
 | nlohmann/json | 3.11.3 |
 | tabulate | 1.5.0 |
 

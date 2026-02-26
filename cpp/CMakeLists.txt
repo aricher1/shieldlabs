@@ -12,7 +12,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # -----------------------------
 # System Dependencies
 # -----------------------------
-find_package(yaml-cpp REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(POPPLER_CPP poppler-cpp)
 
@@ -28,7 +27,6 @@ set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
 add_subdirectory(external/sfml)
 
 # -----------------------------
@@ -72,8 +70,15 @@ set(NLOPT_MATLAB OFF CACHE BOOL "" FORCE)
 set(NLOPT_GUILE OFF CACHE BOOL "" FORCE)
 set(NLOPT_SWIG OFF CACHE BOOL "" FORCE)
 set(NLOPT_TESTS OFF CACHE BOOL "" FORCE)
-
 add_subdirectory(external/nlopt)
+
+# -----------------------------
+# Vendored yaml-cpp
+# -----------------------------
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/yaml-cpp)
 
 # -----------------------------
 # Executable
@@ -166,6 +171,6 @@ target_link_libraries(shieldlabs PRIVATE
     sfml-graphics
     sfml-window
     sfml-system
-    yaml-cpp
+    yaml-cpp::yaml-cpp
     ${POPPLER_CPP_LIBRARIES}
 )
