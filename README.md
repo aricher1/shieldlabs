@@ -56,6 +56,22 @@ ShieldLabs is designed for evaluating shielding effectiveness, layout modificati
 
 ```
 
+## Dependencies
+
+ShieldLabs is built and tested against the following versions:
+
+| Library | Version |
+|----------|----------|
+| SFML | commit 6b23a47 (based on `sfml-stable`) |
+| Dear ImGui | 1.92.6 |
+| ImGui-SFML | 3.0.0 |
+| ImGuiFileDialog | 0.6.9 |
+| NLopt | 2.7.1 |
+| nlohmann/json | 3.11.3 |
+| tabulate | 1.5.0 |
+
+All third-party dependencies are vendored locally within the repository to provide deterministic cross-platform builds across Linux, macOS, and Windows.
+
 ## Usage
 
 Terminal based application. 
