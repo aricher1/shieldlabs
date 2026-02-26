@@ -12,8 +12,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # -----------------------------
 # System Dependencies
 # -----------------------------
-set(SFML_STATIC_LIBRARIES ON CACHE BOOL "" FORCE)
-find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 find_package(yaml-cpp REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(POPPLER_CPP poppler-cpp)
@@ -21,6 +19,17 @@ pkg_check_modules(POPPLER_CPP poppler-cpp)
 if(NOT POPPLER_CPP_FOUND)
     message(FATAL_ERROR "Poppler-cpp not found. Required for PDF rendering.")
 endif()
+
+# -----------------------------
+# Vendored SFML
+# -----------------------------
+set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
+set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
+set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(SFML_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(external/sfml)
 
 # -----------------------------
 # Vendored ImGui
@@ -154,9 +163,9 @@ target_link_libraries(shieldlabs PRIVATE
     ImGui-SFML
     nlohmann_json
     nlopt
-    SFML::Graphics
-    SFML::Window
-    SFML::System
+    sfml-graphics
+    sfml-window
+    sfml-system
     yaml-cpp
     ${POPPLER_CPP_LIBRARIES}
 )
