@@ -129,6 +129,20 @@ $$
 
 Dose $D_j(x)$ is evaluated deterministically at each iteration using the ray-based transport model.
 
+## References
+
+1. Canadian Nuclear Safety Commission (CNSC).  
+   **REGDOC-2.5.6 — Design of Rooms Where Unsealed Nuclear Substances Are Used.**  
+   May 2023.
+
+2. Canadian Nuclear Safety Commission (CNSC).  
+   **Radionuclide Information Booklet.**  
+   July 2025 Edition.
+
+3. AAPM Task Group 108.  
+   Marsden, M. et al.  
+   **PET and PET/CT Shielding Requirements.**  
+   Medical Physics, 2006.
 
 ## Author
-Developed by Aidan Richer
+Developed by Aidan Richer <richer2@uwindsor.ca | richer.a@outlook.com>
