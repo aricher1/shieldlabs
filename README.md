@@ -1,16 +1,8 @@
 <p align="center">
-  <img src="cpp/assets/logos/ShieldLabsLogo.png"
+  <img src="cpp/assets/logos/ShieldLabsTitleLogoTransparent.png"
        alt="ShieldLabs logo"
        width="320">
 </p>
-
-```
-      _____ __  ________________   ____  __    ___    ____  _____
-     / ___// / / /  _/ ____/ / /  / __ \/ /   /   |  / __ // ___/
-     \__ \/ /_/ // // __/ / /    / / / / /   / /| | / __  |\__ \ 
-    ___/ / __  // // /___/ /___ / /_/ / /___/ ___ |/ /_/ /___/ / 
-   /____/_/ /_/___/_____/_____//_____/_____/_/  |_/____//____/
-```
 
 ## Overview
 
