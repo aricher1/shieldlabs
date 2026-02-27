@@ -81,22 +81,24 @@ A packaged desktop executable is planned.
 
 ## Supported Isotopes
 
-The current version (v1.0) supports the following isotopes:
-- Carbon-11 (C-11)
-- Fluorine-18 (F-18)
-- Gallium-68 (Ga-68)
-- Technetium-99m (Tc-99m)
-- Iodine-131 (I-131)
-- Lutetium-177 (Lu-177)
-- Radium-226 (Ra-226)
-- Actinium-225 (Ac-225)
-
+| Isotope         | Symbol |
+|-----------------|--------|
+| Carbon-11       | C-11   |
+| Fluorine-18     | F-18   |
+| Gallium-68      | Ga-68  |
+| Technetium-99m  | Tc-99m |
+| Iodine-131      | I-131  |
+| Lutetium-177    | Lu-177 |
+| Radium-226      | Ra-226 |
+| Actinium-225    | Ac-225 |
 
 ## Supported Materials
 
-- Concrete
-- Lead
-- Steel
+| Material  |
+|-----------|
+| Concrete  |
+| Lead      |
+| Steel     |
 
 
 ## Optimization
