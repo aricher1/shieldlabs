@@ -57,7 +57,11 @@ namespace { // anonymous
     constexpr double SHIFT_MOVE_MULTIPLIER = 10.0;  // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
     
     // ui layout constants
-    constexpr float TOOLBAR_HEIGHT_PX = 40.f;       // toolbar
+    constexpr float TOOLBAR_HEIGHT_PX = 40.f;
+    constexpr float TOOLBAR_GROUP_GAP_PX = 8.f;
+    constexpr float TOOLBAR_CLUSTER_PAD_X = 4.f;
+    constexpr float TOOLBAR_CLUSTER_PAD_Y = 3.f;
+    constexpr float TOOLBAR_CLUSTER_ROUNDING = 3.f;
     constexpr float SIDE_PANEL_WIDTH_RATIO = 0.22f;
     constexpr float SIDE_PANEL_MIN_WIDTH_PX = 220.f;
     constexpr float SIDE_PANEL_MAX_WIDTH_PX = 320.f;
@@ -82,6 +86,12 @@ namespace { // anonymous
         }
 
         return clicked;
+    }
+
+    void ToolbarGap() {
+        ImGui::SameLine();
+        ImGui::Dummy(ImVec2(TOOLBAR_GROUP_GAP_PX, 0.f));
+        ImGui::SameLine();
     }
 
 } // end of anonymous namespace
@@ -470,6 +480,9 @@ namespace ui {
         ImGui::SetNextWindowSize(ImVec2(window.getSize().x, TOOLBAR_HEIGHT_PX));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.14f, 0.17f, 1.0f));
         ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        draw_list->ChannelsSplit(2);
+        draw_list->ChannelsSetCurrent(1);
 
         const auto push_button_group = [](const ImVec4& button, const ImVec4& hovered, const ImVec4& active) {
             ImGui::PushStyleColor(ImGuiCol_Button, button);
@@ -488,81 +501,51 @@ namespace ui {
 
         const auto pop_menu_group = []() { ImGui::PopStyleColor(6); };
 
-        // Toolbar groups use red, grey, dark blue, and navy blue families.
-        const ImVec4 red_button{0.63f, 0.18f, 0.20f, 1.0f};
-        const ImVec4 red_hover{0.72f, 0.23f, 0.25f, 1.0f};
-        const ImVec4 red_active{0.52f, 0.14f, 0.16f, 1.0f};
-
         const ImVec4 grey_button{0.38f, 0.40f, 0.44f, 1.0f};
         const ImVec4 grey_hover{0.45f, 0.47f, 0.51f, 1.0f};
         const ImVec4 grey_active{0.30f, 0.32f, 0.36f, 1.0f};
+        const ImU32 cluster_fill = IM_COL32(28, 32, 40, 235);
+        const ImU32 cluster_border = IM_COL32(64, 71, 83, 255);
 
-        const ImVec4 dark_blue_button{0.12f, 0.22f, 0.40f, 1.0f};
-        const ImVec4 dark_blue_hover{0.16f, 0.28f, 0.50f, 1.0f};
-        const ImVec4 dark_blue_active{0.09f, 0.17f, 0.31f, 1.0f};
+        const auto draw_cluster_plate = [&](const ImVec2& min, const ImVec2& max) {
+            draw_list->ChannelsSetCurrent(0);
+            draw_list->AddRectFilled(
+                ImVec2(min.x - TOOLBAR_CLUSTER_PAD_X, min.y - TOOLBAR_CLUSTER_PAD_Y),
+                ImVec2(max.x + TOOLBAR_CLUSTER_PAD_X, max.y + TOOLBAR_CLUSTER_PAD_Y),
+                cluster_fill,
+                TOOLBAR_CLUSTER_ROUNDING
+            );
+            draw_list->AddRect(
+                ImVec2(min.x - TOOLBAR_CLUSTER_PAD_X, min.y - TOOLBAR_CLUSTER_PAD_Y),
+                ImVec2(max.x + TOOLBAR_CLUSTER_PAD_X, max.y + TOOLBAR_CLUSTER_PAD_Y),
+                cluster_border,
+                TOOLBAR_CLUSTER_ROUNDING
+            );
+            draw_list->ChannelsSetCurrent(1);
+        };
 
-        const ImVec4 navy_button{0.07f, 0.14f, 0.30f, 1.0f};
-        const ImVec4 navy_hover{0.10f, 0.19f, 0.39f, 1.0f};
-        const ImVec4 navy_active{0.05f, 0.10f, 0.23f, 1.0f};
-
-        const ImVec4 select_button = grey_button; // select
-        const ImVec4 select_hover = grey_hover;
-        const ImVec4 select_active = grey_active;
-
-        const ImVec4 draw_button = red_button; // draw
-        const ImVec4 draw_hover = red_hover;
-        const ImVec4 draw_active = red_active;
-
-        const ImVec4 g2_button = dark_blue_button; // wall/source/dose
-        const ImVec4 g2_hover = dark_blue_hover;
-        const ImVec4 g2_active = dark_blue_active;
-
-        const ImVec4 g3_button = grey_button; // undo/redo/remove
-        const ImVec4 g3_hover = grey_hover;
-        const ImVec4 g3_active = grey_active;
-
-        const ImVec4 g4_button = navy_button; // isotopes/materials
-        const ImVec4 g4_hover = navy_hover;
-        const ImVec4 g4_active = navy_active;
-
-        const ImVec4 g5_button = dark_blue_button; // calculate/unlock
-        const ImVec4 g5_hover = dark_blue_hover;
-        const ImVec4 g5_active = dark_blue_active;
-
-        const ImVec4 g6_button = red_button; // optimize/show results
-        const ImVec4 g6_hover = red_hover;
-        const ImVec4 g6_active = red_active;
-
-        const ImVec4 g7_button = grey_button; // edit scale
-        const ImVec4 g7_hover = grey_hover;
-        const ImVec4 g7_active = grey_active;
-
-        const ImVec4 g8_button = grey_button; // save
-        const ImVec4 g8_hover = grey_hover;
-        const ImVec4 g8_active = grey_active;
-
-        push_button_group(select_button, select_hover, select_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
             interaction_mode = InteractionMode::Select;
             current_tool = Tool::None;
             selection.clear();
             drawing = false;
         }
-        pop_button_group();
         ImGui::SameLine();
 
-        push_button_group(draw_button, draw_hover, draw_active);
         if (ToolbarButton("DRAW", interaction_mode == InteractionMode::Draw)) {
             interaction_mode = InteractionMode::Draw;
             selection.clear();
             drawing = false;
         }
         pop_button_group();
-        ImGui::SameLine();
-        ImGui::Separator();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
-        push_button_group(g2_button, g2_hover, g2_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         if (ToolbarButton("Wall", current_tool == Tool::DrawWall)) {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::DrawWall;
@@ -581,11 +564,12 @@ namespace ui {
             current_tool = Tool::PlaceDose;
         }
         pop_button_group();
-        ImGui::SameLine();
-        ImGui::Separator();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
-        push_button_group(g3_button, g3_hover, g3_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         if (ToolbarButton("Undo", false)) {
             undo_stack.undo();
         }
@@ -614,9 +598,12 @@ namespace ui {
             }
         }
         pop_button_group();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
-        push_button_group(g4_button, g4_hover, g4_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         if (ToolbarButton("Isotopes", false)) {
             show_isotope_popup = true;
         }
@@ -626,20 +613,36 @@ namespace ui {
             show_material_popup = true;
         }
         pop_button_group();
-        ImGui::SameLine();
-        ImGui::Separator();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
         float spacing = ImGui::GetStyle().ItemSpacing.x;
+        float toolbar_gap_width = TOOLBAR_GROUP_GAP_PX + spacing;
+        float cluster_border_allowance = TOOLBAR_CLUSTER_PAD_X * 2.0f;
         float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
         float optimize_w = ImGui::CalcTextSize("Optimize").x + ImGui::GetStyle().FramePadding.x * 2;
         float show_w = ImGui::CalcTextSize("Show Optimization Results").x + ImGui::GetStyle().FramePadding.x * 2;
         float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
         float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
-        float total_w = lock_w + spacing + unlock_w + spacing + optimize_w + spacing + show_w + spacing + edit_w + spacing + save_w;
-        ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
-        push_button_group(g5_button, g5_hover, g5_active);
+        float lock_group_w = lock_w + spacing + unlock_w + cluster_border_allowance;
+        float optimize_group_w = optimize_w + spacing + show_w + cluster_border_allowance;
+        float edit_group_w = edit_w + cluster_border_allowance;
+        float save_group_w = save_w + cluster_border_allowance;
+        float total_w = lock_group_w
+            + toolbar_gap_width
+            + optimize_group_w
+            + toolbar_gap_width
+            + edit_group_w
+            + toolbar_gap_width
+            + save_group_w;
+        float right_margin = 8.0f;
+        ImGui::SameLine(ImGui::GetWindowWidth() - total_w - right_margin);
+
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         ImGui::BeginDisabled(blueprint_finalized);
         if (ToolbarButton("Calculate & Lock", blueprint_finalized)) {
             finalize_blueprint(); // locks geometry
@@ -653,9 +656,12 @@ namespace ui {
         }
         ImGui::EndDisabled();
         pop_button_group();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
         
-        push_button_group(g6_button, g6_hover, g6_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
         if (ToolbarButton("Optimize", false)) {
             
@@ -746,18 +752,24 @@ namespace ui {
         }
         ImGui::EndDisabled();
         pop_button_group();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
-        push_button_group(g7_button, g7_hover, g7_active);
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
         if (ToolbarButton("Edit Scale", false)) {
             app_state.mode = AppMode::NewProjectSetup;
             scale_has_p1 = false;
             scale_has_p2 = false;
         }
         pop_button_group();
-        ImGui::SameLine();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
 
-        push_menu_group(g8_button, g8_hover, g8_active);
+        ImGui::BeginGroup();
+        push_menu_group(grey_button, grey_hover, grey_active);
         ImGui::BeginDisabled(!blueprint_finalized);
 
         if (ImGui::BeginMenu("Save")) {
@@ -788,6 +800,9 @@ namespace ui {
         }
         ImGui::EndDisabled();
         pop_menu_group();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        draw_list->ChannelsMerge();
         ImGui::End();
         ImGui::PopStyleColor(1);
     }
