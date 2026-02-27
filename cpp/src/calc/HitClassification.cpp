@@ -1,5 +1,11 @@
-#include "calc/HitClassification.hpp"
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
 
+
+#include "calc/HitClassification.hpp"
 
 
 namespace calc {

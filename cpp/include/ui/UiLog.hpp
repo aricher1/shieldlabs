@@ -1,3 +1,10 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #pragma once
 
 #include <cstddef>
@@ -19,7 +26,7 @@ namespace ui {
         void push(const std::string& s);
 
         void separator() {
-            push("----------------------------------------");
+            push("----------------------------------------"); // terminal length
         }
     };
 

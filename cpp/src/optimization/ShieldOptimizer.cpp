@@ -1,3 +1,10 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 // ShieldOptimizer implements a nonlinear constrained optimization of lead shielding thickness across all walls in the scene.
 // 
 // Decision variables:

@@ -1,9 +1,15 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include <cmath>
 #include <algorithm>
 #include <iostream>
 
 #include "calc/SceneCompiler.hpp"
-
 
 
 namespace calc {

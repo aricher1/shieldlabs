@@ -1,3 +1,10 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -17,7 +24,6 @@
 #include "app/AppState.hpp"
 
 
-
 material::MaterialRegistry material_registry;
 isotope::IsotopeRegistry isotope_registry;
 
@@ -25,7 +31,6 @@ isotope::IsotopeRegistry isotope_registry;
 using namespace app;
 using namespace geom;
 using namespace ui;
-
 
 
 int main() {

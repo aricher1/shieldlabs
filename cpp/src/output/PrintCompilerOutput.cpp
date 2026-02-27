@@ -1,3 +1,10 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include <tabulate/table.hpp>
 #include <iostream>
 #include <iomanip>
@@ -16,7 +23,6 @@ using namespace material;
 
 extern MaterialRegistry material_registry;
 extern IsotopeRegistry isotope_registry;
-
 
 
 namespace output {

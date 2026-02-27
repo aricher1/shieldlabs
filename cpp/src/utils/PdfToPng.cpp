@@ -1,3 +1,10 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include <filesystem>
 #include <memory>
 #include <poppler/cpp/poppler-document.h>
@@ -5,7 +12,6 @@
 #include <poppler/cpp/poppler-page-renderer.h>
 
 #include "utils/PdfToPng.hpp"
-
 
 
 namespace utils {

@@ -1,8 +1,14 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include "calc/RayTraversal.hpp"
 #include "calc/RayIntersection.hpp"
 #include "calc/GeometryUtils.hpp"
 #include "calc/HitClassification.hpp"
-
 
 
 namespace calc {

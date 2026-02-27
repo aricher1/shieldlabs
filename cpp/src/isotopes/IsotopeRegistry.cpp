@@ -1,8 +1,14 @@
+// ============================================================================================
+// ShieldLabs
+// Copyright (c) 2026 Aidan Richer
+// Licensed under the MIT License. See LICENSE file for details.
+// ============================================================================================
+
+
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 
 #include "isotopes/IsotopeRegistry.hpp"
-
 
 
 namespace isotope {
