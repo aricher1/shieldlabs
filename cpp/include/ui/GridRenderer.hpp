@@ -110,6 +110,7 @@ namespace ui {
             bool show_optimization_overlay = false;
             bool show_isotope_popup = false;
             bool show_material_popup = false;
+            bool show_help_popup = false;
             bool scale_calibration_active = false;
             bool scale_has_p1 = false;
             bool scale_has_p2 = false;

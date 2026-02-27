@@ -58,9 +58,9 @@ namespace { // anonymous
     
     // ui layout constants
     constexpr float TOOLBAR_HEIGHT_PX = 40.f;
-    constexpr float TOOLBAR_GROUP_GAP_PX = 8.f;
-    constexpr float TOOLBAR_CLUSTER_PAD_X = 4.f;
-    constexpr float TOOLBAR_CLUSTER_PAD_Y = 3.f;
+    constexpr float TOOLBAR_GROUP_GAP_PX = 6.f;
+    constexpr float TOOLBAR_CLUSTER_PAD_X = 3.f;
+    constexpr float TOOLBAR_CLUSTER_PAD_Y = 2.f;
     constexpr float TOOLBAR_CLUSTER_ROUNDING = 3.f;
     constexpr float SIDE_PANEL_WIDTH_RATIO = 0.22f;
     constexpr float SIDE_PANEL_MIN_WIDTH_PX = 220.f;
@@ -86,6 +86,18 @@ namespace { // anonymous
         }
 
         return clicked;
+    }
+
+    void ToolbarTooltip(const char* text) {
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+            ImGui::SetTooltip("%s", text);
+        }
+    }
+
+    void DrawHelpButtonPreview(const char* label) {
+        ImGui::BeginDisabled();
+        ImGui::Button(label);
+        ImGui::EndDisabled();
     }
 
     void ToolbarGap() {
@@ -317,40 +329,135 @@ namespace ui {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(11.f / 255.f, 11.f / 255.f, 20.f / 255.f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
         ImGui::Begin("ShieldLabs", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.23f, 0.25f, 0.29f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.29f, 0.31f, 0.36f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.21f, 0.25f, 1.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(14.f, 10.f));
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        const ImVec2 bg_min = ImGui::GetWindowPos();
+        const ImVec2 bg_max(bg_min.x + ImGui::GetWindowWidth(), bg_min.y + ImGui::GetWindowHeight());
+        draw_list->AddRectFilledMultiColor(
+            bg_min,
+            bg_max,
+            IM_COL32(5, 8, 18, 255),
+            IM_COL32(8, 12, 24, 255),
+            IM_COL32(3, 5, 14, 255),
+            IM_COL32(5, 8, 18, 255)
+        );
 
-        const sf::Vector2u logo_size = shieldlabs_logo.getSize();
-        float scale = 0.25f; // image size
+        const float panel_width = std::min(980.f, ImGui::GetWindowWidth() - 120.f);
+        const float panel_height = 340.f;
+        const ImVec2 panel_pos(
+            (ImGui::GetWindowWidth() - panel_width) * 0.5f,
+            (ImGui::GetWindowHeight() - panel_height) * 0.5f
+        );
+        const ImVec2 panel_screen_min(bg_min.x + panel_pos.x, bg_min.y + panel_pos.y);
+        const ImVec2 panel_screen_max(panel_screen_min.x + panel_width, panel_screen_min.y + panel_height);
+        const ImU32 panel_ghost = IM_COL32(110, 160, 220, 28);
+        const ImU32 panel_ghost_strong = IM_COL32(135, 190, 245, 38);
+        const ImVec2 panel_offset(24.f, -16.f);
+        const ImVec2 panel_back_min(panel_screen_min.x + panel_offset.x, panel_screen_min.y + panel_offset.y);
+        const ImVec2 panel_back_max(panel_screen_max.x + panel_offset.x, panel_screen_max.y + panel_offset.y);
+        draw_list->AddRect(panel_back_min, panel_back_max, panel_ghost, 0.f, 0, 1.0f);
+        draw_list->AddRect(panel_screen_min, panel_screen_max, panel_ghost, 0.f, 0, 1.0f);
+        draw_list->AddLine(panel_screen_min, panel_back_min, panel_ghost_strong, 1.0f);
+        draw_list->AddLine(ImVec2(panel_screen_max.x, panel_screen_min.y), ImVec2(panel_back_max.x, panel_back_min.y), panel_ghost_strong, 1.0f);
+        draw_list->AddLine(ImVec2(panel_screen_min.x, panel_screen_max.y), ImVec2(panel_back_min.x, panel_back_max.y), panel_ghost_strong, 1.0f);
+        draw_list->AddLine(panel_screen_max, panel_back_max, panel_ghost_strong, 1.0f);
 
-        ImVec2 img_size(logo_size.x * scale, logo_size.y * scale);
-        ImGui::SetCursorPos(ImVec2(24.f, 24.f));
+        ImGui::SetCursorPos(panel_pos);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.10f, 0.12f, 0.17f, 0.96f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.28f, 0.33f, 0.42f, 0.80f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(28.f, 24.f));
+        ImGui::BeginChild("LaunchPanel", ImVec2(panel_width, panel_height), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        ImGui::Image(shieldlabs_logo.getNativeHandle(), img_size);
-        float button_width = 240.f;
-        float button_height = 48.f;
-        float center_x = (ImGui::GetWindowWidth() - button_width) * 0.5f;
-        float center_y = (ImGui::GetWindowHeight() * 0.5f) - 36.f;
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.12f, 0.15f, 0.21f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.26f, 0.31f, 0.40f, 0.90f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 12.f));
+        ImGui::BeginChild("LaunchHeader", ImVec2(-1.f, 104.f), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        static constexpr const char* launch_banner[] = {
+            "     _____ __  ________________   ____  __    ___    ____  _____",
+            "    / ___// / / /  _/ ____/ / /  / __ \\/ /   /   |  / __ // ___/",
+            "    \\__ \\/ /_/ // // __/ / /    / / / / /   / /| | / __  |\\__ \\",
+            "   ___/ / __  // // /___/ /___ / /_/ / /___/ ___ |/ /_/ /___/ /",
+            "  /____/_/ /_/___/_____/_____//_____/_____/_/  |_/____//____/"
+        };
+        const float header_content_width = ImGui::GetContentRegionAvail().x;
+        const float line_height = ImGui::GetTextLineHeightWithSpacing();
+        const float banner_height = line_height * 5.0f;
+        const float banner_start_y = std::max(0.f, (104.f - banner_height) * 0.5f - 2.f);
+        const float time = static_cast<float>(ImGui::GetTime());
+        const float pulse = 0.88f + 0.12f * std::sin(time * 1.8f);
+        const float mix = 0.5f + 0.5f * std::sin(time * 1.1f);
+        const ImVec4 cool_a(0.72f, 0.80f, 0.96f, 1.0f);
+        const ImVec4 cool_b(0.58f, 0.90f, 0.92f, 1.0f);
+        const ImVec4 banner_color(
+            (cool_a.x + (cool_b.x - cool_a.x) * mix) * pulse,
+            (cool_a.y + (cool_b.y - cool_a.y) * mix) * pulse,
+            (cool_a.z + (cool_b.z - cool_a.z) * mix) * pulse,
+            1.0f
+        );
 
-        ImGui::SetCursorPos(ImVec2(center_x, center_y));
+        for (int i = 0; i < 5; ++i) {
+            const float line_width = ImGui::CalcTextSize(launch_banner[i]).x;
+            const float line_x = std::max(0.f, (header_content_width - line_width) * 0.5f);
+            ImGui::SetCursorPos(ImVec2(line_x, banner_start_y + i * line_height));
+            ImGui::TextColored(banner_color, "%s", launch_banner[i]);
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(2);
 
-        if (ImGui::Button("New Project", ImVec2(button_width, button_height))) {
+        ImGui::Spacing();
+
+        const float content_width = ImGui::GetContentRegionAvail().x;
+        const float gap = 18.f;
+        const float card_width = (content_width - gap) * 0.5f;
+        const float card_height = 180.f;
+
+        const auto draw_action_card = [&](const char* id, const char* title, const char* description, const char* button_label) {
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.13f, 0.16f, 0.22f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.30f, 0.35f, 0.45f, 0.90f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(18.f, 16.f));
+            ImGui::BeginChild(id, ImVec2(card_width, card_height), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            ImGui::Text("%s", title);
+            ImGui::Separator();
+            ImGui::Spacing();
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+            ImGui::TextColored(ImVec4(0.82f, 0.85f, 0.90f, 1.0f), "%s", description);
+            ImGui::PopTextWrapPos();
+            ImGui::SetCursorPosY(card_height - 62.f);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.27f, 0.31f, 0.38f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.33f, 0.38f, 0.46f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.22f, 0.26f, 0.33f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(14.f, 12.f));
+            bool clicked = ImGui::Button(button_label, ImVec2(-1.f, 36.f));
+            ImGui::PopStyleVar();
+            ImGui::PopStyleColor(3);
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
+            return clicked;
+        };
+
+        if (draw_action_card(
+                "NewProjectCard",
+                "New Project",
+                "Set up a new shielding project from a floorplan PDF and calibrate the plan before editing geometry.",
+                "Create New Project")) {
             app_state.mode = AppMode::NewProjectSetup;
             scale_has_p1 = false;
             scale_has_p2 = false;
             update_viewport();
         }
 
-        ImGui::SetCursorPosX(center_x);
-        ImGui::TextDisabled("Start from a floorplan PDF");
-        ImGui::Spacing();
-        ImGui::Spacing();
-        ImGui::SetCursorPosX(center_x);
-        
-        if (ImGui::Button("Open Project", ImVec2(button_width, button_height))) {
+        ImGui::SameLine(0.f, gap);
+
+        if (draw_action_card(
+                "OpenProjectCard",
+                "Open Project",
+                "Load an existing ShieldLabs project to continue geometry edits, calculations, and optimization work.",
+                "Open Existing Project")) {
             IGFD::FileDialogConfig config;
             config.path = ".";
             ImGuiFileDialog::Instance()->OpenDialog(
@@ -362,19 +469,10 @@ namespace ui {
 
             app_state.mode = AppMode::OpeningProject;
         }
-        
-        ImGui::SetCursorPosX(center_x);
-        ImGui::TextDisabled("Load an existing project");
-        float padding = 20.f;
-        float box_width = 400.f;
-        float box_height = 35.f;
-        ImGui::SetCursorPos(ImVec2(padding, ImGui::GetWindowHeight() - box_height - padding));
-        ImGui::BeginChild("BottomLeftInfo", ImVec2(box_width, box_height), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::TextWrapped("ShieldLabs v1.0");
-        ImGui::TextWrapped("Radiation shielding design and optimization application.");
+
         ImGui::EndChild();
-        ImGui::PopStyleVar(2);
-        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar(3);
+        ImGui::PopStyleColor(2);
         ImGui::End();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();
@@ -384,14 +482,27 @@ namespace ui {
     void GridRenderer::draw_new_project_setup() {
         const float panel_width = side_panel_width_px(window);
         ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
-        ImGui::SetNextWindowSize(ImVec2(panel_width - 20.f, 400));
+        ImGui::SetNextWindowSize(ImVec2(panel_width - 20.f, window.getSize().y - TOOLBAR_HEIGHT_PX - 20.f));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.14f, 0.17f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.23f, 0.25f, 0.29f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.29f, 0.31f, 0.36f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.21f, 0.25f, 1.0f));
-        ImGui::Begin("##ProjectSetup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.28f, 0.33f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.31f, 0.35f, 0.41f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.21f, 0.24f, 0.29f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.26f, 0.30f, 0.37f, 0.72f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.f, 14.f));
+        ImGui::Begin("##ProjectSetup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        if (ImGui::Button("Upload PDF Floorplan")) {
+        ImGui::Text("Project Setup");
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+        ImGui::TextDisabled("Load the floorplan, then calibrate the scale.");
+        ImGui::PopTextWrapPos();
+        ImGui::Spacing();
+
+        ImGui::Text("Floorplan");
+        ImGui::Separator();
+        ImGui::Spacing();
+        if (ImGui::Button("Upload PDF Floorplan", ImVec2(-1.f, 0.f))) {
             IGFD::FileDialogConfig config;
             config.path = ".";
             ImGuiFileDialog::Instance()->OpenDialog(
@@ -404,32 +515,39 @@ namespace ui {
 
         if (!pdf_error_message.empty()) {
             ImGui::Spacing();
-            ImGui::Separator();
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.20f, 0.15f, 0.16f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.52f, 0.27f, 0.27f, 0.70f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.f, 10.f));
+            ImGui::BeginChild("FloorplanError", ImVec2(0.f, 96.f), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::TextColored(ImVec4(0.85f, 0.30f, 0.30f, 1.0f), "Floorplan Error");
             ImGui::TextWrapped("%s", pdf_error_message.c_str());
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+            ImGui::PopStyleColor(2);
         }
-        
+
         ImGui::Spacing();
-        ImGui::Separator();
         ImGui::Text("Scale Calibration");
         ImGui::Separator();
         ImGui::TextWrapped("Click two points on the grid that represent a known real-world distance.");
         ImGui::Spacing();
         ImGui::Text("Real-world distance (cm)");
         ImGui::SetNextItemWidth(-1);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.24f, 0.20f, 0.22f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.22f, 0.20f, 0.22f, 1.0f));
         ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
         ImGui::PopStyleColor();
 
         if (scale_has_p1 && scale_has_p2) {
             double pixel_dist = distance_cm(scale_p1, scale_p2);
-            ImGui::TextWrapped("Measured distance on plan: %.2f grid units", pixel_dist);
+            ImGui::Spacing();
+            ImGui::Text("Measured distance: %.2f grid units", pixel_dist);
             ImGui::TextWrapped(
                 "Grid units are arbitrary until calibrated. "
                 "Press 'Apply Scale' to calibrate and proceed to editing. "
-                "If you would like to re-calibrate the scale once entering editing mode, press the 'Edit Scale' button to return to this page. "
+                "If you would like to re-calibrate the scale once entering Editing, press the 'Edit Scale' button to return to this page. "
             );
-            if (ImGui::Button("Apply Scale")) {
+            ImGui::Spacing();
+            if (ImGui::Button("Apply Scale", ImVec2(-1.f, 0.f))) {
                 double measured_draw_distance = distance_cm(scale_p1, scale_p2);
                 if (measured_draw_distance > 0.0) {
                     engine.set_distance_scale(scale_real_distance_cm / measured_draw_distance);
@@ -439,11 +557,20 @@ namespace ui {
                 app_state.mode = AppMode::Editing;
             }
         } else {
+            ImGui::Spacing();
             ImGui::TextDisabled("Select two points on the grid.");
         }
-        ImGui::Spacing();
 
-        if (ImGui::Button("Reset Points")) {
+        const float reset_button_height = ImGui::GetFrameHeight();
+        const float bottom_gap = 14.f;
+        const float reset_y = ImGui::GetWindowHeight() - reset_button_height - bottom_gap - ImGui::GetStyle().WindowPadding.y;
+        if (ImGui::GetCursorPosY() < reset_y) {
+            ImGui::SetCursorPosY(reset_y);
+        } else {
+            ImGui::Spacing();
+        }
+
+        if (ImGui::Button("Reset Points", ImVec2(-1.f, 0.f))) {
             scale_has_p1 = false;
             scale_has_p2 = false;
         }
@@ -471,7 +598,8 @@ namespace ui {
             ImGuiFileDialog::Instance()->Close();
         }
         ImGui::End();
-        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor(5);
     }
 
 
@@ -479,6 +607,8 @@ namespace ui {
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(window.getSize().x, TOOLBAR_HEIGHT_PX));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.14f, 0.17f, 1.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6.f, 4.f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.f, 6.f));
         ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         draw_list->ChannelsSplit(2);
@@ -526,19 +656,21 @@ namespace ui {
 
         ImGui::BeginGroup();
         push_button_group(grey_button, grey_hover, grey_active);
-        if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
+        if (ToolbarButton("Selection", interaction_mode == InteractionMode::Select)) {
             interaction_mode = InteractionMode::Select;
             current_tool = Tool::None;
             selection.clear();
             drawing = false;
         }
+        ToolbarTooltip("Select and inspect geometry.");
         ImGui::SameLine();
 
-        if (ToolbarButton("DRAW", interaction_mode == InteractionMode::Draw)) {
+        if (ToolbarButton("Editing", interaction_mode == InteractionMode::Draw)) {
             interaction_mode = InteractionMode::Draw;
             selection.clear();
             drawing = false;
         }
+        ToolbarTooltip("Switch to placement and editing mode.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -546,23 +678,26 @@ namespace ui {
 
         ImGui::BeginGroup();
         push_button_group(grey_button, grey_hover, grey_active);
-        if (ToolbarButton("Wall", current_tool == Tool::DrawWall)) {
+        if (ToolbarButton("Add Wall", current_tool == Tool::DrawWall)) {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::DrawWall;
             drawing = false;
         }
+        ToolbarTooltip("Place a wall segment.");
         ImGui::SameLine();
 
-        if (ToolbarButton("Source", current_tool == Tool::PlaceSource)) {
+        if (ToolbarButton("Add Source", current_tool == Tool::PlaceSource)) {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::PlaceSource;
         }
+        ToolbarTooltip("Place a radiation source.");
         ImGui::SameLine();
 
-        if (ToolbarButton("Dose", current_tool == Tool::PlaceDose)) {
+        if (ToolbarButton("Add Dose", current_tool == Tool::PlaceDose)) {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::PlaceDose;
         }
+        ToolbarTooltip("Place a dose point.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -573,14 +708,16 @@ namespace ui {
         if (ToolbarButton("Undo", false)) {
             undo_stack.undo();
         }
+        ToolbarTooltip("Reverse the last action.");
         ImGui::SameLine();
 
         if (ToolbarButton("Redo", false)) {
             undo_stack.redo();
         }
+        ToolbarTooltip("Reapply the last undone action.");
         ImGui::SameLine();
 
-        if (ToolbarButton("Remove", false)) {
+        if (ToolbarButton("Delete", false)) {
             switch (selection.type) {
 
                 case Selection::Type::Wall:
@@ -597,6 +734,7 @@ namespace ui {
                     break;
             }
         }
+        ToolbarTooltip("Remove the selected item.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -607,46 +745,57 @@ namespace ui {
         if (ToolbarButton("Isotopes", false)) {
             show_isotope_popup = true;
         }
+        ToolbarTooltip("Show the list of supported isotopes.");
         ImGui::SameLine();
 
         if (ToolbarButton("Materials", false)) {
             show_material_popup = true;
         }
+        ToolbarTooltip("Show the list of supported materials.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         ToolbarGap();
 
         float spacing = ImGui::GetStyle().ItemSpacing.x;
-        float toolbar_gap_width = TOOLBAR_GROUP_GAP_PX + spacing;
+        float toolbar_gap_width = TOOLBAR_GROUP_GAP_PX;
         float cluster_border_allowance = TOOLBAR_CLUSTER_PAD_X * 2.0f;
-        float lock_w = ImGui::CalcTextSize("Calculate & Lock").x + ImGui::GetStyle().FramePadding.x * 2;
+        float lock_w = ImGui::CalcTextSize("Run Calc").x + ImGui::GetStyle().FramePadding.x * 2;
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
         float optimize_w = ImGui::CalcTextSize("Optimize").x + ImGui::GetStyle().FramePadding.x * 2;
-        float show_w = ImGui::CalcTextSize("Show Optimization Results").x + ImGui::GetStyle().FramePadding.x * 2;
+        float show_w = ImGui::CalcTextSize("Results").x + ImGui::GetStyle().FramePadding.x * 2;
         float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
-        float save_w = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2;
+        float save_w = ImGui::CalcTextSize("Save").x
+            + ImGui::GetStyle().FramePadding.x * 2
+            + ImGui::GetStyle().ItemInnerSpacing.x
+            + ImGui::GetFontSize()
+            + 10.0f;
+        float help_w = ImGui::CalcTextSize("Help").x + ImGui::GetStyle().FramePadding.x * 2;
 
         float lock_group_w = lock_w + spacing + unlock_w + cluster_border_allowance;
         float optimize_group_w = optimize_w + spacing + show_w + cluster_border_allowance;
         float edit_group_w = edit_w + cluster_border_allowance;
         float save_group_w = save_w + cluster_border_allowance;
+        float help_group_w = help_w + cluster_border_allowance;
         float total_w = lock_group_w
             + toolbar_gap_width
             + optimize_group_w
             + toolbar_gap_width
             + edit_group_w
             + toolbar_gap_width
+            + help_group_w
+            + toolbar_gap_width
             + save_group_w;
-        float right_margin = 8.0f;
+        float right_margin = 18.0f;
         ImGui::SameLine(ImGui::GetWindowWidth() - total_w - right_margin);
 
         ImGui::BeginGroup();
         push_button_group(grey_button, grey_hover, grey_active);
         ImGui::BeginDisabled(blueprint_finalized);
-        if (ToolbarButton("Calculate & Lock", blueprint_finalized)) {
+        if (ToolbarButton("Run Calc", blueprint_finalized)) {
             finalize_blueprint(); // locks geometry
         }
+        ToolbarTooltip("Calculate dose and lock geometry.");
         ImGui::EndDisabled();
         ImGui::SameLine();
 
@@ -654,6 +803,7 @@ namespace ui {
         if (ToolbarButton("Unlock Geometry", false)) {
             finalize_blueprint(); // unlocks geometry
         }
+        ToolbarTooltip("Unlock geometry so you can edit again.");
         ImGui::EndDisabled();
         pop_button_group();
         ImGui::EndGroup();
@@ -740,16 +890,18 @@ namespace ui {
             }
 
             ui_log.push(any_violation ? "\n[STATUS: FAILED]" : "\n[STATUS: SUCCESS]");
-            ui_log.push("Press [Show Optimization Results]");
+            ui_log.push("Press [Results]");
             optimization_ran = true;
         }
+        ToolbarTooltip("Optimize shielding.");
         ImGui::EndDisabled();
         ImGui::SameLine();
 
         ImGui::BeginDisabled(!optimized_scene_cache.has_value());
-        if (ToolbarButton("Show Optimization Results", show_optimization_overlay)) {
+        if (ToolbarButton("Results", show_optimization_overlay)) {
             show_optimization_overlay = !show_optimization_overlay;
         }
+        ToolbarTooltip("Show optimization results.");
         ImGui::EndDisabled();
         pop_button_group();
         ImGui::EndGroup();
@@ -763,6 +915,18 @@ namespace ui {
             scale_has_p1 = false;
             scale_has_p2 = false;
         }
+        ToolbarTooltip("Recalibrate the floorplan scale.");
+        pop_button_group();
+        ImGui::EndGroup();
+        draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        ToolbarGap();
+
+        ImGui::BeginGroup();
+        push_button_group(grey_button, grey_hover, grey_active);
+        if (ToolbarButton("Help", false)) {
+            show_help_popup = true;
+        }
+        ToolbarTooltip("Show button descriptions and workflow help.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -798,12 +962,14 @@ namespace ui {
             }
             ImGui::EndMenu();
         }
+        ToolbarTooltip("Save the project or export results.");
         ImGui::EndDisabled();
         pop_menu_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         draw_list->ChannelsMerge();
         ImGui::End();
+        ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(1);
     }
 
@@ -1172,15 +1338,17 @@ namespace ui {
         while (const auto event = window.pollEvent()) {
             ImGui::SFML::ProcessEvent(window, *event);
 
+            // Always allow the window to close, regardless of app state.
+            if (event->is<sf::Event::Closed>()) {
+                window.close();
+                continue;
+            }
+
             if (app_state.mode == AppMode::ProjectPicker) {
                 continue;
             }
 
             const ImGuiIO& io = ImGui::GetIO();
-            // close
-            if (event->is<sf::Event::Closed>()) {
-                window.close();
-            }
             // resize
             if (const auto* resized = event->getIf<sf::Event::Resized>()) {
                 window_size = {resized->size.x, resized->size.y};
@@ -1793,6 +1961,50 @@ namespace ui {
             }
 
             if (ImGui::Button("Close")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if (show_help_popup) {
+            ImGui::OpenPopup("Help");
+            show_help_popup = false;
+        }
+
+        ImGui::SetNextWindowSize(ImVec2(760, 520), ImGuiCond_FirstUseEver);
+        if (ImGui::BeginPopupModal("Help", nullptr, ImGuiWindowFlags_NoCollapse)) {
+            ImGui::Spacing();
+
+            ImGui::BeginChild("HelpScrollRegion", ImVec2(0, -40), true);
+            const auto help_row = [](const char* label, const char* description) {
+                DrawHelpButtonPreview(label);
+                ImGui::SameLine();
+                ImGui::TextWrapped("%s", description);
+                ImGui::Spacing();
+            };
+
+            help_row("Selection", "Select and inspect geometry.");
+            help_row("Editing", "Switch to placement and editing mode.");
+            help_row("Add Wall", "Place a wall segment.");
+            help_row("Add Source", "Place a radiation source.");
+            help_row("Add Dose", "Place a dose point.");
+            help_row("Delete", "Remove the selected item.");
+            help_row("Undo", "Reverse the last action.");
+            help_row("Redo", "Restore the last undone action.");
+            help_row("Isotopes", "Show the list of supported isotopes.");
+            help_row("Materials", "Show the list of supported materials.");
+            help_row("Run Calc", "Calculate dose and lock geometry.");
+            help_row("Unlock Geometry", "Unlock geometry so you can edit again.");
+            help_row("Optimize", "Optimize shielding.");
+            help_row("Results", "Show optimization results.");
+            help_row("Edit Scale", "Recalibrate the floorplan scale.");
+            help_row("Help", "Open this help window.");
+            help_row("Save", "Save the project or export results.");
+
+            ImGui::TextWrapped("Typical workflow: Upload the PDF floorplan, calibrate the real-world scale, add walls, sources, and dose points, adjust wall materials and thicknesses, enter the source and dose-point data, review the supported isotopes and materials, select the isotope to use throughout the calculation, run the initial calculation, and then optimize and review the results if needed.");
+            ImGui::EndChild();
+
+            if (ImGui::Button("Close", ImVec2(120, 0))) {
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();

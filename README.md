@@ -8,7 +8,7 @@
 
 ShieldLabs is a deterministic, ray-based radiation shielding and dose calculation application written in C++20. It models gamma radiation transport through multi-layer materials using calibrated 2D floorplans to compute spatial dose distributions with engineering-level precision.
 
-The system integrates geometric intersection logic, material attenuation modeling, isotope-specific emission data, and constrained shielding optimization into a single analysis workflow. All calculations are deterministic and reproducible, making results suitable for technical validation, regulatory comparison, and scenario-based engineering studies.
+The system integrates geometric intersection logic, material attenuation modeling, isotope-specific emission data, and constrained shielding optimization into a single analysis workflow. All calculations are deterministic and reproducible, making results suitable for technical validation and scenario-based studies.
 
 ShieldLabs is designed for evaluating shielding effectiveness, layout modifications, source placement, and minimum-lead optimization, with a strict separation between computational core, data registries, and user interface.
 
@@ -77,6 +77,40 @@ All third-party dependencies are vendored locally within the repository to provi
 
 Terminal based application. 
 A packaged desktop executable is planned.
+
+### Toolbar Guide
+
+| Button | Description |
+|--------|-------------|
+| `Selection` | Select and inspect geometry. |
+| `Editing` | Switch to placement and editing mode. |
+| `Add Wall` | Place a wall segment. |
+| `Add Source` | Place a radiation source. |
+| `Add Dose` | Place a dose point. |
+| `Delete` | Remove the selected item. |
+| `Undo` | Reverse the last action. |
+| `Redo` | Restore the last undone action. |
+| `Isotopes` | Show the list of supported isotopes. |
+| `Materials` | Show the list of supported materials. |
+| `Run Calc` | Calculate dose and lock geometry. |
+| `Unlock Geometry` | Unlock geometry so you can edit again. |
+| `Optimize` | Optimize shielding. |
+| `Results` | Show optimization results. |
+| `Edit Scale` | Recalibrate the floorplan scale. |
+| `Help` | Open the in-application help window. |
+| `Save` | Save the project or export results. |
+
+### Typical Workflow
+
+1. Upload the PDF floorplan.
+2. Calibrate the real-world scale.
+3. Add walls, sources, and dose points.
+4. Adjust wall materials and thicknesses.
+5. Enter the source and dose-point data.
+6. Review the supported isotopes and materials.
+7. Select the isotope to use throughout the calculation.
+8. Run the initial calculation.
+9. Optimize and review the results if needed.
 
 
 ## Supported Isotopes
