@@ -15,8 +15,6 @@
 #include "materials/MaterialRegistry.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
 
-constexpr double WEEKS_PER_YEAR = 52.0;
-
 using namespace isotope;
 using namespace material;
 

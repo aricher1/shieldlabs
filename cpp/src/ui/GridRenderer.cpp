@@ -54,14 +54,18 @@ namespace { // anonymous
 
     // interaction constants
     constexpr double SELECT_EPS_CM = 25.0;          // select wall/point by clicking within 25cm of it
-    constexpr double SNAP_POINT_EPS_CM = 0.01;      // snap epsilon, checking if p equals an existing endpoint for selection logic
-    constexpr float PICK_RADIUS_PX = 10.0f;
     constexpr double SHIFT_MOVE_MULTIPLIER = 10.0;  // when shift is pressed, the drawing shifts SHIFT_MOVE_MULTIPLIER times the normal distance
     
     // ui layout constants
     constexpr float TOOLBAR_HEIGHT_PX = 40.f;       // toolbar
-    constexpr float RIGHT_PANEL_WIDTH_PX = 300.f;   // terminal
-    constexpr float LEFT_PANEL_WIDTH_PX = 300.f;    // user input
+    constexpr float SIDE_PANEL_WIDTH_RATIO = 0.22f;
+    constexpr float SIDE_PANEL_MIN_WIDTH_PX = 220.f;
+    constexpr float SIDE_PANEL_MAX_WIDTH_PX = 320.f;
+
+    float side_panel_width_px(const sf::RenderWindow& window) {
+        const float width = static_cast<float>(window.getSize().x);
+        return std::clamp(width * SIDE_PANEL_WIDTH_RATIO, SIDE_PANEL_MIN_WIDTH_PX, SIDE_PANEL_MAX_WIDTH_PX);
+    }
 
     // used to be static method
     bool ToolbarButton(const char* label, bool active) {
@@ -133,15 +137,35 @@ namespace ui {
         if (win_w <= 0.f || win_h <= 0.f) { return; }
 
         const float top_norm = TOOLBAR_HEIGHT_PX / win_h;
-        const float side_norm = RIGHT_PANEL_WIDTH_PX / win_w;
+        const float side_panel_px = side_panel_width_px(window);
+        const float side_norm = side_panel_px / win_w;
+        const float avail_x = side_norm;
+        const float avail_y = top_norm;
+        const float avail_w = 1.f - 2.f * side_norm;
+        const float avail_h = 1.f - top_norm;
+
+        if (avail_w <= 0.f || avail_h <= 0.f) { return; }
+
+        const float avail_px_w = avail_w * win_w;
+        const float avail_px_h = avail_h * win_h;
 
         sf::FloatRect viewport;
-        viewport.position.x = side_norm;
-        viewport.position.y = top_norm;
-        viewport.size.x = 1.f - 2.f * side_norm;
-        viewport.size.y = 1.f - top_norm;
+        viewport.position.x = avail_x;
+        viewport.position.y = avail_y;
+        viewport.size.x = avail_w;
+        viewport.size.y = avail_h;
 
         grid_view.setViewport(viewport);
+        // Keep square grid cells and fit the full world bounds into the available area.
+        const auto& bounds = engine.get_world_bounds();
+        const float world_w = static_cast<float>(bounds.width_cm);
+        const float world_h = static_cast<float>(bounds.height_cm);
+        if (world_w <= 0.f || world_h <= 0.f) { return; }
+
+        const float units_per_px = std::max(world_w / avail_px_w, world_h / avail_px_h);
+        sf::Vector2f view_size{units_per_px * avail_px_w, units_per_px * avail_px_h};
+        grid_view.setSize(view_size);
+        grid_view.setCenter(sf::Vector2f{world_w * 0.5f, world_h * 0.5f});
     }
 
 
@@ -348,8 +372,9 @@ namespace ui {
 
 
     void GridRenderer::draw_new_project_setup() {
+        const float panel_width = side_panel_width_px(window);
         ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
-        ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX - 20, 400));
+        ImGui::SetNextWindowSize(ImVec2(panel_width - 20.f, 400));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
@@ -684,8 +709,9 @@ namespace ui {
 
 
     void GridRenderer::draw_left_panel() {
+        const float panel_width = side_panel_width_px(window);
         ImGui::SetNextWindowPos(ImVec2(0.f, TOOLBAR_HEIGHT_PX));
-        ImGui::SetNextWindowSize(ImVec2(LEFT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
+        ImGui::SetNextWindowSize(ImVec2(panel_width, window.getSize().y - TOOLBAR_HEIGHT_PX));
         ImGui::Begin("Geometric Entity Information", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         
         if (ImGui::BeginTabBar("LeftPanelTabs")) {
@@ -1300,8 +1326,6 @@ namespace ui {
             window.setView(window.getDefaultView());
             window.clear(sf::Color(11, 11, 20));
             draw_project_picker();
-            ImGui::SFML::Render(window);
-            window.display();
             return;
         }
         
@@ -1311,8 +1335,6 @@ namespace ui {
             window.clear(sf::Color(11, 11, 20));
             render_grid_only();    
             draw_new_project_setup();
-            ImGui::SFML::Render(window);
-            window.display();
             return;
         }
 
@@ -1353,10 +1375,7 @@ namespace ui {
                 
                 ImGuiFileDialog::Instance()->Close();
             }
-            
-            ImGui::SFML::Render(window);
-            window.display();
-            
+
             return;
         }
 
@@ -1559,8 +1578,9 @@ namespace ui {
         draw_toolbar();
         draw_left_panel();
 
-        ImGui::SetNextWindowPos(ImVec2(window.getSize().x - RIGHT_PANEL_WIDTH_PX, TOOLBAR_HEIGHT_PX));
-        ImGui::SetNextWindowSize(ImVec2(RIGHT_PANEL_WIDTH_PX, window.getSize().y - TOOLBAR_HEIGHT_PX));
+        const float panel_width = side_panel_width_px(window);
+        ImGui::SetNextWindowPos(ImVec2(window.getSize().x - panel_width, TOOLBAR_HEIGHT_PX));
+        ImGui::SetNextWindowSize(ImVec2(panel_width, window.getSize().y - TOOLBAR_HEIGHT_PX));
         ImGui::Begin("Terminal", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::BeginChild("terminal_scroll");
         

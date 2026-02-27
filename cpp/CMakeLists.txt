@@ -10,6 +10,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(shieldlabs)
 
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif()
@@ -22,11 +24,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # System Dependencies
 # ============================================================================================
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(POPPLER_CPP poppler-cpp)
-
-if(NOT POPPLER_CPP_FOUND)
-    message(FATAL_ERROR "Poppler-cpp not found. Required for PDF rendering.")
-endif()
+pkg_check_modules(POPPLER_CPP REQUIRED IMPORTED_TARGET poppler-cpp)
 
 # ============================================================================================
 # Vendored SFML
@@ -35,6 +33,7 @@ set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(SFML_USE_SYSTEM_DEPS ON CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/sfml)
 
@@ -58,6 +57,7 @@ set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
 # ============================================================================================
 # Vendored ImGui-SFML
 # ============================================================================================
+set(IMGUI_SFML_FIND_SFML OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/imgui-sfml)
 
 # ============================================================================================
@@ -180,5 +180,5 @@ target_link_libraries(shieldlabs PRIVATE
     sfml-window
     sfml-system
     yaml-cpp::yaml-cpp
-    ${POPPLER_CPP_LIBRARIES}
+    PkgConfig::POPPLER_CPP
 )

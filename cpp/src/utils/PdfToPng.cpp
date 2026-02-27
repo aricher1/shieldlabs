@@ -7,9 +7,9 @@
 
 #include <filesystem>
 #include <memory>
-#include <poppler/cpp/poppler-document.h>
-#include <poppler/cpp/poppler-page.h>
-#include <poppler/cpp/poppler-page-renderer.h>
+#include <poppler-document.h>
+#include <poppler-page.h>
+#include <poppler-page-renderer.h>
 
 #include "utils/PdfToPng.hpp"
 

@@ -115,7 +115,7 @@ int main() {
     while (window.isOpen()) {
         renderer.handle_events();
         ImGui::SFML::Update(window, deltaClock.restart());
-        window.clear(sf::Color::White);
+        window.clear(sf::Color(11, 11, 20));
         renderer.render();
         ImGui::SFML::Render(window);
         window.display();
