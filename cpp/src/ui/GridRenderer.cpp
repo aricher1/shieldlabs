@@ -488,47 +488,70 @@ namespace ui {
 
         const auto pop_menu_group = []() { ImGui::PopStyleColor(6); };
 
-        const ImVec4 g1_button{0.22f, 0.24f, 0.27f, 1.0f}; // select/draw
-        const ImVec4 g1_hover{0.27f, 0.29f, 0.33f, 1.0f};
-        const ImVec4 g1_active{0.18f, 0.20f, 0.23f, 1.0f};
+        // Toolbar groups use red, grey, dark blue, and navy blue families.
+        const ImVec4 red_button{0.63f, 0.18f, 0.20f, 1.0f};
+        const ImVec4 red_hover{0.72f, 0.23f, 0.25f, 1.0f};
+        const ImVec4 red_active{0.52f, 0.14f, 0.16f, 1.0f};
 
-        const ImVec4 g2_button{0.20f, 0.22f, 0.25f, 1.0f}; // wall/source/dose
-        const ImVec4 g2_hover{0.25f, 0.27f, 0.31f, 1.0f};
-        const ImVec4 g2_active{0.16f, 0.18f, 0.21f, 1.0f};
+        const ImVec4 grey_button{0.38f, 0.40f, 0.44f, 1.0f};
+        const ImVec4 grey_hover{0.45f, 0.47f, 0.51f, 1.0f};
+        const ImVec4 grey_active{0.30f, 0.32f, 0.36f, 1.0f};
 
-        const ImVec4 g3_button{0.26f, 0.24f, 0.22f, 1.0f}; // undo/redo/remove
-        const ImVec4 g3_hover{0.32f, 0.29f, 0.26f, 1.0f};
-        const ImVec4 g3_active{0.22f, 0.20f, 0.18f, 1.0f};
+        const ImVec4 dark_blue_button{0.12f, 0.22f, 0.40f, 1.0f};
+        const ImVec4 dark_blue_hover{0.16f, 0.28f, 0.50f, 1.0f};
+        const ImVec4 dark_blue_active{0.09f, 0.17f, 0.31f, 1.0f};
 
-        const ImVec4 g4_button{0.24f, 0.22f, 0.26f, 1.0f}; // isotopes/materials
-        const ImVec4 g4_hover{0.30f, 0.27f, 0.32f, 1.0f};
-        const ImVec4 g4_active{0.20f, 0.18f, 0.22f, 1.0f};
+        const ImVec4 navy_button{0.07f, 0.14f, 0.30f, 1.0f};
+        const ImVec4 navy_hover{0.10f, 0.19f, 0.39f, 1.0f};
+        const ImVec4 navy_active{0.05f, 0.10f, 0.23f, 1.0f};
 
-        const ImVec4 g5_button{0.21f, 0.25f, 0.23f, 1.0f}; // calculate/unlock
-        const ImVec4 g5_hover{0.26f, 0.31f, 0.28f, 1.0f};
-        const ImVec4 g5_active{0.17f, 0.21f, 0.19f, 1.0f};
+        const ImVec4 select_button = grey_button; // select
+        const ImVec4 select_hover = grey_hover;
+        const ImVec4 select_active = grey_active;
 
-        const ImVec4 g6_button{0.27f, 0.25f, 0.22f, 1.0f}; // optimize/show results
-        const ImVec4 g6_hover{0.33f, 0.30f, 0.27f, 1.0f};
-        const ImVec4 g6_active{0.22f, 0.20f, 0.18f, 1.0f};
+        const ImVec4 draw_button = red_button; // draw
+        const ImVec4 draw_hover = red_hover;
+        const ImVec4 draw_active = red_active;
 
-        const ImVec4 g7_button{0.21f, 0.24f, 0.26f, 1.0f}; // edit scale
-        const ImVec4 g7_hover{0.26f, 0.29f, 0.32f, 1.0f};
-        const ImVec4 g7_active{0.17f, 0.20f, 0.22f, 1.0f};
+        const ImVec4 g2_button = dark_blue_button; // wall/source/dose
+        const ImVec4 g2_hover = dark_blue_hover;
+        const ImVec4 g2_active = dark_blue_active;
 
-        const ImVec4 g8_button{0.28f, 0.30f, 0.33f, 1.0f}; // save
-        const ImVec4 g8_hover{0.34f, 0.36f, 0.40f, 1.0f};
-        const ImVec4 g8_active{0.23f, 0.25f, 0.28f, 1.0f};
+        const ImVec4 g3_button = grey_button; // undo/redo/remove
+        const ImVec4 g3_hover = grey_hover;
+        const ImVec4 g3_active = grey_active;
 
-        push_button_group(g1_button, g1_hover, g1_active);
+        const ImVec4 g4_button = navy_button; // isotopes/materials
+        const ImVec4 g4_hover = navy_hover;
+        const ImVec4 g4_active = navy_active;
+
+        const ImVec4 g5_button = dark_blue_button; // calculate/unlock
+        const ImVec4 g5_hover = dark_blue_hover;
+        const ImVec4 g5_active = dark_blue_active;
+
+        const ImVec4 g6_button = red_button; // optimize/show results
+        const ImVec4 g6_hover = red_hover;
+        const ImVec4 g6_active = red_active;
+
+        const ImVec4 g7_button = grey_button; // edit scale
+        const ImVec4 g7_hover = grey_hover;
+        const ImVec4 g7_active = grey_active;
+
+        const ImVec4 g8_button = grey_button; // save
+        const ImVec4 g8_hover = grey_hover;
+        const ImVec4 g8_active = grey_active;
+
+        push_button_group(select_button, select_hover, select_active);
         if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
             interaction_mode = InteractionMode::Select;
             current_tool = Tool::None;
             selection.clear();
             drawing = false;
         }
+        pop_button_group();
         ImGui::SameLine();
 
+        push_button_group(draw_button, draw_hover, draw_active);
         if (ToolbarButton("DRAW", interaction_mode == InteractionMode::Draw)) {
             interaction_mode = InteractionMode::Draw;
             selection.clear();
