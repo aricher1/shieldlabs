@@ -13,11 +13,15 @@
 
 namespace Cosmetics {
 
+    // app theme
+    inline const sf::Color APP_BACKGROUND = sf::Color(11, 11, 20);
+    inline const sf::Color GRID_BACKGROUND = sf::Color(240, 240, 243);
+
     // splash window
     inline const sf::Color PROGRESS_BAR = sf::Color(10, 10, 100);
 
     // grid
-    inline const sf::Color GRID_COLOR = sf::Color(220, 220, 220);
+    inline const sf::Color GRID_COLOR = sf::Color(210, 210, 214);
 
     // thickness    
     constexpr float WALL_THICKNESS_PX = 4.0f;

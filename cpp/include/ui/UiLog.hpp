@@ -26,7 +26,7 @@ namespace ui {
         void push(const std::string& s);
 
         void separator() {
-            push("----------------------------------------"); // terminal length
+            push("-----------");
         }
     };
 

@@ -304,13 +304,13 @@ namespace ui {
     {
         ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window.getSize().x), static_cast<float>(window.getSize().y)), ImGuiCond_Always);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(11.f/255.f, 11.f/255.f, 20.f/255.f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(11.f / 255.f, 11.f / 255.f, 20.f / 255.f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
         ImGui::Begin("ShieldLabs", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(22.f/255.f, 22.f/255.f, 42.f/255.f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(31.f/255.f, 31.f/255.f, 61.f/255.f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(42.f/255.f, 42.f/255.f, 90.f/255.f, 1.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.23f, 0.25f, 0.29f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.29f, 0.31f, 0.36f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.21f, 0.25f, 1.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(14.f, 10.f));
 
         const sf::Vector2u logo_size = shieldlabs_logo.getSize();
@@ -375,10 +375,10 @@ namespace ui {
         const float panel_width = side_panel_width_px(window);
         ImGui::SetNextWindowPos(ImVec2(10, TOOLBAR_HEIGHT_PX + 10));
         ImGui::SetNextWindowSize(ImVec2(panel_width - 20.f, 400));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.14f, 0.17f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.23f, 0.25f, 0.29f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.29f, 0.31f, 0.36f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.21f, 0.25f, 1.0f));
         ImGui::Begin("##ProjectSetup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
         if (ImGui::Button("Upload PDF Floorplan")) {
@@ -395,7 +395,7 @@ namespace ui {
         if (!pdf_error_message.empty()) {
             ImGui::Spacing();
             ImGui::Separator();
-            ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f),"Floorplan Error");
+            ImGui::TextColored(ImVec4(0.85f, 0.30f, 0.30f, 1.0f), "Floorplan Error");
             ImGui::TextWrapped("%s", pdf_error_message.c_str());
         }
         
@@ -407,7 +407,7 @@ namespace ui {
         ImGui::Spacing();
         ImGui::Text("Real-world distance (cm)");
         ImGui::SetNextItemWidth(-1);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.30f, 0.22f, 0.22f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.24f, 0.20f, 0.22f, 1.0f));
         ImGui::InputDouble("##scale_cm", &scale_real_distance_cm, 10.0, 100.0);
         ImGui::PopStyleColor();
 
@@ -468,12 +468,59 @@ namespace ui {
     void GridRenderer::draw_toolbar() {
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(window.getSize().x, TOOLBAR_HEIGHT_PX));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.34f, 0.38f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.38f, 0.42f, 0.46f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.26f, 0.30f, 0.34f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.14f, 0.17f, 1.0f));
         ImGui::Begin("TopToolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 
+        const auto push_button_group = [](const ImVec4& button, const ImVec4& hovered, const ImVec4& active) {
+            ImGui::PushStyleColor(ImGuiCol_Button, button);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hovered);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+        };
+
+        const auto pop_button_group = []() { ImGui::PopStyleColor(3); };
+
+        const auto push_menu_group = [&](const ImVec4& button, const ImVec4& hovered, const ImVec4& active) {
+            push_button_group(button, hovered, active);
+            ImGui::PushStyleColor(ImGuiCol_Header, button);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, hovered);
+            ImGui::PushStyleColor(ImGuiCol_HeaderActive, active);
+        };
+
+        const auto pop_menu_group = []() { ImGui::PopStyleColor(6); };
+
+        const ImVec4 g1_button{0.22f, 0.24f, 0.27f, 1.0f}; // select/draw
+        const ImVec4 g1_hover{0.27f, 0.29f, 0.33f, 1.0f};
+        const ImVec4 g1_active{0.18f, 0.20f, 0.23f, 1.0f};
+
+        const ImVec4 g2_button{0.20f, 0.22f, 0.25f, 1.0f}; // wall/source/dose
+        const ImVec4 g2_hover{0.25f, 0.27f, 0.31f, 1.0f};
+        const ImVec4 g2_active{0.16f, 0.18f, 0.21f, 1.0f};
+
+        const ImVec4 g3_button{0.26f, 0.24f, 0.22f, 1.0f}; // undo/redo/remove
+        const ImVec4 g3_hover{0.32f, 0.29f, 0.26f, 1.0f};
+        const ImVec4 g3_active{0.22f, 0.20f, 0.18f, 1.0f};
+
+        const ImVec4 g4_button{0.24f, 0.22f, 0.26f, 1.0f}; // isotopes/materials
+        const ImVec4 g4_hover{0.30f, 0.27f, 0.32f, 1.0f};
+        const ImVec4 g4_active{0.20f, 0.18f, 0.22f, 1.0f};
+
+        const ImVec4 g5_button{0.21f, 0.25f, 0.23f, 1.0f}; // calculate/unlock
+        const ImVec4 g5_hover{0.26f, 0.31f, 0.28f, 1.0f};
+        const ImVec4 g5_active{0.17f, 0.21f, 0.19f, 1.0f};
+
+        const ImVec4 g6_button{0.27f, 0.25f, 0.22f, 1.0f}; // optimize/show results
+        const ImVec4 g6_hover{0.33f, 0.30f, 0.27f, 1.0f};
+        const ImVec4 g6_active{0.22f, 0.20f, 0.18f, 1.0f};
+
+        const ImVec4 g7_button{0.21f, 0.24f, 0.26f, 1.0f}; // edit scale
+        const ImVec4 g7_hover{0.26f, 0.29f, 0.32f, 1.0f};
+        const ImVec4 g7_active{0.17f, 0.20f, 0.22f, 1.0f};
+
+        const ImVec4 g8_button{0.28f, 0.30f, 0.33f, 1.0f}; // save
+        const ImVec4 g8_hover{0.34f, 0.36f, 0.40f, 1.0f};
+        const ImVec4 g8_active{0.23f, 0.25f, 0.28f, 1.0f};
+
+        push_button_group(g1_button, g1_hover, g1_active);
         if (ToolbarButton("SELECT", interaction_mode == InteractionMode::Select)) {
             interaction_mode = InteractionMode::Select;
             current_tool = Tool::None;
@@ -487,10 +534,12 @@ namespace ui {
             selection.clear();
             drawing = false;
         }
+        pop_button_group();
         ImGui::SameLine();
         ImGui::Separator();
         ImGui::SameLine();
 
+        push_button_group(g2_button, g2_hover, g2_active);
         if (ToolbarButton("Wall", current_tool == Tool::DrawWall)) {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::DrawWall;
@@ -508,10 +557,12 @@ namespace ui {
             interaction_mode = InteractionMode::Draw;
             current_tool = Tool::PlaceDose;
         }
+        pop_button_group();
         ImGui::SameLine();
         ImGui::Separator();
         ImGui::SameLine();
 
+        push_button_group(g3_button, g3_hover, g3_active);
         if (ToolbarButton("Undo", false)) {
             undo_stack.undo();
         }
@@ -539,8 +590,10 @@ namespace ui {
                     break;
             }
         }
+        pop_button_group();
         ImGui::SameLine();
 
+        push_button_group(g4_button, g4_hover, g4_active);
         if (ToolbarButton("Isotopes", false)) {
             show_isotope_popup = true;
         }
@@ -549,6 +602,7 @@ namespace ui {
         if (ToolbarButton("Materials", false)) {
             show_material_popup = true;
         }
+        pop_button_group();
         ImGui::SameLine();
         ImGui::Separator();
 
@@ -562,6 +616,7 @@ namespace ui {
         float total_w = lock_w + spacing + unlock_w + spacing + optimize_w + spacing + show_w + spacing + edit_w + spacing + save_w;
         ImGui::SameLine(ImGui::GetWindowWidth() - total_w);
 
+        push_button_group(g5_button, g5_hover, g5_active);
         ImGui::BeginDisabled(blueprint_finalized);
         if (ToolbarButton("Calculate & Lock", blueprint_finalized)) {
             finalize_blueprint(); // locks geometry
@@ -574,8 +629,10 @@ namespace ui {
             finalize_blueprint(); // unlocks geometry
         }
         ImGui::EndDisabled();
+        pop_button_group();
         ImGui::SameLine();
         
+        push_button_group(g6_button, g6_hover, g6_active);
         ImGui::BeginDisabled(!blueprint_finalized || !last_compiler_output.has_value());
         if (ToolbarButton("Optimize", false)) {
             
@@ -665,15 +722,19 @@ namespace ui {
             show_optimization_overlay = !show_optimization_overlay;
         }
         ImGui::EndDisabled();
+        pop_button_group();
         ImGui::SameLine();
 
+        push_button_group(g7_button, g7_hover, g7_active);
         if (ToolbarButton("Edit Scale", false)) {
             app_state.mode = AppMode::NewProjectSetup;
             scale_has_p1 = false;
             scale_has_p2 = false;
         }
+        pop_button_group();
         ImGui::SameLine();
 
+        push_menu_group(g8_button, g8_hover, g8_active);
         ImGui::BeginDisabled(!blueprint_finalized);
 
         if (ImGui::BeginMenu("Save")) {
@@ -703,8 +764,9 @@ namespace ui {
             ImGui::EndMenu();
         }
         ImGui::EndDisabled();
+        pop_menu_group();
         ImGui::End();
-        ImGui::PopStyleColor(4);
+        ImGui::PopStyleColor(1);
     }
 
 
@@ -1259,7 +1321,7 @@ namespace ui {
         const auto& bounds = engine.get_world_bounds();
         grid_bg.setSize(sf::Vector2f(static_cast<float>(bounds.width_cm), static_cast<float>(bounds.height_cm)));
         grid_bg.setPosition(sf::Vector2f{0.f, 0.f});
-        grid_bg.setFillColor(sf::Color::White);
+        grid_bg.setFillColor(Cosmetics::GRID_BACKGROUND);
         window.draw(grid_bg);
 
         float pixels_per_cm = static_cast<float>(window.getSize().x) / grid_view.getSize().x;
@@ -1324,7 +1386,7 @@ namespace ui {
         // 1. project picker mode
         if (app_state.mode == AppMode::ProjectPicker) {
             window.setView(window.getDefaultView());
-            window.clear(sf::Color(11, 11, 20));
+            window.clear(Cosmetics::APP_BACKGROUND);
             draw_project_picker();
             return;
         }
@@ -1332,7 +1394,7 @@ namespace ui {
         // 2. new project setup
         if (app_state.mode == AppMode::NewProjectSetup) {
             window.setView(window.getDefaultView());
-            window.clear(sf::Color(11, 11, 20));
+            window.clear(Cosmetics::APP_BACKGROUND);
             render_grid_only();    
             draw_new_project_setup();
             return;
@@ -1343,7 +1405,7 @@ namespace ui {
         // 4. open project
         if (app_state.mode == AppMode::OpeningProject) {
             window.setView(window.getDefaultView());
-            window.clear(sf::Color(11, 11, 20));
+            window.clear(Cosmetics::APP_BACKGROUND);
 
             draw_project_picker();
 
