@@ -75,8 +75,7 @@ All third-party dependencies are vendored locally within the repository to provi
 
 ## Usage
 
-Terminal based application. 
-A packaged desktop executable is planned.
+Builds on Linux and MacOS currently
 
 ### Toolbar Guide
 
