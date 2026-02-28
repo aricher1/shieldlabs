@@ -1265,11 +1265,11 @@ namespace ui {
             e.label = name_buf;
         }
         ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextWrapped("Occupancy [0, 1]");
+        ImGui::TextWrapped("Occupancy [0,1]");
         ImGui::PopTextWrapPos();
         ImGui::InputFloat("##Occupancy", &d.occupancy);
         ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextWrapped("Dose limit (uSv)");
+        ImGui::TextWrapped("Dose limit (uSv/y)");
         ImGui::PopTextWrapPos();
         ImGui::InputFloat("##DoseLimit", &d.dose_limit_uSv);
 
