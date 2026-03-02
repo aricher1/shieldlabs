@@ -108,6 +108,7 @@ namespace ui {
 
             bool optimization_ran = false;
             bool show_optimization_overlay = false;
+            bool show_display_info = false;
             bool show_isotope_popup = false;
             bool show_material_popup = false;
             bool show_help_popup = false;

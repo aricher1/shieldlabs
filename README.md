@@ -96,6 +96,7 @@ A packaged desktop executable is planned.
 | `Unlock Geometry` | Unlock geometry so you can edit again. |
 | `Optimize` | Optimize shielding. |
 | `Results` | Show optimization results. |
+| `Info` | Toggle wall layer contents plus source and dose annotations. |
 | `Edit Scale` | Recalibrate the floorplan scale. |
 | `Help` | Open the in-application help window. |
 | `Save` | Save the project or export results. |
