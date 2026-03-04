@@ -106,6 +106,35 @@ namespace { // anonymous
         ImGui::SameLine();
     }
 
+    std::string fmt_compact(double value, int precision = 2) {
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(precision) << value;
+        return ss.str();
+    }
+
+    std::string build_wall_layers_label(const Wall& wall) {
+        std::ostringstream ss;
+        bool first = true;
+
+        for (const auto& layer : wall.layers) {
+            if (layer.thickness_cm <= 1e-6) {
+                continue;
+            }
+
+            const MaterialDef* mat = material_registry.get(layer.material_id);
+            const std::string material_name = mat ? mat->name : ("Material " + std::to_string(layer.material_id));
+
+            if (!first) {
+                ss << " | ";
+            }
+
+            ss << material_name << " " << fmt_compact(layer.thickness_cm) << " cm";
+            first = false;
+        }
+
+        return ss.str();
+    }
+
 } // end of anonymous namespace
 
 
@@ -764,6 +793,7 @@ namespace ui {
         float unlock_w = ImGui::CalcTextSize("Unlock Geometry").x + ImGui::GetStyle().FramePadding.x * 2;
         float optimize_w = ImGui::CalcTextSize("Optimize").x + ImGui::GetStyle().FramePadding.x * 2;
         float show_w = ImGui::CalcTextSize("Results").x + ImGui::GetStyle().FramePadding.x * 2;
+        float info_w = ImGui::CalcTextSize("Info").x + ImGui::GetStyle().FramePadding.x * 2;
         float edit_w = ImGui::CalcTextSize("Edit Scale").x + ImGui::GetStyle().FramePadding.x * 2;
         float save_w = ImGui::CalcTextSize("Save").x
             + ImGui::GetStyle().FramePadding.x * 2
@@ -773,7 +803,7 @@ namespace ui {
         float help_w = ImGui::CalcTextSize("Help").x + ImGui::GetStyle().FramePadding.x * 2;
 
         float lock_group_w = lock_w + spacing + unlock_w + cluster_border_allowance;
-        float optimize_group_w = optimize_w + spacing + show_w + cluster_border_allowance;
+        float optimize_group_w = optimize_w + spacing + show_w + spacing + info_w + cluster_border_allowance;
         float edit_group_w = edit_w + cluster_border_allowance;
         float save_group_w = save_w + cluster_border_allowance;
         float help_group_w = help_w + cluster_border_allowance;
@@ -829,12 +859,16 @@ namespace ui {
             optimized_scene_cache = optimized_scene;
             optimized_output_cache = after;
 
-            ui_log.push("\nOPTIMIZING DOSIMETRY...");
+            ui_log.push("");
+            ui_log.push("[Shield Optimization]");
             bool any_violation = false;
             size_t n = std::min(before.dose_totals.size(), after.dose_totals.size());
-            ui_log.push("\nDose Limits Post Optimization:");
+            ui_log.push("[Dose Summary]");
 
             for (size_t i = 0; i < n; ++i) {
+                const std::string& dose_name = after.dose_totals[i].dose_name.empty()
+                    ? before.dose_totals[i].dose_name
+                    : after.dose_totals[i].dose_name;
                 double b = before.dose_totals[i].annual_dose_uSv;
                 double a = after.dose_totals[i].annual_dose_uSv;
                 double limit = after.dose_totals[i].dose_limit_uSv;
@@ -844,16 +878,17 @@ namespace ui {
                 }
                  
                 std::ostringstream ss;
-                ss << "- DP" << (i + 1)
-                << " " << std::fixed << std::setprecision(2)
+                ss << "- "
+                << (dose_name.empty() ? ("Dose Point " + std::to_string(i + 1)) : dose_name)
+                << ": " << std::fixed << std::setprecision(2)
                 << b << " -> " << a
-                << " (Limit: " << limit
+                << " uSv/y (limit " << limit
                 << ")";
 
                 ui_log.push(ss.str());
             }
 
-            ui_log.push("\nWall Changes:");
+            ui_log.push("[Wall Updates]");
             bool any_wall_change = false;
 
             for (size_t i = 0; i < scene.walls.size(); ++i) {
@@ -876,21 +911,21 @@ namespace ui {
                     any_wall_change = true;
 
                     std::ostringstream ss;
-                    ss << "- W" << (i + 1)
-                    << " Lead(cm) "
+                    ss << "- Wall " << (i + 1)
+                    << ": lead "
                     << std::fixed << std::setprecision(2)
-                    << old_lead << " -> " << new_lead;
+                    << old_lead << " -> " << new_lead << " cm";
 
                     ui_log.push(ss.str());
                 }
             }
 
             if (!any_wall_change) {
-                ui_log.push("No wall changes.");
+                ui_log.push("No wall updates.");
             }
 
-            ui_log.push(any_violation ? "\n[STATUS: FAILED]" : "\n[STATUS: SUCCESS]");
-            ui_log.push("Press [Results]");
+            ui_log.push(any_violation ? "[Dose Limits Not Met]" : "[All Dose Limits Met]");
+            ui_log.push("Open [Results] for details");
             optimization_ran = true;
         }
         ToolbarTooltip("Optimize shielding.");
@@ -903,6 +938,12 @@ namespace ui {
         }
         ToolbarTooltip("Show optimization results.");
         ImGui::EndDisabled();
+        ImGui::SameLine();
+
+        if (ToolbarButton("Info", show_display_info)) {
+            show_display_info = !show_display_info;
+        }
+        ToolbarTooltip("Toggle wall, source, and dose annotations.");
         pop_button_group();
         ImGui::EndGroup();
         draw_cluster_plate(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -1702,6 +1743,8 @@ namespace ui {
                 std::ostringstream ss;
                 ss << std::fixed << std::setprecision(1) << len_cm << " cm";
                 length_text.setString(ss.str());
+                length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
+                length_text.setOutlineThickness(0.f);
                 length_text.setPosition(mid);
                 window.draw(length_text);
             }
@@ -1767,16 +1810,40 @@ namespace ui {
 
             const Point mid{(w.a.x_cm + w.b.x_cm) * 0.5, (w.a.y_cm + w.b.y_cm) * 0.5};
 
-            if (!show_optimization_overlay) {
+            if (!show_optimization_overlay && !show_display_info) {
                 std::ostringstream ss;
                 ss << std::fixed << std::setprecision(1) << (w.length_cm * engine.get_distance_scale()) << " cm";
                 length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
+                length_text.setOutlineThickness(0.f);
                 length_text.setString(ss.str());
                 length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
 
                 window.draw(length_text);
+            } else if (!show_optimization_overlay && show_display_info) {
+                const std::string wall_label = build_wall_layers_label(w);
+                if (!wall_label.empty()) {
+                    length_text.setFillColor(Cosmetics::LENGTH_TEXT_COLOR);
+                    length_text.setString(wall_label);
+                    length_text.setOutlineThickness(1.f);
+                    length_text.setOutlineColor(sf::Color::White);
+                    length_text.setPosition(sf::Vector2f{static_cast<float>(mid.x_cm), static_cast<float>(mid.y_cm)});
+                    window.draw(length_text);
+                }
             }
         }
+
+        auto draw_point_label = [&](const std::string& text, const sf::Color& color, const sf::Vector2f& position) {
+            if (text.empty()) {
+                return;
+            }
+
+            length_text.setString(text);
+            length_text.setFillColor(color);
+            length_text.setOutlineThickness(1.f);
+            length_text.setOutlineColor(sf::Color::White);
+            length_text.setPosition(position);
+            window.draw(length_text);
+        };
 
         // draw source + dose points
         const auto& entities = engine.get_entities();
@@ -1799,6 +1866,20 @@ namespace ui {
 
             window.draw(marker);
 
+            const sf::Vector2f label_position{
+                static_cast<float>(e.position.x_cm + 20),
+                static_cast<float>(e.position.y_cm - 30)
+            };
+
+            if (show_display_info && e.type == PointType::Source && e.source.has_value()) {
+                std::ostringstream ss;
+                ss << (e.label.empty() ? "Source" : e.label)
+                   << "\n"
+                   << fmt_compact(e.source->num_patients, 1) << " pt/wk | "
+                   << fmt_compact(e.source->activity_per_patient_MBq, 1) << " MBq";
+                draw_point_label(ss.str(), Cosmetics::SOURCE_COLOR, label_position);
+            }
+
             if (show_optimization_overlay && optimized_output_cache.has_value()) {
                 
                 if (e.type == PointType::Dose) {
@@ -1813,31 +1894,32 @@ namespace ui {
 
                     if (dose_counter < optimized_output_cache->dose_totals.size()) {
                         const auto& d = optimized_output_cache->dose_totals[dose_counter];
+                        const std::string dose_name = d.dose_name.empty()
+                            ? ("Dose Point " + std::to_string(dose_counter + 1))
+                            : d.dose_name;
                         double annual = d.annual_dose_uSv;
                         double limit = d.dose_limit_uSv;
                         bool violation = (annual > limit + 1e-2);  // equality passes
 
                         std::ostringstream ss;
-                        ss << "DP" << (dose_counter + 1)
+                        ss << dose_name
                         << "\n"
                         << std::fixed << std::setprecision(2)
                         << annual << " / " << limit << " uSv";
 
-                        length_text.setString(ss.str());
-
-                        if (violation) {
-                            length_text.setFillColor(Cosmetics::DOSE_LIMIT_FAIL);   
-                        } else {
-                            length_text.setFillColor(Cosmetics::DOSE_LIMIT_PASS);   
-                        }
-
-                        length_text.setOutlineThickness(1.f);
-                        length_text.setOutlineColor(sf::Color::White);
-                        length_text.setPosition(sf::Vector2f{static_cast<float>(e.position.x_cm + 20), static_cast<float>(e.position.y_cm - 30)});
-
-                        window.draw(length_text);
+                        draw_point_label(
+                            ss.str(),
+                            violation ? Cosmetics::DOSE_LIMIT_FAIL : Cosmetics::DOSE_LIMIT_PASS,
+                            label_position
+                        );
                     }
                 }
+            } else if (show_display_info && e.type == PointType::Dose && e.dose.has_value()) {
+                std::ostringstream ss;
+                ss << (e.label.empty() ? "Dose Point" : e.label)
+                   << "\nOcc " << fmt_compact(e.dose->occupancy, 2)
+                   << " | Limit " << fmt_compact(e.dose->dose_limit_uSv, 2) << " uSv";
+                draw_point_label(ss.str(), Cosmetics::DOSE_COLOR, label_position);
             }
         } 
 
@@ -1997,6 +2079,7 @@ namespace ui {
             help_row("Unlock Geometry", "Unlock geometry so you can edit again.");
             help_row("Optimize", "Optimize shielding.");
             help_row("Results", "Show optimization results.");
+            help_row("Info", "Toggle wall, source, and dose annotations.");
             help_row("Edit Scale", "Recalibrate the floorplan scale.");
             help_row("Help", "Open this help window.");
             help_row("Save", "Save the project or export results.");
