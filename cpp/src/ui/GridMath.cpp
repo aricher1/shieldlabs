@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 #include "ui/GridMath.hpp"
 
@@ -77,7 +78,7 @@ namespace ui {
         r.setFillColor(color);
         r.setOrigin(sf::Vector2f{0.f, thickness * 0.5f});
         r.setPosition(a);
-        r.setRotation(sf::degrees(std::atan2(d.y, d.x) * 180.f / M_PI));
+        r.setRotation(sf::degrees(std::atan2(d.y, d.x) * 180.f / static_cast<float>(std::numbers::pi)));
             
         return r;
     }

@@ -26,6 +26,7 @@
 #include "calc/HitClassification.hpp"
 #include "materials/MaterialRegistry.hpp"
 #include "isotopes/IsotopeRegistry.hpp"
+#include "utils/AppPaths.hpp"
 #include "ui/GridRenderer.hpp"
 #include "ui/Cosmetics.hpp"
 #include "app/AppState.hpp"
@@ -78,12 +79,13 @@ namespace {
 
 
 int main() {
+    const std::filesystem::path assets_dir = utils::find_assets_dir();
 
     // Load materials
-    if (!material_registry.load_from_file("../assets/materials/materials.yml")) { return 1; }
+    if (!material_registry.load_from_file((assets_dir / "materials/materials.yml").string())) { return 1; }
     
     // Load isotopes
-    if (!isotope_registry.load_from_file("../assets/isotopes/isotopes.yml")) { return 1; }
+    if (!isotope_registry.load_from_file((assets_dir / "isotopes/isotopes.yml").string())) { return 1; }
 
     // Splash window
     {
@@ -97,7 +99,7 @@ int main() {
 
         // load logo
         sf::Texture splashTexture;
-        if (!splashTexture.loadFromFile("../assets/logos/ShieldLabsTitleLogoTransparent.png")) { return 1; }
+        if (!splashTexture.loadFromFile((assets_dir / "logos/ShieldLabsTitleLogoTransparent.png").string())) { return 1; }
         
         // scale logo
         sf::Sprite splashSprite(splashTexture);
@@ -135,7 +137,7 @@ int main() {
     
     // Icon
     sf::Image icon;
-    if (icon.loadFromFile("../assets/logos/ShieldLabsLogo.png")) {
+    if (icon.loadFromFile((assets_dir / "logos/ShieldLabsLogo.png").string())) {
         window.setIcon(icon);
     }
     

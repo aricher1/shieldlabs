@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
-
-
 
 namespace utils {
 
-    bool pdf_to_png(const std::string& pdf_path, const std::string& png_path, int dpi = 150, std::string* error_message = nullptr);
+    std::filesystem::path find_assets_dir();
+    std::filesystem::path asset_path(const std::filesystem::path& relative_path);
+    std::string default_user_directory();
 
 } // end namespace utils

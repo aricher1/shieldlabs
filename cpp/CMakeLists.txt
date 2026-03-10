@@ -23,8 +23,29 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # ============================================================================================
 # System Dependencies
 # ============================================================================================
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(POPPLER_CPP REQUIRED IMPORTED_TARGET poppler-cpp)
+set(POPPLER_CPP_TARGET "")
+set(POPPLER_CPP_INCLUDE_DIRS "")
+set(POPPLER_CPP_CFLAGS_OTHER "")
+
+if(WIN32)
+    find_package(unofficial-poppler CONFIG QUIET)
+    find_package(poppler CONFIG QUIET)
+    find_package(poppler-cpp CONFIG QUIET)
+
+    if(TARGET unofficial::poppler::poppler-cpp)
+        set(POPPLER_CPP_TARGET unofficial::poppler::poppler-cpp)
+    elseif(TARGET poppler-cpp)
+        set(POPPLER_CPP_TARGET poppler-cpp)
+    elseif(TARGET Poppler::Cpp)
+        set(POPPLER_CPP_TARGET Poppler::Cpp)
+    else()
+        message(FATAL_ERROR "Could not find a Poppler C++ target on Windows. Configure CMake with the vcpkg toolchain and install Poppler.")
+    endif()
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(POPPLER_CPP REQUIRED IMPORTED_TARGET poppler-cpp)
+    set(POPPLER_CPP_TARGET PkgConfig::POPPLER_CPP)
+endif()
 
 # ============================================================================================
 # Vendored SFML
@@ -97,6 +118,7 @@ add_executable(shieldlabs
     src/ui/GridMath.cpp
     src/ui/UiLog.cpp
 
+    src/utils/AppPaths.cpp
     src/utils/PdfToPng.cpp
     src/utils/ProjectIO.cpp
 
@@ -137,9 +159,9 @@ endif()
 # ============================================================================================
 # Platform Fixes
 # ============================================================================================
-if(WIN32)
-    add_definitions(-DNOMINMAX)
-endif()
+target_compile_definitions(shieldlabs PRIVATE
+    $<$<PLATFORM_ID:Windows>:NOMINMAX>
+)
 
 if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
@@ -180,5 +202,5 @@ target_link_libraries(shieldlabs PRIVATE
     sfml-window
     sfml-system
     yaml-cpp::yaml-cpp
-    PkgConfig::POPPLER_CPP
+    ${POPPLER_CPP_TARGET}
 )

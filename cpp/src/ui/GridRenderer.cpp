@@ -34,6 +34,7 @@
 #include "output/PrintCompilerOutput.hpp"
 #include "output/PrintCompilerOutputUI.hpp"
 #include "output/ExportCompilerOutputCSV.hpp"
+#include "utils/AppPaths.hpp"
 #include "utils/PdfToPng.hpp"
 #include "utils/ProjectIO.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
@@ -162,10 +163,10 @@ namespace ui {
             viewport = {{0.f, (1.f - height) / 2.f}, {1.f, height}};
         }
         update_viewport();
-        if (!font.openFromFile("assets/fonts/Inter-Regular.ttf")) {
+        if (!font.openFromFile(asset_path("fonts/Inter-Regular.ttf").string())) {
             std::cerr << "Failed to load font\n";
         }
-        if (!shieldlabs_logo.loadFromFile("assets/logos/ShieldLabsTitleLogoTransparent.png")) {
+        if (!shieldlabs_logo.loadFromFile(asset_path("logos/ShieldLabsTitleLogoTransparent.png").string())) {
             std::cerr << "Failed to load logo\n"; 
         }
         length_text.setFont(font);
@@ -608,8 +609,9 @@ namespace ui {
             if (ImGuiFileDialog::Instance()->IsOk()) {
                 std::string pdf_path = ImGuiFileDialog::Instance()->GetFilePathName();
                 std::string png_path = "cache/blueprint.png";
+                std::string pdf_load_error;
 
-                if (pdf_to_png(pdf_path, png_path)) {
+                if (pdf_to_png(pdf_path, png_path, 150, &pdf_load_error)) {
                     pdf_error_message.clear();
                     current_floorplan_png_path = png_path;
                     load_background_image(png_path);
@@ -619,6 +621,8 @@ namespace ui {
                 } else {
                     pdf_error_message = 
                     "PDF upload failed.\n"
+                    + pdf_load_error
+                    + "\n\nRequirements:\n"
                     "- Must be exactly 1 page\n"
                     "- Must not be encrypted\n"
                     "- Must contain visible content";
@@ -991,7 +995,7 @@ namespace ui {
             // export to CSV
             if (ImGui::MenuItem("Export CSV")) {
                 IGFD::FileDialogConfig config;
-                config.path = std::filesystem::path(getenv("HOME") ? getenv("HOME") : ".").string();
+                config.path = default_user_directory();
                 config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 
                 ImGuiFileDialog::Instance()->OpenDialog(
