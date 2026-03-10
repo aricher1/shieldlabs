@@ -25,7 +25,7 @@ ShieldLabs is designed for evaluating shielding effectiveness, layout modificati
     ├── assets/
     │   ├── fonts/          # Font used in UI
     │   ├── isotopes/       # Isotope YAML file (gamma constants, attenutatio coefficients)
-    │   ├── logos/          # ShieldLabs Logos
+    │   ├── logos/          # ShieldLabs logos + Windows icon source
     │   └── materials/      # Material YAML file (concrete, steel, lead)
     │
     ├── external/           # Git submodules
@@ -43,6 +43,8 @@ ShieldLabs is designed for evaluating shielding effectiveness, layout modificati
     │   ├── output/         # Reports, exports, result formatting
     │   ├── ui/             # UI interfaces (GridRenderer, main)
     │   └── utils/          # Pdf to Png conversion
+    │
+    ├── resources/          # Platform resources such as the Windows app icon
     │
     └── src/                # Implentation files (.cpp)
         ├── calc/
@@ -75,7 +77,60 @@ All third-party dependencies are vendored locally within the repository to provi
 
 ## Usage
 
-Builds on Linux and MacOS currently
+Builds on Linux, macOS, and Windows.
+
+### Build Requirements
+
+- CMake
+- Git with submodules initialized
+- A C++20-capable compiler
+
+Platform-specific requirements:
+
+- Linux and macOS: `pkg-config` and `poppler-cpp`
+- Windows: Visual Studio/MSVC and `vcpkg` with `poppler`
+
+### Windows Build
+
+1. Install `poppler` with `vcpkg` for your Windows triplet.
+
+2. Configure CMake from the repository root and pass the `vcpkg` toolchain file:
+
+```powershell
+cmake -S cpp -B cpp\build\windows -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake
+```
+
+3. Build the project:
+
+```powershell
+cmake --build cpp\build\windows --config Release
+```
+
+4. Run the generated executable from the build output directory.
+
+Notes:
+
+- On Windows, the executable must remain beside its dependent DLLs.
+- The `assets` directory is copied into the output folder automatically after build.
+- If the `vcpkg` toolchain file is not provided during configure, CMake will not find the Windows Poppler package.
+
+### Linux and macOS Build
+
+1. Install `pkg-config` and `poppler-cpp` using your system package manager.
+
+2. Configure the project from the repository root:
+
+```bash
+cmake -S cpp -B cpp/build/native
+```
+
+3. Build it:
+
+```bash
+cmake --build cpp/build/native
+```
+
+4. Run the executable from the build output directory.
 
 ### Toolbar Guide
 

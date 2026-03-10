@@ -112,7 +112,7 @@ add_subdirectory(external/yaml-cpp)
 # ============================================================================================
 # Executable
 # ============================================================================================
-add_executable(shieldlabs
+set(SHIELDLABS_SOURCES
     src/ui/main.cpp
     src/ui/GridRenderer.cpp
     src/ui/GridMath.cpp
@@ -146,6 +146,16 @@ add_executable(shieldlabs
     src/output/ExportCompilerOutputCSV.cpp
 
     src/isotopes/IsotopeRegistry.cpp
+)
+
+if(WIN32)
+    list(APPEND SHIELDLABS_SOURCES
+        resources/shieldlabs.rc
+    )
+endif()
+
+add_executable(shieldlabs
+    ${SHIELDLABS_SOURCES}
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
