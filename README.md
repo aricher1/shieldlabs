@@ -56,9 +56,6 @@ ShieldLabs is designed for evaluating shielding effectiveness, layout modificati
 
 ```
 
-## Requirements
-CMake, 
-
 ## Dependencies
 
 ShieldLabs is built and tested against the following versions:
