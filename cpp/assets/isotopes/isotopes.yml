@@ -1,0 +1,208 @@
+isotopes:
+  - id: 1
+    key: c11
+    name: Carbon-11
+
+    gamma_constant_uSv_m2_per_MBq_h: 1.440e-04
+    half_life_hours: 0.3395
+
+    materials:
+      lead:
+        hvl1_mm: 5.00
+        hvl2_mm: 4.48
+        tvl1_mm: 15.2
+        tvl2_mm: 13.9
+
+      steel:
+        hvl1_mm: 25.8
+        hvl2_mm: 17.1
+        tvl1_mm: 52.8
+        tvl2_mm: 45.2
+
+      concrete:
+        hvl1_mm: 101.1
+        hvl2_mm: 56.0
+        tvl1_mm: 221.8
+        tvl2_mm: 144.3
+    
+  - id: 2
+    key: f18
+    name: Flourine-18
+
+    gamma_constant_uSv_m2_per_MBq_h: 1.398e-04
+    half_life_hours: 1.83
+
+    materials:
+      lead:
+        hvl1_mm: 5.03
+        hvl2_mm: 4.46
+        tvl1_mm: 15.2
+        tvl2_mm: 13.8
+
+      steel:
+        hvl1_mm: 25.8
+        hvl2_mm: 17.1
+        tvl1_mm: 52.8
+        tvl2_mm: 45.2
+
+      concrete:
+        hvl1_mm: 101.1
+        hvl2_mm: 56.0
+        tvl1_mm: 221.8
+        tvl2_mm: 144.3
+  
+  - id: 3
+    key: ga68
+    name: Gallium-68
+
+    gamma_constant_uSv_m2_per_MBq_h: 1.336e-04
+    half_life_hours: 1.128
+
+    materials:
+      lead:
+        hvl1_mm: 5.18
+        hvl2_mm: 4.67
+        tvl1_mm: 16.1
+        tvl2_mm: 17.6
+
+      steel:
+        hvl1_mm: 26.0
+        hvl2_mm: 17.3
+        tvl1_mm: 63.7
+        tvl2_mm: 47.0
+
+      concrete:
+        hvl1_mm: 101.4
+        hvl2_mm: 56.8
+        tvl1_mm: 223.9
+        tvl2_mm: 148.4
+  
+  - id: 4
+    key: tc99m
+    name: Technetium-99m
+
+    gamma_constant_uSv_m2_per_MBq_h: 1.853e-05
+    half_life_hours: 6.01
+
+    materials:
+      lead:
+        hvl1_mm: 0.36
+        hvl2_mm: 0.31
+        tvl1_mm: 1.06
+        tvl2_mm: 0.94
+
+      steel:
+        hvl1_mm: 6.47
+        hvl2_mm: 5.25
+        tvl1_mm: 18.2
+        tvl2_mm: 15.2
+
+      concrete:
+        hvl1_mm: 66.6
+        hvl2_mm: 31.7
+        tvl1_mm: 135.3
+        tvl2_mm: 83.7
+  
+  - id: 5
+    key: i131
+    name: Iodine-131
+
+    gamma_constant_uSv_m2_per_MBq_h: 5.471e-05
+    half_life_hours: 192.552
+
+    materials:
+      lead:
+        hvl1_mm: 2.83
+        hvl2_mm: 2.92
+        tvl1_mm: 10.1
+        tvl2_mm: 15.7
+
+      steel:
+        hvl1_mm: 21.7
+        hvl2_mm: 14.8
+        tvl1_mm: 54.2
+        tvl2_mm: 41.9
+
+      concrete:
+        hvl1_mm: 94.6
+        hvl2_mm: 51.0
+        tvl1_mm: 205.0
+        tvl2_mm: 134.4
+  
+  - id: 6
+    key: lu177
+    name: Lutetium-177
+
+    gamma_constant_uSv_m2_per_MBq_h: 4.935e-06
+    half_life_hours: 159.6
+
+    materials:
+      lead:
+        hvl1_mm: 0.53
+        hvl2_mm: 0.65
+        tvl1_mm: 2.13
+        tvl2_mm: 2.64
+
+      steel:
+        hvl1_mm: 8.95
+        hvl2_mm: 8.74
+        tvl1_mm: 28.7
+        tvl2_mm: 25.9
+
+      concrete:
+        hvl1_mm: 70.8
+        hvl2_mm: 37.5
+        tvl1_mm: 152.7
+        tvl2_mm: 101.6
+  
+  - id: 7
+    key: ra226
+    name: Radium-226
+
+    gamma_constant_uSv_m2_per_MBq_h: 2.199e-04
+    half_life_hours: 1.4016e+7
+
+    materials:
+      lead:
+        hvl1_mm: 9.46
+        hvl2_mm: 12.6
+        tvl1_mm: 40.1
+        tvl2_mm: 46.7
+
+      steel:
+        hvl1_mm: 30.2
+        hvl2_mm: 24.2
+        tvl1_mm: 85.2
+        tvl2_mm: 75.7
+
+      concrete:
+        hvl1_mm: 108.8
+        hvl2_mm: 75.0
+        tvl1_mm: 276.4
+        tvl2_mm: 228.8
+  
+  - id: 8
+    key: ac225
+    name: Actinium-225
+
+    gamma_constant_uSv_m2_per_MBq_h: 3.023e-05
+    half_life_hours: 240.0
+
+    materials:
+      lead:
+        hvl1_mm: 2.98
+        hvl2_mm: 4.70
+        tvl1_mm: 16.1
+        tvl2_mm: 41.4
+
+      steel:
+        hvl1_mm: 20.4
+        hvl2_mm: 17.2
+        tvl1_mm: 59.6
+        tvl2_mm: 58.8
+
+      concrete:
+        hvl1_mm: 91.4
+        hvl2_mm: 54.9
+        tvl1_mm: 214.0
+        tvl2_mm: 172.8
