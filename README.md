@@ -81,6 +81,22 @@ ShieldLabs is built and tested against the following versions:
 
 All third-party dependencies are vendored locally within the repository to provide deterministic cross-platform builds across Linux, macOS, and Windows.
 
+## Isotopes and Shielding Materials
+
+| Type      | Name             | Symbol |
+|-----------|------------------|--------|
+| Isotope   | Carbon-11        | C-11   |
+| Isotope   | Fluorine-18      | F-18   |
+| Isotope   | Gallium-68       | Ga-68  |
+| Isotope   | Technetium-99m   | Tc-99m |
+| Isotope   | Iodine-131       | I-131  |
+| Isotope   | Lutetium-177     | Lu-177 |
+| Isotope   | Radium-226       | Ra-226 |
+| Isotope   | Actinium-225     | Ac-225 |
+| Material  | Concrete         | —      |
+| Material  | Steel            | —      |
+| Material  | Lead             | —      |
+
 ## Usage
 
 ### Build Requirements
@@ -177,23 +193,71 @@ cmake --build cpp/build/native
 8. Run the initial calculation.
 9. Optimize and review the results if needed.
 
+### Startup And Workspace
 
-## Supported Isotopes
+<table>
+  <tr>
+    <td align="center">
+      <img src="cpp/assets/demo/homepage.png" alt="Homepage" width="420"><br>
+      <sub>Homepage</sub>
+    </td>
+    <td align="center">
+      <img src="cpp/assets/demo/opening_project.png" alt="Opening a Project" width="420"><br>
+      <sub>Opening a Project</sub>
+    </td>
+  </tr>
+</table>
 
-| Isotope         | Symbol |
-|-----------------|--------|
-| Carbon-11       | C-11   |
-| Fluorine-18     | F-18   |
-| Gallium-68      | Ga-68  |
-| Technetium-99m  | Tc-99m |
-| Iodine-131      | I-131  |
-| Lutetium-177    | Lu-177 |
-| Radium-226      | Ra-226 |
-| Actinium-225    | Ac-225 |
+### Entity Editing
 
-## Supported Materials
+<table>
+  <tr>
+    <td align="center">
+      <img src="cpp/assets/demo/wall_info.png" alt="Wall Layer Information" width="420"><br>
+      <sub>Wall Layer Information</sub>
+    </td>
+    <td align="center">
+      <img src="cpp/assets/demo/source_point_info.png" alt="Source Point Information" width="420"><br>
+      <sub>Source Point Information</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="cpp/assets/demo/dose_point_info.png" alt="Dose Point Information" width="420"><br>
+      <sub>Dose Point Information</sub>
+    </td>
+    <td align="center">
+      <img src="cpp/assets/demo/display_entity_info_example.png" alt="Entity Information Display" width="420"><br>
+      <sub>Entity Information Display</sub>
+    </td>
+  </tr>
+</table>
 
-- Concrete, Steel, Lead
+### Calculation And Optimization
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="cpp/assets/demo/isotope_selection.png" alt="Isotope Selection" width="420"><br>
+      <sub>Isotope Selection</sub>
+    </td>
+    <td align="center">
+      <img src="cpp/assets/demo/calc_example.png" alt="Dose Calculation Example" width="420"><br>
+      <sub>Dose Calculation Example</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="cpp/assets/demo/optimize_example.png" alt="Optimization Terminal Output" width="420"><br>
+      <sub>Optimization Terminal Output</sub>
+    </td>
+    <td align="center">
+      <img src="cpp/assets/demo/optimization_results.png" alt="Optimization Overlay Results" width="420"><br>
+      <sub>Optimization Overlay Results</sub>
+    </td>
+  </tr>
+</table>
+
 
 ## References
 
