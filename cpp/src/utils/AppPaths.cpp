@@ -10,13 +10,17 @@
 #include <array>
 #include <cstdlib>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace utils {
 
     namespace fs = std::filesystem;
 
     namespace {
 
-        fs::path first_existing_path(const std::array<fs::path, 5>& candidates) {
+        fs::path first_existing_path(const std::array<fs::path, 8>& candidates) {
             for (const auto& candidate : candidates) {
                 if (!candidate.empty() && fs::exists(candidate)) {
                     return candidate;
@@ -26,19 +30,38 @@ namespace utils {
             return {};
         }
 
+        fs::path executable_dir() {
+#ifdef _WIN32
+            std::wstring buffer(MAX_PATH, L'\0');
+            const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+            if (length == 0) {
+                return {};
+            }
+
+            buffer.resize(length);
+            return fs::path(buffer).parent_path();
+#else
+            return {};
+#endif
+        }
+
     } // namespace
 
     fs::path find_assets_dir() {
         const fs::path cwd = fs::current_path();
+        const fs::path exe_dir = executable_dir();
         const fs::path discovered = first_existing_path({
+            exe_dir / "assets",
+            exe_dir / "../assets",
+            exe_dir / "../../assets",
+            exe_dir / "../../../assets",
             cwd / "assets",
             cwd / "../assets",
             cwd / "../../assets",
-            cwd / "cpp/assets",
-            cwd / "../cpp/assets"
+            cwd / "cpp/assets"
         });
 
-        return discovered.empty() ? (cwd / "assets") : discovered;
+        return discovered.empty() ? (exe_dir.empty() ? (cwd / "assets") : (exe_dir / "assets")) : discovered;
     }
 
     fs::path asset_path(const fs::path& relative_path) {

@@ -3,7 +3,7 @@ isotopes:
     key: c11
     name: Carbon-11
 
-    gamma_constant_uSv_m2_per_MBq_h: 1.440e-04
+    gamma_constant_uSv_m2_per_MBq_h: 1.440e-01
     half_life_hours: 0.3395
 
     materials:
@@ -29,7 +29,7 @@ isotopes:
     key: f18
     name: Flourine-18
 
-    gamma_constant_uSv_m2_per_MBq_h: 1.398e-04
+    gamma_constant_uSv_m2_per_MBq_h: 1.398e-01
     half_life_hours: 1.83
 
     materials:
@@ -55,7 +55,7 @@ isotopes:
     key: ga68
     name: Gallium-68
 
-    gamma_constant_uSv_m2_per_MBq_h: 1.336e-04
+    gamma_constant_uSv_m2_per_MBq_h: 1.336e-01
     half_life_hours: 1.128
 
     materials:
@@ -81,7 +81,7 @@ isotopes:
     key: tc99m
     name: Technetium-99m
 
-    gamma_constant_uSv_m2_per_MBq_h: 1.853e-05
+    gamma_constant_uSv_m2_per_MBq_h: 1.853e-02
     half_life_hours: 6.01
 
     materials:
@@ -107,7 +107,7 @@ isotopes:
     key: i131
     name: Iodine-131
 
-    gamma_constant_uSv_m2_per_MBq_h: 5.471e-05
+    gamma_constant_uSv_m2_per_MBq_h: 5.471e-02
     half_life_hours: 192.552
 
     materials:
@@ -133,7 +133,7 @@ isotopes:
     key: lu177
     name: Lutetium-177
 
-    gamma_constant_uSv_m2_per_MBq_h: 4.935e-06
+    gamma_constant_uSv_m2_per_MBq_h: 4.935e-03
     half_life_hours: 159.6
 
     materials:
@@ -159,7 +159,7 @@ isotopes:
     key: ra226
     name: Radium-226
 
-    gamma_constant_uSv_m2_per_MBq_h: 2.199e-04
+    gamma_constant_uSv_m2_per_MBq_h: 2.196e-01
     half_life_hours: 1.4016e+7
 
     materials:
@@ -185,7 +185,7 @@ isotopes:
     key: ac225
     name: Actinium-225
 
-    gamma_constant_uSv_m2_per_MBq_h: 3.023e-05
+    gamma_constant_uSv_m2_per_MBq_h: 3.023e-02
     half_life_hours: 240.0
 
     materials:

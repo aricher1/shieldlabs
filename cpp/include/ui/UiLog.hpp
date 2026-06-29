@@ -17,7 +17,7 @@ namespace ui {
 
     struct UiLog {
         std::deque<std::string> lines;
-        std::size_t max_lines = 1000;
+        std::size_t max_lines = 10000;
 
         void clear() {
             lines.clear();
